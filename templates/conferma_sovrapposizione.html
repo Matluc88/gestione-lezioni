@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conferma Sovrapposizione</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body class="container mt-5">
+
+    <h2 class="text-center text-warning mb-4">⚠️ Conferma Sovrapposizione Lezione</h2>
+
+     {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="mb-3">
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="alert alert-warning text-center">
+        <p>Stai per aggiungere la lezione "<strong>{{ lezione.materia }}</strong>" (Corso: {{ lezione.id_corso }}, Data: {{ lezione.data }}, Orario: {{ lezione.ora_inizio }} - {{ lezione.ora_fine }}).</p>
+        <p class="mb-0">Questa lezione si sovrappone ad altre lezioni già pianificate.</p>
+        <hr>
+        <p class="fw-bold">Vuoi procedere comunque?</p>
+    </div>
+
+    <form method="POST" class="text-center">
+        {{ csrf_token() }} <input type="hidden" name="conferma_sovrapposizione" value="1">
+
+        <button type="submit" class="btn btn-success mx-2">✅ Sì, Conferma e Aggiungi</button>
+        <a href="{{ url_for('aggiungi_lezione') }}" class="btn btn-danger mx-2">❌ No, Annulla</a>
+    </form>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

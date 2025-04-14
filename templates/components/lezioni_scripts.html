@@ -1,0 +1,142 @@
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const selectAllCheckbox = document.getElementById("select-all");
+        const checkboxes = document.querySelectorAll("input[name='lezioni_selezionate[]']");
+
+        // Seleziona/Deseleziona tutte
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener("change", function () {
+                // Aggiorna tutte le checkbox, sia nella vista tabella che nella vista card mobile
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = selectAllCheckbox.checked;
+                });
+            });
+        }
+        
+        // Sincronizza le checkbox tra vista tabella e vista card
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener("change", function() {
+                // Trova tutte le checkbox con lo stesso valore (stesso ID lezione)
+                const sameIdCheckboxes = document.querySelectorAll(`input[name='lezioni_selezionate[]'][value='${this.value}']`);
+                sameIdCheckboxes.forEach(cb => {
+                    if (cb !== this) {
+                        cb.checked = this.checked;
+                    }
+                });
+            });
+        });
+
+        // Funzione riutilizzabile per fetch POST
+        function postLezioni(url, confermaMsg, successoMsg, erroreMsg) {
+            const selezionate = Array.from(checkboxes).filter(c => c.checked).map(c => c.value);
+
+            if (selezionate.length === 0) {
+                alert("⚠️ Seleziona almeno una lezione.");
+                return;
+            }
+            if (!confirm(confermaMsg)) return;
+
+            // Ottieni il token CSRF dal campo nascosto
+            const csrfToken = document.getElementById('csrf_token')?.value;
+            if (!csrfToken) {
+                alert("❌ Errore: Token CSRF non trovato.");
+                return;
+            }
+
+            const formData = new URLSearchParams();
+            selezionate.forEach(id => formData.append("lezioni_selezionate[]", id));
+            formData.append("csrf_token", csrfToken);
+
+            fetch(url, {
+                method: "POST",
+                headers: { 
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: formData.toString()
+            })
+            .then(res => {
+                if (res.ok) {
+                    alert(successoMsg);
+                    window.location.reload();
+                } else {
+                    alert(erroreMsg);
+                }
+            })
+            .catch(() => alert("❌ Errore di connessione."));
+        }
+
+        // Bottone Elimina Multipla
+        const eliminaBtn = document.getElementById("elimina-button");
+        if (eliminaBtn) {
+            eliminaBtn.addEventListener("click", function () {
+                postLezioni("{{ url_for('lezioni.elimina_lezioni') }}", "❌ Eliminare le lezioni selezionate?", "✅ Lezioni eliminate!", "❌ Errore durante l'eliminazione.");
+            });
+        }
+
+        // Bottone Archivia Multipla
+        const archiviaBtn = document.getElementById("archivia-button");
+        if (archiviaBtn) {
+            archiviaBtn.addEventListener("click", function () {
+                postLezioni("{{ url_for('lezioni.archivia_lezioni') }}", "📁 Archiviare le lezioni selezionate?", "✅ Lezioni archiviate!", "❌ Errore durante l'archiviazione.");
+            });
+        }
+
+        // Toggle filtro avanzato
+        const filterBtn = document.getElementById("toggleFilter");
+        const filterSection = document.getElementById("filterSection");
+        if (filterBtn && filterSection) {
+            filterBtn.addEventListener("click", () => {
+                if (filterSection.style.display === "none" || getComputedStyle(filterSection).display === "none") {
+                    filterSection.style.display = "block";
+                    filterBtn.textContent = "🔍 Nascondi Filtri";
+                } else {
+                    filterSection.style.display = "none";
+                    filterBtn.textContent = "🔍 Filtra";
+                }
+            });
+        }
+        
+        // Gestione pulsanti eliminazione singola
+        const eliminaSingolaButtons = document.querySelectorAll(".elimina-singola");
+        if (eliminaSingolaButtons.length > 0) {
+            eliminaSingolaButtons.forEach(button => {
+                button.addEventListener("click", function() {
+                    const id = this.getAttribute("data-id");
+                    if (!id) {
+                        alert("❌ Errore: ID lezione non trovato.");
+                        return;
+                    }
+                    
+                    if (!confirm(`❌ Eliminare la lezione ${id}?`)) return;
+                    
+                    // Ottieni il token CSRF dal campo nascosto
+                    const csrfToken = document.getElementById('csrf_token')?.value;
+                    if (!csrfToken) {
+                        alert("❌ Errore: Token CSRF non trovato.");
+                        return;
+                    }
+                    
+                    const formData = new URLSearchParams();
+                    formData.append("csrf_token", csrfToken);
+                    
+                    fetch(`{{ url_for('lezioni.elimina_lezione', id_lezione=0) }}`.replace('/0', `/${id}`), {
+                        method: "POST",
+                        headers: { 
+                            "Content-Type": "application/x-www-form-urlencoded"
+                        },
+                        body: formData.toString()
+                    })
+                    .then(res => {
+                        if (res.ok) {
+                            alert("✅ Lezione eliminata con successo!");
+                            window.location.reload();
+                        } else {
+                            alert("❌ Errore durante l'eliminazione della lezione.");
+                        }
+                    })
+                    .catch(() => alert("❌ Errore di connessione."));
+                });
+            });
+        }
+    });
+</script>

@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aggiungi Fattura - Gestione Lezioni</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background-color: #f4f6f9; }
+    .navbar { background: linear-gradient(45deg, #007bff, #6610f2); }
+    .card { border-radius: 15px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); }
+    .form-label { font-weight: 500; }
+    .btn-custom { background: linear-gradient(45deg, #ff416c, #ff4b2b); color: white; border: none; }
+    .btn-custom:hover { opacity: 0.9; color: white; }
+    .section-header { margin-top: 1rem; margin-bottom: 1rem; color: #0d6efd; font-weight: bold; }
+    .lezioni-container { max-height: 400px; overflow-y: auto; }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark shadow">
+    <div class="container">
+      <a class="navbar-brand" href="#">📝 Aggiungi Nuova Fattura</a>
+    </div>
+  </nav>
+
+  <div class="container my-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4>Inserisci i dettagli della fattura</h4>
+          <a href="{{ url_for('fatture.index') }}" class="btn btn-secondary">↩ Torna alle Fatture</a>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, msg in messages %}
+              <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ msg }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form method="POST" enctype="multipart/form-data" class="row g-3">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          
+          <div class="col-md-6">
+            <label for="numero_fattura" class="form-label">Numero Fattura</label>
+            <input type="text" class="form-control" id="numero_fattura" name="numero_fattura" required>
+          </div>
+          
+          <div class="col-md-12">
+            <label class="form-label">Corsi da Fatturare</label>
+            <div class="card p-3 mb-3">
+              <div class="row">
+                {% for corso in corsi %}
+                <div class="col-md-6 mb-2">
+                  <div class="form-check">
+                    <input class="form-check-input corso-checkbox" type="checkbox" id="corso_{{ loop.index }}" value="{{ corso }}" data-corso="{{ corso }}">
+                    <label class="form-check-label" for="corso_{{ loop.index }}">
+                      {{ corso }}
+                    </label>
+                  </div>
+                  <div class="ms-4 mt-1">
+                    <div class="form-check form-check-inline">
+                      <input class="form-check-input fatturazione-tipo" type="radio" name="tipo_fatturazione_{{ corso }}" id="fatturazione_totale_{{ loop.index }}" value="totale" checked data-corso="{{ corso }}">
+                      <label class="form-check-label" for="fatturazione_totale_{{ loop.index }}">
+                        Fatturazione Totale
+                      </label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                      <input class="form-check-input fatturazione-tipo" type="radio" name="tipo_fatturazione_{{ corso }}" id="fatturazione_parziale_{{ loop.index }}" value="parziale" data-corso="{{ corso }}">
+                      <label class="form-check-label" for="fatturazione_parziale_{{ loop.index }}">
+                        Fatturazione Parziale
+                      </label>
+                    </div>
+                    <div class="corso-status mt-1" id="corso_status_{{ corso }}"></div>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+              <input type="hidden" id="corsi_selezionati" name="corsi_selezionati" value="">
+            </div>
+          </div>
+          
+          <div class="col-md-6">
+            <label for="data_fattura" class="form-label">Data Fattura</label>
+            <input type="date" class="form-control" id="data_fattura" name="data_fattura" required value="{{ now.strftime('%Y-%m-%d') }}">
+          </div>
+          
+          <div class="col-md-6">
+            <label for="importo" class="form-label">Importo (€)</label>
+            <input type="number" step="0.01" class="form-control" id="importo" name="importo" required>
+          </div>
+          
+          <div class="col-md-6">
+            <label for="tipo_fatturazione" class="form-label">Tipo Fatturazione</label>
+            <select class="form-select" id="tipo_fatturazione" name="tipo_fatturazione" required>
+              <option value="2">Prestazione Occasionale (2)</option>
+              <option value="1">Partita IVA (1)</option>
+              <option value="3">Altro (3)</option>
+            </select>
+          </div>
+          
+          <div class="col-md-6">
+            <label for="file_pdf" class="form-label">File PDF Fattura</label>
+            <input type="file" class="form-control" id="file_pdf" name="file_pdf" accept=".pdf">
+            <div class="form-text">Opzionale: carica il file PDF della fattura</div>
+          </div>
+          
+          <div class="col-12">
+            <label for="note" class="form-label">Note</label>
+            <textarea class="form-control" id="note" name="note" rows="3"></textarea>
+          </div>
+          
+          <div class="col-12">
+            <h5 class="section-header">Seleziona le lezioni da fatturare</h5>
+            <div class="form-text mb-2">Seleziona le lezioni che vuoi includere in questa fattura</div>
+            
+            <!-- Filtri avanzati -->
+            <div class="card mb-3">
+              <div class="card-header bg-light">
+                <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#filtriAvanzati">
+                  🔍 Filtri Avanzati
+                </button>
+              </div>
+              <div class="collapse" id="filtriAvanzati">
+                <div class="card-body">
+                  <div class="row g-3">
+                    <div class="col-md-4">
+                      <label class="form-label">Cliente</label>
+                      <select class="form-select" id="filtro-cliente">
+                        <option value="">Tutti i clienti</option>
+                        {% for cliente in clienti %}
+                          <option value="{{ cliente }}">{{ cliente }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label">Mese</label>
+                      <input type="month" class="form-control" id="filtro-mese">
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label">Intervallo Date</label>
+                      <div class="d-flex gap-2">
+                        <input type="date" class="form-control" id="filtro-data-inizio" placeholder="Da">
+                        <input type="date" class="form-control" id="filtro-data-fine" placeholder="A">
+                      </div>
+                    </div>
+                  </div>
+                  <div class="mt-3 text-end">
+                    <button type="button" class="btn btn-primary" id="applica-filtri">Applica Filtri</button>
+                    <button type="button" class="btn btn-outline-secondary" id="reset-filtri">Reset</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="lezioni-container">
+              <table class="table table-striped table-hover">
+                <thead class="table-primary">
+                  <tr>
+                    <th>Seleziona</th>
+                    <th>Corso</th>
+                    <th>Cliente</th>
+                    <th>Materia</th>
+                    <th>Data</th>
+                    <th>Orario</th>
+                    <th>Compenso</th>
+                  </tr>
+                </thead>
+                <tbody id="lezioni-tbody">
+                  {% for lezione in lezioni %}
+                    <tr data-cliente="{{ lezione.cliente|default('Sconosciuto') }}" data-data="{{ lezione.data }}">
+                      <td>
+                        <input type="checkbox" class="form-check-input" name="lezioni" value="{{ lezione.id }}" id="lezione_{{ lezione.id }}">
+                      </td>
+                      <td>{{ lezione.id_corso }}</td>
+                      <td>{{ lezione.cliente|default('Sconosciuto') }}</td>
+                      <td>{{ lezione.materia }}</td>
+                      <td>{{ lezione.data }}</td>
+                      <td>{{ lezione.ora_inizio }} - {{ lezione.ora_fine }}</td>
+                      <td>€{{ lezione.compenso_orario }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
+          <div class="col-12 text-end">
+            <button type="submit" class="btn btn-success btn-lg">✅ Salva Fattura</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Elementi DOM
+      const checkboxes = document.querySelectorAll('input[name="lezioni"]');
+      const importoInput = document.getElementById('importo');
+      const corsiCheckboxes = document.querySelectorAll('.corso-checkbox');
+      const corsiSelezionatiInput = document.getElementById('corsi_selezionati');
+      const filtroCliente = document.getElementById('filtro-cliente');
+      const filtroMese = document.getElementById('filtro-mese');
+      const filtroDataInizio = document.getElementById('filtro-data-inizio');
+      const filtroDataFine = document.getElementById('filtro-data-fine');
+      const applicaFiltriBtn = document.getElementById('applica-filtri');
+      const resetFiltriBtn = document.getElementById('reset-filtri');
+      
+      // Inizializza gli stati di fatturazione dei corsi
+      const corsiStati = {};
+      
+      // Gestione selezione corsi
+      corsiCheckboxes.forEach(checkbox => {
+        const corso = checkbox.value;
+        const statusDiv = document.getElementById(`corso_status_${corso}`);
+        const radioTotale = document.querySelector(`input[name="tipo_fatturazione_${corso}"][value="totale"]`);
+        const radioParziale = document.querySelector(`input[name="tipo_fatturazione_${corso}"][value="parziale"]`);
+        
+        // Disabilita inizialmente i radio buttons
+        radioTotale.disabled = true;
+        radioParziale.disabled = true;
+        
+        checkbox.addEventListener('change', function() {
+          // Abilita/disabilita i radio buttons in base allo stato del checkbox
+          radioTotale.disabled = !this.checked;
+          radioParziale.disabled = !this.checked;
+          
+          // Aggiorna l'elenco dei corsi selezionati
+          updateCorsiSelezionati();
+          
+          // Aggiorna la visualizzazione delle lezioni
+          updateLezioniVisibility();
+          
+          // Aggiorna lo stato di fatturazione del corso
+          updateCorsoStatus(corso);
+        });
+        
+        // Gestione cambio tipo fatturazione
+        [radioTotale, radioParziale].forEach(radio => {
+          radio.addEventListener('change', function() {
+            updateLezioniVisibility();
+          });
+        });
+      });
+      
+      // Funzione per aggiornare l'input nascosto con i corsi selezionati
+      function updateCorsiSelezionati() {
+        const corsiSelezionati = Array.from(corsiCheckboxes)
+          .filter(cb => cb.checked)
+          .map(cb => cb.value);
+        
+        corsiSelezionatiInput.value = corsiSelezionati.join(',');
+      }
+      
+      // Funzione per aggiornare la visibilità delle lezioni in base ai corsi selezionati
+      function updateLezioniVisibility() {
+        // Raccogli i corsi selezionati e il loro tipo di fatturazione
+        const corsiSelezionati = {};
+        corsiCheckboxes.forEach(checkbox => {
+          if (checkbox.checked) {
+            const corso = checkbox.value;
+            const tipoFatturazione = document.querySelector(`input[name="tipo_fatturazione_${corso}"]:checked`).value;
+            corsiSelezionati[corso] = tipoFatturazione;
+          }
+        });
+        
+        // Aggiorna la visibilità delle lezioni
+        checkboxes.forEach(checkbox => {
+          const row = checkbox.closest('tr');
+          const corsoCella = row.querySelector('td:nth-child(2)').textContent;
+          
+          if (Object.keys(corsiSelezionati).length === 0 || corsoCella in corsiSelezionati) {
+            row.style.display = '';
+            
+            // Se il corso è selezionato per fatturazione totale, seleziona automaticamente tutte le lezioni
+            if (corsiSelezionati[corsoCella] === 'totale') {
+              checkbox.checked = true;
+              checkbox.disabled = true; // Disabilita il checkbox per evitare deselezionamenti
+            } else {
+              checkbox.disabled = false; // Riabilita il checkbox per fatturazione parziale
+            }
+          } else {
+            row.style.display = 'none';
+            checkbox.checked = false;
+          }
+        });
+        
+        // Ricalcola l'importo totale
+        calcolaImportoTotale();
+      }
+      
+      // Funzione per aggiornare lo stato di fatturazione di un corso
+      function updateCorsoStatus(corso) {
+        const statusDiv = document.getElementById(`corso_status_${corso}`);
+        
+        // Conta le lezioni totali e fatturate per il corso
+        let lezioniTotali = 0;
+        let lezioniFatturate = 0;
+        
+        checkboxes.forEach(checkbox => {
+          const row = checkbox.closest('tr');
+          const corsoCella = row.querySelector('td:nth-child(2)').textContent;
+          
+          if (corsoCella === corso) {
+            lezioniTotali++;
+            // Controlla se la lezione è già fatturata
+            if (row.dataset.fatturato === '1' || row.dataset.fatturato === '2' || row.dataset.fatturato === '3') {
+              lezioniFatturate++;
+            }
+          }
+        });
+        
+        // Aggiorna lo stato del corso
+        if (lezioniTotali === 0) {
+          statusDiv.innerHTML = '❓ Nessuna lezione trovata';
+          statusDiv.className = 'mt-1 fw-bold text-secondary';
+        } else if (lezioniFatturate === 0) {
+          statusDiv.innerHTML = '❌ Non fatturato';
+          statusDiv.className = 'mt-1 fw-bold text-danger';
+        } else if (lezioniFatturate < lezioniTotali) {
+          statusDiv.innerHTML = `⚠️ Parzialmente fatturato (${lezioniFatturate}/${lezioniTotali})`;
+          statusDiv.className = 'mt-1 fw-bold text-warning';
+        } else {
+          statusDiv.innerHTML = '✅ Totalmente fatturato';
+          statusDiv.className = 'mt-1 fw-bold text-success';
+        }
+        
+        // Salva lo stato nel dizionario
+        corsiStati[corso] = {
+          totale: lezioniTotali,
+          fatturate: lezioniFatturate
+        };
+      }
+      
+      // Calcola l'importo totale in base alle lezioni selezionate
+      checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', calcolaImportoTotale);
+      });
+      
+      function calcolaImportoTotale() {
+        let importoTotale = 0;
+        checkboxes.forEach(checkbox => {
+          if (checkbox.checked) {
+            const row = checkbox.closest('tr');
+            const compensoText = row.querySelector('td:last-child').textContent;
+            const compenso = parseFloat(compensoText.replace('€', '').trim());
+            
+            // Ottieni l'orario dalla riga
+            const orarioText = row.querySelector('td:nth-child(6)').textContent;
+            const [inizio, fine] = orarioText.split(' - ');
+            
+            // Calcola le ore
+            const oraInizio = new Date(`2000-01-01T${inizio}`);
+            const oraFine = new Date(`2000-01-01T${fine}`);
+            const oreLezione = (oraFine - oraInizio) / (1000 * 60 * 60);
+            
+            importoTotale += compenso * oreLezione;
+          }
+        });
+        
+        importoInput.value = importoTotale.toFixed(2);
+      }
+      
+      // Inizializza gli stati dei corsi
+      corsiCheckboxes.forEach(checkbox => {
+        updateCorsoStatus(checkbox.value);
+      });
+      
+      // Gestione filtri avanzati
+      applicaFiltriBtn.addEventListener('click', applicaFiltri);
+      resetFiltriBtn.addEventListener('click', resetFiltri);
+      
+      function applicaFiltri() {
+        const cliente = filtroCliente.value;
+        const mese = filtroMese.value;
+        const dataInizio = filtroDataInizio.value;
+        const dataFine = filtroDataFine.value;
+        
+        // Raccogli i corsi selezionati
+        const corsiSelezionati = {};
+        corsiCheckboxes.forEach(checkbox => {
+          if (checkbox.checked) {
+            const corso = checkbox.value;
+            const tipoFatturazione = document.querySelector(`input[name="tipo_fatturazione_${corso}"]:checked`).value;
+            corsiSelezionati[corso] = tipoFatturazione;
+          }
+        });
+        
+        checkboxes.forEach(checkbox => {
+          const row = checkbox.closest('tr');
+          const corsoCella = row.querySelector('td:nth-child(2)').textContent;
+          const clienteCella = row.querySelector('td:nth-child(3)').textContent;
+          const dataCella = row.dataset.data;
+          
+          // Verifica se la riga corrisponde al corso selezionato (se c'è)
+          const corsoMatch = Object.keys(corsiSelezionati).length === 0 || corsoCella in corsiSelezionati;
+          
+          // Verifica se la riga corrisponde al cliente selezionato (se c'è)
+          const clienteMatch = !cliente || clienteCella === cliente;
+          
+          // Verifica se la riga corrisponde al mese selezionato (se c'è)
+          const meseMatch = !mese || dataCella.startsWith(mese);
+          
+          // Verifica se la riga è nell'intervallo di date (se specificato)
+          let dataMatch = true;
+          if (dataInizio) {
+            dataMatch = dataMatch && dataCella >= dataInizio;
+          }
+          if (dataFine) {
+            dataMatch = dataMatch && dataCella <= dataFine;
+          }
+          
+          // Mostra o nascondi la riga in base ai filtri
+          if (corsoMatch && clienteMatch && meseMatch && dataMatch) {
+            row.style.display = '';
+            
+            // Se il corso è selezionato per fatturazione totale, seleziona automaticamente tutte le lezioni
+            if (corsiSelezionati[corsoCella] === 'totale') {
+              checkbox.checked = true;
+              checkbox.disabled = true;
+            } else {
+              checkbox.disabled = false;
+            }
+          } else {
+            row.style.display = 'none';
+            checkbox.checked = false;
+          }
+        });
+        
+        calcolaImportoTotale();
+      }
+      
+      function resetFiltri() {
+        filtroCliente.value = '';
+        filtroMese.value = '';
+        filtroDataInizio.value = '';
+        filtroDataFine.value = '';
+        
+        // Riapplica la visibilità in base ai corsi selezionati
+        updateLezioniVisibility();
+      }
+      
+      // Inizializza la visibilità delle lezioni
+      updateLezioniVisibility();
+    });
+  </script>
+</body>
+</html>

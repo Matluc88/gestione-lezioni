@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Modifica Corso</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body class="container mt-4">
+
+    <h2 class="text-center">✏️ Modifica Corso</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST" class="card p-4 shadow">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        
+        <div class="mb-3">
+            <label for="id_corso" class="form-label">ID Corso</label>
+            <input type="text" name="id_corso" id="id_corso" class="form-control" value="{{ corso.id_corso }}" readonly>
+        </div>
+    
+        <div class="mb-3">
+            <label for="nome" class="form-label">Nome del Corso</label>
+            <input type="text" name="nome" id="nome" class="form-control" value="{{ corso.nome }}" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="cliente" class="form-label">Cliente</label>
+            <input type="text" name="cliente" id="cliente" class="form-control" value="{{ corso.cliente or '' }}" placeholder="Nome del cliente">
+        </div>
+    
+        <button type="submit" class="btn btn-success">✅ Salva Modifiche</button>
+        <a href="{{ url_for('corsi.lista_corsi') }}" class="btn btn-secondary">↩ Annulla</a>
+    </form>
+    
+</body>
+</html>

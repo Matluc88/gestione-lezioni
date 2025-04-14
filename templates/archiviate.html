@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lezioni Archiviate</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    </head>
+<body class="container mt-4">
+
+    <h2 class="mb-4 text-center">📂 Lezioni Archiviate</h2>
+
+     {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="mb-3">
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <a href="{{ url_for('lezioni.dashboard') }}" class="btn btn-secondary">🏠 Torna alla Dashboard</a>
+        <div>
+            <button type="button" class="btn btn-success me-2" id="ripristina-button">🔄 Ripristina Selezionate</button>
+            <button type="button" class="btn btn-danger" id="elimina-button">🗑️ Elimina Selezionate</button>
+        </div>
+    </div>
+
+    {% if lezioni %}
+    <form id="lezioniArchiviateForm" method="POST" action="{{ url_for('archivio.ripristina_lezioni') }}"> <input type="hidden" name="csrf_token" id="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="table-responsive"> <table class="table table-bordered table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th style="width: 1%;"><input type="checkbox" id="select-all" title="Seleziona/Deseleziona tutto"></th> <th>ID</th>
+                        <th>Materia</th>
+                        <th>Data</th>
+                        <th>Ora Inizio</th>
+                        <th>Ora Fine</th>
+                        <th>Luogo</th>
+                        <th>Stato Archiviato</th> </tr>
+                </thead>
+                <tbody>
+                    {% for lezione in lezioni %}
+                    <tr>
+                        <td><input type="checkbox" name="lezioni_selezionate[]" value="{{ lezione['id'] }}"></td>
+                        <td>{{ lezione['id'] }}</td>
+                        <td>{{ lezione['materia'] }}</td>
+                        <td>{{ lezione['data'] }}</td>
+                        <td>{{ lezione['ora_inizio'] }}</td>
+                        <td>{{ lezione['ora_fine'] }}</td>
+                        <td>{{ lezione['luogo'] }}</td>
+                        <td>
+                            {% if lezione['stato'] == 'Completato' %}
+                                <span class="badge bg-success">✅ {{ lezione['stato'] }}</span>
+                            {% elif lezione['stato'] == 'Pianificato' %}
+                                <span class="badge bg-warning text-dark">🟡 {{ lezione['stato'] }}</span>
+                            {% elif lezione['stato'] == 'Cancellato' %}
+                                <span class="badge bg-danger">❌ {{ lezione['stato'] }}</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ lezione['stato'] | default('N/D') }}</span> {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </form>
+
+    {% else %}
+        <p class="text-center text-muted">📭 Nessuna lezione archiviata.</p>
+    {% endif %}
+
+    <script>
+        // Seleziona tutte le checkbox
+        const selectAllCheckbox = document.getElementById("select-all");
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener("change", function () {
+                let checkboxes = document.querySelectorAll("input[name='lezioni_selezionate[]']");
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                });
+            });
+        }
+
+        // Funzione per gestire le azioni sulle lezioni selezionate (ripristina o elimina)
+        function gestisciAzione(url, tipoAzione, messaggioConferma) {
+            // Trova le checkbox selezionate
+            let selectedLessons = [];
+            document.querySelectorAll("input[name='lezioni_selezionate[]']:checked").forEach((checkbox) => {
+                // Aggiungi ogni lezione selezionata come coppia [nome, valore]
+                selectedLessons.push(["lezioni_selezionate[]", checkbox.value]);
+            });
+
+            if (selectedLessons.length === 0) {
+                alert(`⚠️ Seleziona almeno una lezione da ${tipoAzione}.`);
+                return;
+            }
+
+            // Chiedi conferma
+            if (!confirm(messaggioConferma)) {
+                return;
+            }
+
+            // Leggi il token CSRF dal campo nascosto
+            const csrfToken = document.getElementById('csrf_token')?.value;
+            if (!csrfToken) {
+                alert('❌ Errore: Token CSRF non trovato. Ricarica la pagina.');
+                return;
+            }
+
+            // Crea i dati del form includendo le lezioni selezionate
+            let formData = new URLSearchParams(selectedLessons);
+            formData.append('csrf_token', csrfToken);
+
+            // Invia la richiesta POST al backend
+            fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: formData.toString()
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    alert(`❌ Errore ${response.status} durante l'operazione. Riprova.`);
+                }
+            })
+            .catch(error => {
+                console.error(`❌ Errore nella richiesta fetch:`, error);
+                alert("❌ Errore di connessione. Controlla la rete e riprova.");
+            });
+        }
+
+        // Funzione per ripristinare le lezioni selezionate
+        const ripristinaButton = document.getElementById("ripristina-button");
+        if (ripristinaButton) {
+            ripristinaButton.addEventListener("click", function() {
+                gestisciAzione(
+                    "{{ url_for('archivio.ripristina_lezioni') }}", 
+                    "ripristinare",
+                    `🔄 Sei sicuro di voler ripristinare le lezioni selezionate?`
+                );
+            });
+        }
+
+        // Funzione per eliminare le lezioni selezionate
+        const eliminaButton = document.getElementById("elimina-button");
+        if (eliminaButton) {
+            eliminaButton.addEventListener("click", function() {
+                gestisciAzione(
+                    "{{ url_for('archivio.elimina_lezioni_archiviate_ajax') }}", 
+                    "eliminare",
+                    `🗑️ ATTENZIONE: Sei sicuro di voler eliminare definitivamente le lezioni selezionate? Questa operazione non può essere annullata.`
+                );
+            });
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

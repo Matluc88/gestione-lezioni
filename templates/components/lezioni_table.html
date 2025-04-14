@@ -1,0 +1,83 @@
+{% if lezioni %}
+<form id="lezioniForm">
+    <input type="hidden" name="csrf_token" id="csrf_token" value="{{ csrf_token() }}">
+    <div class="table-responsive mobile-scroll">
+        <table class="table table-bordered table-striped mt-4">
+            <thead class="table-dark">
+                <tr>
+                    <th style="min-width: 40px;"><input type="checkbox" id="select-all" class="form-check-input mobile-touch-target"> ✔</th>
+                    <th style="min-width: 90px;">ID Corso</th>
+                    <th style="min-width: 100px;">Materia</th>
+                    <th style="min-width: 90px;">Data</th>
+                    <th style="min-width: 90px;">Inizio</th>
+                    <th style="min-width: 90px;">Fine</th>
+                    <th style="min-width: 100px;">Luogo</th>
+                    <th style="min-width: 100px;">Stato</th>
+                    <th style="min-width: 100px;">Azioni</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for lezione in lezioni %}
+                <tr>
+                    <td><input type="checkbox" name="lezioni_selezionate[]" value="{{ lezione['id'] }}" class="form-check-input mobile-touch-target"></td>
+                    <td>{{ lezione['id_corso'] }}</td>
+                    <td>{{ lezione['materia'] }}</td>
+                    <td>{{ lezione['data'] }}</td>
+                    <td>{{ lezione['ora_inizio'] }}</td>
+                    <td>{{ lezione['ora_fine'] }}</td>
+                    <td>{{ lezione['luogo'] }}</td>
+                    <td>
+                        {% if lezione['stato'] == 'Completato' %}
+                            <span class="badge bg-success">✅ {{ lezione['stato'] }}</span>
+                        {% elif lezione['stato'] == 'Pianificato' %}
+                            <span class="badge bg-warning text-dark">🟡 {{ lezione['stato'] }}</span>
+                        {% else %}
+                            <span class="badge bg-danger">❌ {{ lezione['stato'] }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="action-buttons">
+                        <a href="{{ url_for('lezioni.modifica_lezione', lezione_id=lezione['id']) }}" class="btn btn-warning btn-sm mobile-touch-target">✏️</a>
+                        <button type="button" class="btn btn-danger btn-sm elimina-singola mobile-touch-target" data-id="{{ lezione['id'] }}">🗑️</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Vista alternativa per schermi molto piccoli (visibile solo su schermi < 576px) -->
+    <div class="d-sm-none mt-4">
+        {% for lezione in lezioni %}
+        <div class="card mb-3 mobile-mb-2">
+            <div class="card-header d-flex justify-content-between align-items-center py-2">
+                <div>
+                    <input type="checkbox" name="lezioni_selezionate[]" value="{{ lezione['id'] }}" class="form-check-input mobile-touch-target me-2">
+                    <strong>{{ lezione['materia'] }}</strong>
+                </div>
+                <div>
+                    {% if lezione['stato'] == 'Completato' %}
+                        <span class="badge bg-success">✅ {{ lezione['stato'] }}</span>
+                    {% elif lezione['stato'] == 'Pianificato' %}
+                        <span class="badge bg-warning text-dark">🟡 {{ lezione['stato'] }}</span>
+                    {% else %}
+                        <span class="badge bg-danger">❌ {{ lezione['stato'] }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body py-2">
+                <p class="mb-1"><strong>Corso:</strong> {{ lezione['id_corso'] }}</p>
+                <p class="mb-1"><strong>Data:</strong> {{ lezione['data'] }}</p>
+                <p class="mb-1"><strong>Orario:</strong> {{ lezione['ora_inizio'] }} - {{ lezione['ora_fine'] }}</p>
+                <p class="mb-1"><strong>Luogo:</strong> {{ lezione['luogo'] }}</p>
+                <div class="mt-2 d-flex justify-content-end">
+                    <a href="{{ url_for('lezioni.modifica_lezione', lezione_id=lezione['id']) }}" class="btn btn-warning btn-sm me-2 mobile-touch-target">✏️ Modifica</a>
+                    <button type="button" class="btn btn-danger btn-sm elimina-singola mobile-touch-target" data-id="{{ lezione['id'] }}">🗑️ Elimina</button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</form>
+{% else %}
+<p class="text-center text-muted mt-4">📭 Nessuna lezione trovata. Modifica i filtri o aggiungi una nuova lezione.</p>
+{% endif %}

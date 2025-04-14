@@ -1,0 +1,2 @@
+id_corso,materia,data,ora_inizio,ora_fine,luogo,compenso_orario,stato,fatturato,mese_fatturato,cliente
+TEST-CORSO,Matematica,2025-04-20,09:00,10:30,Aula 1,25.0,Pianificato,0,,
