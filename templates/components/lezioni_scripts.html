@@ -13,6 +13,20 @@
             });
         }
         
+        // Seleziona/Deseleziona tutte per la tabella mobile
+        const selectAllMobileCheckbox = document.getElementById("select-all-mobile");
+        if (selectAllMobileCheckbox) {
+            selectAllMobileCheckbox.addEventListener("change", function () {
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = selectAllMobileCheckbox.checked;
+                });
+                // Sincronizza anche con l'altra checkbox "select-all"
+                if (selectAllCheckbox) {
+                    selectAllCheckbox.checked = selectAllMobileCheckbox.checked;
+                }
+            });
+        }
+        
         // Sincronizza le checkbox tra vista tabella e vista card
         checkboxes.forEach(checkbox => {
             checkbox.addEventListener("change", function() {
