@@ -1,10 +1,65 @@
-/* Ottimizzazione mobile avanzata per iPhone */
+/* Stile iOS per iPhone */
 
-/* Stili generali per dispositivi mobili */
+/* Variabili per colori iOS */
+:root {
+    --ios-blue: #007aff;
+    --ios-green: #34c759;
+    --ios-red: #ff3b30;
+    --ios-yellow: #ffcc00;
+    --ios-orange: #ff9500;
+    --ios-purple: #af52de;
+    --ios-pink: #ff2d55;
+    --ios-gray: #8e8e93;
+    --ios-light-gray: #f2f2f7;
+    --ios-extra-light-gray: #f9f9f9;
+    --ios-dark-gray: #1c1c1e;
+    --ios-background: #f2f2f7;
+    --ios-card-background: #ffffff;
+    --ios-separator: rgba(60, 60, 67, 0.1);
+    --ios-border-radius: 13px;
+    --ios-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    --ios-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Stili generali per iOS */
 @media (max-width: 767px) {
     body {
-        font-size: 16px;
-        padding: 0.5rem !important;
+        font-family: var(--ios-font) !important;
+        font-size: 16px !important;
+        background-color: var(--ios-background) !important;
+        color: #000000 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        -webkit-font-smoothing: antialiased !important;
+        -moz-osx-font-smoothing: grayscale !important;
+    }
+    
+    /* Stile iOS per la barra di navigazione */
+    .navbar {
+        background-color: rgba(255, 255, 255, 0.8) !important;
+        backdrop-filter: blur(10px) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
+        border-bottom: 1px solid var(--ios-separator) !important;
+        padding: 0.5rem 1rem !important;
+        box-shadow: none !important;
+    }
+    
+    .navbar-brand {
+        font-weight: 600 !important;
+        font-size: 1.2rem !important;
+        color: #000 !important;
+    }
+    
+    /* Contenitore principale con padding iOS */
+    .container, .container-fluid {
+        padding: 1rem !important;
+        max-width: 100% !important;
+    }
+    
+    /* Titoli in stile iOS */
+    h1, h2, h3, h4, h5, h6 {
+        font-weight: 600 !important;
+        color: #000 !important;
     }
     
     h2 {
@@ -12,93 +67,129 @@
         margin-bottom: 1rem !important;
     }
     
-    /* Pulsanti più grandi e colorati */
+    /* Pulsanti in stile iOS */
     .btn {
-        padding: 0.8rem 0.75rem !important;
-        margin-bottom: 0.75rem !important;
-        font-size: 1.1rem !important;
         border-radius: 10px !important;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
-        transition: transform 0.2s, box-shadow 0.2s !important;
+        font-weight: 500 !important;
+        padding: 0.8rem 1rem !important;
+        margin-bottom: 0.75rem !important;
+        font-size: 1rem !important;
+        border: none !important;
+        transition: all 0.2s ease !important;
+        box-shadow: none !important;
     }
     
     .btn:active {
-        transform: scale(0.95) !important;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.2) !important;
+        transform: scale(0.97) !important;
+        opacity: 0.8 !important;
     }
     
-    /* Colori più vivaci per i pulsanti */
+    /* Colori iOS per i pulsanti */
     .btn-primary {
-        background-color: #007bff !important;
-        border-color: #007bff !important;
-    }
-    
-    .btn-success {
-        background-color: #28a745 !important;
-        border-color: #28a745 !important;
-    }
-    
-    .btn-warning {
-        background-color: #ffc107 !important;
-        border-color: #ffc107 !important;
-        color: #212529 !important;
-    }
-    
-    .btn-danger {
-        background-color: #dc3545 !important;
-        border-color: #dc3545 !important;
-    }
-    
-    .btn-info {
-        background-color: #17a2b8 !important;
-        border-color: #17a2b8 !important;
+        background-color: var(--ios-blue) !important;
         color: white !important;
     }
     
-    /* Spaziatura maggiore tra gli elementi */
+    .btn-success {
+        background-color: var(--ios-green) !important;
+        color: white !important;
+    }
+    
+    .btn-warning {
+        background-color: var(--ios-yellow) !important;
+        color: #000 !important;
+    }
+    
+    .btn-danger {
+        background-color: var(--ios-red) !important;
+        color: white !important;
+    }
+    
+    .btn-info {
+        background-color: var(--ios-purple) !important;
+        color: white !important;
+    }
+    
+    /* Card in stile iOS */
     .card {
+        border: none !important;
+        border-radius: var(--ios-border-radius) !important;
+        box-shadow: var(--ios-shadow) !important;
+        background-color: var(--ios-card-background) !important;
         margin-bottom: 1.5rem !important;
-        border-radius: 12px !important;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+        overflow: hidden !important;
     }
     
     .card-header {
-        padding: 0.75rem 1rem !important;
-        border-radius: 12px 12px 0 0 !important;
+        background-color: var(--ios-card-background) !important;
+        border-bottom: 1px solid var(--ios-separator) !important;
+        padding: 1rem !important;
+        font-weight: 600 !important;
     }
     
     .card-body {
         padding: 1.25rem !important;
     }
     
-    /* Font più leggibili */
+    /* Form in stile iOS */
     .form-label {
-        font-size: 1rem !important;
+        font-size: 0.9rem !important;
         font-weight: 500 !important;
+        color: var(--ios-gray) !important;
         margin-bottom: 0.5rem !important;
     }
     
-    /* Input e select più grandi */
     .form-control, .form-select {
-        height: 50px !important;
+        height: 44px !important;
         font-size: 1rem !important;
-        padding: 0.75rem !important;
+        padding: 0.5rem 1rem !important;
         border-radius: 10px !important;
+        border: 1px solid var(--ios-separator) !important;
+        background-color: var(--ios-extra-light-gray) !important;
         margin-bottom: 1rem !important;
+        transition: all 0.2s ease !important;
     }
     
-    /* Checkbox più grandi */
+    .form-control:focus, .form-select:focus {
+        border-color: var(--ios-blue) !important;
+        box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2) !important;
+    }
+    
+    /* Checkbox in stile iOS */
     input[type="checkbox"] {
-        width: 24px !important;
-        height: 24px !important;
+        width: 22px !important;
+        height: 22px !important;
         margin-right: 10px !important;
+        border-radius: 6px !important;
+        border: 2px solid var(--ios-separator) !important;
+        appearance: none !important;
+        -webkit-appearance: none !important;
+        background-color: white !important;
+        position: relative !important;
+        cursor: pointer !important;
     }
     
-    /* Tabelle responsive */
+    input[type="checkbox"]:checked {
+        background-color: var(--ios-blue) !important;
+        border-color: var(--ios-blue) !important;
+    }
+    
+    input[type="checkbox"]:checked::after {
+        content: "✓" !important;
+        position: absolute !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        color: white !important;
+        font-size: 14px !important;
+    }
+    
+    /* Tabelle in stile iOS */
     .table-responsive {
-        font-size: 0.95rem !important;
-        border-radius: 10px !important;
+        border-radius: var(--ios-border-radius) !important;
         overflow: hidden !important;
+        background-color: var(--ios-card-background) !important;
+        box-shadow: var(--ios-shadow) !important;
     }
     
     .table {
@@ -106,74 +197,208 @@
     }
     
     .table th {
-        background-color: #f8f9fa !important;
-        padding: 0.75rem !important;
+        background-color: var(--ios-extra-light-gray) !important;
+        padding: 0.75rem 1rem !important;
         font-weight: 600 !important;
+        color: var(--ios-gray) !important;
+        border-bottom: 1px solid var(--ios-separator) !important;
+        text-transform: uppercase !important;
+        font-size: 0.8rem !important;
     }
     
     .table td {
-        padding: 0.75rem !important;
+        padding: 0.75rem 1rem !important;
         vertical-align: middle !important;
+        border-bottom: 1px solid var(--ios-separator) !important;
+    }
+    
+    .table tr:last-child td {
+        border-bottom: none !important;
     }
     
     /* Pulsanti nelle tabelle */
     .action-buttons .btn {
-        padding: 0.6rem 0.7rem !important;
+        width: 40px !important;
+        height: 40px !important;
+        padding: 0 !important;
         margin: 0.25rem !important;
-        font-size: 1rem !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: 50% !important;
     }
     
-    /* Vista a schede per mobile */
+    /* Vista a schede per mobile in stile iOS */
     .mobile-card {
-        border: 1px solid #dee2e6 !important;
-        border-radius: 12px !important;
+        border: none !important;
+        border-radius: var(--ios-border-radius) !important;
+        background-color: var(--ios-card-background) !important;
         margin-bottom: 1rem !important;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important;
+        box-shadow: var(--ios-shadow) !important;
+        overflow: hidden !important;
     }
     
     .mobile-card .card-header {
-        background-color: #f8f9fa !important;
-        padding: 0.75rem 1rem !important;
-        font-weight: 500 !important;
+        background-color: var(--ios-card-background) !important;
+        border-bottom: 1px solid var(--ios-separator) !important;
+        padding: 1rem !important;
+        font-weight: 600 !important;
     }
     
     .mobile-card .card-body {
         padding: 1rem !important;
     }
     
-    /* Menu a tendina ottimizzato per touch */
+    /* Menu a tendina in stile iOS */
     .dropdown-menu {
         padding: 0.5rem 0 !important;
-        border-radius: 10px !important;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.15) !important;
+        border-radius: var(--ios-border-radius) !important;
+        border: none !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+        background-color: rgba(255, 255, 255, 0.8) !important;
+        backdrop-filter: blur(20px) !important;
+        -webkit-backdrop-filter: blur(20px) !important;
     }
     
     .dropdown-item {
         padding: 0.75rem 1.5rem !important;
         font-size: 1rem !important;
+        color: #000 !important;
+    }
+    
+    .dropdown-item:active, .dropdown-item:focus {
+        background-color: var(--ios-light-gray) !important;
+        color: var(--ios-blue) !important;
     }
     
     /* Miglioramenti per la navigazione */
     .mobile-touch-target {
-        min-height: 48px !important;
-        min-width: 48px !important;
+        min-height: 44px !important;
+        min-width: 44px !important;
     }
     
     /* Spaziatura per il menu principale */
     .row-cols-3 {
-        gap: 0.5rem !important;
+        gap: 0.75rem !important;
     }
     
     /* Stili per i grafici */
     canvas {
         max-height: 300px !important;
+        border-radius: var(--ios-border-radius) !important;
     }
     
-    /* Stili per le badge */
+    /* Badge in stile iOS */
     .badge {
-        font-size: 0.9rem !important;
-        padding: 0.5rem 0.75rem !important;
+        font-size: 0.85rem !important;
+        padding: 0.4rem 0.7rem !important;
+        border-radius: 20px !important;
+        font-weight: 500 !important;
+    }
+    
+    .badge.bg-success {
+        background-color: var(--ios-green) !important;
+    }
+    
+    .badge.bg-warning {
+        background-color: var(--ios-yellow) !important;
+    }
+    
+    .badge.bg-danger {
+        background-color: var(--ios-red) !important;
+    }
+    
+    .badge.bg-primary {
+        background-color: var(--ios-blue) !important;
+    }
+    
+    .badge.bg-info {
+        background-color: var(--ios-purple) !important;
+    }
+    
+    .badge.bg-secondary {
+        background-color: var(--ios-gray) !important;
+    }
+    
+    /* Barra di navigazione inferiore in stile iOS */
+    .ios-tab-bar {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        height: 60px !important;
+        background-color: rgba(255, 255, 255, 0.8) !important;
+        backdrop-filter: blur(10px) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
+        border-top: 1px solid var(--ios-separator) !important;
+        display: flex !important;
+        justify-content: space-around !important;
+        align-items: center !important;
+        padding: 0 !important;
+        z-index: 1000 !important;
+    }
+    
+    .ios-tab-item {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        flex: 1 !important;
+        height: 100% !important;
+        color: var(--ios-gray) !important;
+        text-decoration: none !important;
+        font-size: 0.7rem !important;
+        font-weight: 500 !important;
+        transition: color 0.2s ease !important;
+    }
+    
+    .ios-tab-item.active {
+        color: var(--ios-blue) !important;
+    }
+    
+    .ios-tab-icon {
+        font-size: 1.5rem !important;
+        margin-bottom: 0.2rem !important;
+    }
+    
+    /* Aggiunta di padding al fondo per la barra di navigazione */
+    .ios-has-tab-bar {
+        padding-bottom: 70px !important;
+    }
+    
+    /* Animazioni in stile iOS */
+    .ios-fade {
+        transition: opacity 0.3s ease !important;
+    }
+    
+    .ios-slide-up {
+        transition: transform 0.3s ease !important;
+    }
+    
+    /* Stile per i segmented controls iOS */
+    .ios-segmented-control {
+        display: flex !important;
+        background-color: var(--ios-extra-light-gray) !important;
         border-radius: 8px !important;
+        padding: 2px !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    .ios-segment {
+        flex: 1 !important;
+        text-align: center !important;
+        padding: 0.5rem 0 !important;
+        font-size: 0.9rem !important;
+        font-weight: 500 !important;
+        color: var(--ios-gray) !important;
+        border-radius: 6px !important;
+        transition: all 0.2s ease !important;
+    }
+    
+    .ios-segment.active {
+        background-color: white !important;
+        color: #000 !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
     }
 }
 
@@ -181,16 +406,15 @@
 @media (max-width: 375px) {
     body {
         font-size: 15px !important;
-        padding: 0.25rem !important;
     }
     
     .btn {
-        font-size: 1rem !important;
+        font-size: 0.95rem !important;
         padding: 0.7rem 0.5rem !important;
     }
     
     .form-control, .form-select {
-        height: 45px !important;
+        height: 42px !important;
         font-size: 0.95rem !important;
     }
     
@@ -200,5 +424,17 @@
     
     .card-header h5 {
         font-size: 1rem !important;
+    }
+    
+    .ios-tab-bar {
+        height: 55px !important;
+    }
+    
+    .ios-tab-icon {
+        font-size: 1.3rem !important;
+    }
+    
+    .ios-has-tab-bar {
+        padding-bottom: 65px !important;
     }
 }
