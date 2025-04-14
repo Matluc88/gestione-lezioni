@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Errore di Conflitto</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body class="container mt-5">
+
+    <div class="alert alert-danger text-center">
+        <h2>⚠️ Conflitto di Orario</h2>
+        <p>Esiste già una lezione il <strong>{{ data }}</strong> dalle <strong>{{ ora_inizio }}</strong> alle <strong>{{ ora_fine }}</strong> che si sovrappone a quella che stai cercando di aggiungere.</p>
+    </div>
+
+    <h3>📋 Dettagli delle lezioni in conflitto:</h3>
+    <table class="table table-bordered mt-3">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Materia</th>
+                <th>Data</th>
+                <th>Ora Inizio</th>
+                <th>Ora Fine</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for lezione in conflitti %}
+            <tr>
+                <td>{{ lezione[0] }}</td>
+                <td>{{ lezione[1] }}</td>
+                <td>{{ lezione[2] }}</td>
+                <td>{{ lezione[3] }}</td>
+                <td>{{ lezione[4] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="d-flex justify-content-between">
+        <a href="{{ url_for('aggiungi_lezione') }}" class="btn btn-warning">🔄 Continua a Modificare</a>
+        <a href="{{ url_for('lezioni.dashboard') }}" class="btn btn-secondary">🏠 Torna alla Home</a>
+    </div>
+
+</body>
+</html>

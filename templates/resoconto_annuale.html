@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Resoconto Annuale</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container mt-4">
+        <h2 class="mb-4 text-center">📊 Resoconto Annuale</h2>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <a href="{{ url_for('lezioni.dashboard') }}" class="btn btn-secondary">🏠 Torna alla Dashboard</a>
+            
+            <div class="d-flex">
+                <form method="get" class="d-flex">
+                    <select name="anno" class="form-select me-2" onchange="this.form.submit()">
+                        {% for anno_option in anni_disponibili %}
+                            <option value="{{ anno_option }}" {% if anno_option == anno %}selected{% endif %}>{{ anno_option }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Compenso Totale per Stato ({{ anno }})</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="chartStato"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">Compenso Mensile ({{ anno }})</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="chartMensile"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12 mb-4">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">Compenso per Cliente ({{ anno }})</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="chartClienti"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12 mb-4">
+                <div class="card">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0">Dettaglio Compensi ({{ anno }})</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-bordered">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Categoria</th>
+                                        <th class="text-end">Importo</th>
+                                        <th class="text-end">Percentuale</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Completate e Fatturate</td>
+                                        <td class="text-end">€{{ "%.2f"|format(totale_fatturate) }}</td>
+                                        <td class="text-end">{{ "%.1f"|format(percentuale_fatturate) }}%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Completate da Fatturare</td>
+                                        <td class="text-end">€{{ "%.2f"|format(totale_da_fatturare) }}</td>
+                                        <td class="text-end">{{ "%.1f"|format(percentuale_da_fatturare) }}%</td>
+                                    </tr>
+                                    {% if anno|int >= 2025 %}
+                                    <tr>
+                                        <td>Pianificate</td>
+                                        <td class="text-end">€{{ "%.2f"|format(totale_pianificate) }}</td>
+                                        <td class="text-end">{{ "%.1f"|format(percentuale_pianificate) }}%</td>
+                                    </tr>
+                                    {% endif %}
+                                    <tr>
+                                        <td>Cancellate</td>
+                                        <td class="text-end">€{{ "%.2f"|format(totale_cancellate) }}</td>
+                                        <td class="text-end">{{ "%.1f"|format(percentuale_cancellate) }}%</td>
+                                    </tr>
+                                    <tr class="table-dark">
+                                        <td><strong>TOTALE</strong></td>
+                                        <td class="text-end"><strong>€{{ "%.2f"|format(totale_complessivo) }}</strong></td>
+                                        <td class="text-end">100%</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Grafico Compenso Totale per Tutti gli Anni -->
+        <div class="row">
+            <div class="col-md-12 mb-4">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">📊 Compenso Totale per Tutti gli Anni</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="chartStoricoTotale"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Grafico Dettagliato per Tutti gli Anni -->
+        <div class="row">
+            <div class="col-md-12 mb-4">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">📊 Dettaglio Compenso per Tutti gli Anni</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="chartStoricoDettaglio"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dati per il grafico per stato
+        const ctxStato = document.getElementById('chartStato').getContext('2d');
+        const chartStato = new Chart(ctxStato, {
+            type: 'pie',
+            data: {
+                labels: [
+                    'Completate e Fatturate', 
+                    'Completate da Fatturare', 
+                    {% if anno|int >= 2025 %}'Pianificate', {% endif %}
+                    'Cancellate'
+                ],
+                datasets: [{
+                    data: [
+                        {{ totale_fatturate }}, 
+                        {{ totale_da_fatturare }}, 
+                        {% if anno|int >= 2025 %}{{ totale_pianificate }}, {% endif %}
+                        {{ totale_cancellate }}
+                    ],
+                    backgroundColor: [
+                        'rgba(54, 162, 235, 0.7)',
+                        'rgba(255, 206, 86, 0.7)',
+                        {% if anno|int >= 2025 %}'rgba(75, 192, 192, 0.7)', {% endif %}
+                        'rgba(255, 99, 132, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        {% if anno|int >= 2025 %}'rgba(75, 192, 192, 1)', {% endif %}
+                        'rgba(255, 99, 132, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += '€' + context.raw.toFixed(2);
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Dati per il grafico mensile
+        const ctxMensile = document.getElementById('chartMensile').getContext('2d');
+        const chartMensile = new Chart(ctxMensile, {
+            type: 'bar',
+            data: {
+                labels: {{ mesi|safe }},
+                datasets: [
+                    {
+                        label: 'Fatturate',
+                        data: {{ dati_mensili_fatturate|safe }},
+                        backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Da Fatturare',
+                        data: {{ dati_mensili_da_fatturare|safe }},
+                        backgroundColor: 'rgba(255, 206, 86, 0.7)',
+                        borderColor: 'rgba(255, 206, 86, 1)',
+                        borderWidth: 1
+                    },
+                    {% if anno|int >= 2025 %}
+                    {
+                        label: 'Pianificate',
+                        data: {{ dati_mensili_pianificate|safe }},
+                        backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    },
+                    {% endif %}
+                    {
+                        label: 'Cancellate',
+                        data: {{ dati_mensili_cancellate|safe }},
+                        backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        stacked: false,
+                    },
+                    y: {
+                        stacked: false,
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '€' + value;
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += '€' + context.raw.toFixed(2);
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Dati per il grafico per cliente
+        const ctxClienti = document.getElementById('chartClienti').getContext('2d');
+        const chartClienti = new Chart(ctxClienti, {
+            type: 'bar',
+            data: {
+                labels: {{ clienti|safe }},
+                datasets: [
+                    {
+                        label: 'Fatturate',
+                        data: {{ dati_clienti_fatturate|safe }},
+                        backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Da Fatturare',
+                        data: {{ dati_clienti_da_fatturare|safe }},
+                        backgroundColor: 'rgba(255, 206, 86, 0.7)',
+                        borderColor: 'rgba(255, 206, 86, 1)',
+                        borderWidth: 1
+                    },
+                    {% if anno|int >= 2025 %}
+                    {
+                        label: 'Pianificate',
+                        data: {{ dati_clienti_pianificate|safe }},
+                        backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    },
+                    {% endif %}
+                    {
+                        label: 'Cancellate',
+                        data: {{ dati_clienti_cancellate|safe }},
+                        backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        stacked: false,
+                    },
+                    y: {
+                        stacked: false,
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '€' + value;
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += '€' + context.raw.toFixed(2);
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Grafico Compenso Totale per Tutti gli Anni
+        const ctxStoricoTotale = document.getElementById('chartStoricoTotale').getContext('2d');
+        const chartStoricoTotale = new Chart(ctxStoricoTotale, {
+            type: 'line',
+            data: {
+                labels: {{ anni_grafico|safe }},
+                datasets: [{
+                    label: 'Compenso Totale',
+                    data: {{ dati_totali_per_anno|safe }},
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 3,
+                    tension: 0.1,
+                    fill: true,
+                    pointBackgroundColor: 'rgba(75, 192, 192, 1)',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '€' + value;
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Andamento Compenso Totale negli Anni',
+                        font: {
+                            size: 16
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += '€' + context.raw.toFixed(2);
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Grafico Dettagliato per Tutti gli Anni
+        const ctxStoricoDettaglio = document.getElementById('chartStoricoDettaglio').getContext('2d');
+        const chartStoricoDettaglio = new Chart(ctxStoricoDettaglio, {
+            type: 'bar',
+            data: {
+                labels: {{ anni_grafico|safe }},
+                datasets: [
+                    {
+                        label: 'Fatturate',
+                        data: {{ dati_fatturate_per_anno|safe }},
+                        backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Da Fatturare',
+                        data: {{ dati_da_fatturare_per_anno|safe }},
+                        backgroundColor: 'rgba(255, 206, 86, 0.7)',
+                        borderColor: 'rgba(255, 206, 86, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Pianificate',
+                        data: {{ dati_pianificate_per_anno|safe }},
+                        backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Cancellate',
+                        data: {{ dati_cancellate_per_anno|safe }},
+                        backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        stacked: false,
+                    },
+                    y: {
+                        stacked: false,
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '€' + value;
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Dettaglio Compenso per Categoria negli Anni',
+                        font: {
+                            size: 16
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += '€' + context.raw.toFixed(2);
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

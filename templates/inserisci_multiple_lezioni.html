@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Inserisci Più Lezioni</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body class="container mt-5">
+
+    <h1>Inserisci più lezioni</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, msg in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ msg }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="card p-3 mb-3">
+        <div class="row mb-3">
+            <!-- Seleziona corso -->
+            <div class="col-md-4">
+                <label for="id_corso" class="form-label">Corso</label>
+                <select id="id_corso" class="form-select">
+                    <option value="" disabled selected>Seleziona il corso</option>
+                    {% for c in corsi %}
+                        <option value="{{ c.id_corso }}">{{ c.nome }} ({{ c.id_corso }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <!-- Quante lezioni -->
+            <div class="col-md-4">
+                <label for="numero_lezioni" class="form-label">Quante lezioni vuoi inserire?</label>
+                <input type="number" id="numero_lezioni" class="form-control" min="1" max="50" value="1">
+            </div>
+        </div>
+
+        <!-- Compenso orario (unico) -->
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <label for="compenso_orario" class="form-label">Compenso Orario (€)</label>
+                <input type="number" id="compenso_orario" class="form-control" step="0.01" placeholder="€/ora" />
+            </div>
+        </div>
+
+        <!-- Checkbox per materia/orari unici -->
+        <div class="form-check mb-2">
+            <input class="form-check-input" type="checkbox" id="materia_unica" checked />
+            <label class="form-check-label" for="materia_unica">Materia uguale per tutte?</label>
+        </div>
+        <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="orari_unici" checked />
+            <label class="form-check-label" for="orari_unici">Orari (inizio/fine) uguali per tutte?</label>
+        </div>
+
+        <button class="btn btn-primary" id="generaForm">Genera Campi</button>
+    </div>
+
+    <!-- Form finale -->
+    <form id="lezioniForm" method="POST" action="{{ url_for('inserisci_multiple_lezioni') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div id="lezioniContainer"></div>
+        <button type="submit" class="btn btn-success mt-3">Salva Tutte le Lezioni</button>
+    </form>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    let btnGenera = document.getElementById("generaForm");
+    let container = document.getElementById("lezioniContainer");
+
+    btnGenera.addEventListener("click", function(e) {
+        e.preventDefault();
+        container.innerHTML = ""; // pulisci
+
+        let idCorso = document.getElementById("id_corso").value;
+        let nLezioni = parseInt(document.getElementById("numero_lezioni").value);
+        let compenso = document.getElementById("compenso_orario").value || "0";
+        let materiaUnica = document.getElementById("materia_unica").checked;
+        let orariUnici = document.getElementById("orari_unici").checked;
+
+        if (!idCorso) {
+            alert("Seleziona un corso!");
+            return;
+        }
+        if (isNaN(nLezioni) || nLezioni < 1) {
+            alert("Inserisci un numero lezioni valido!");
+            return;
+        }
+
+        // Input hidden con id_corso e compenso
+        let hiddenCorso = document.createElement("input");
+        hiddenCorso.type = "hidden";
+        hiddenCorso.name = "id_corso";
+        hiddenCorso.value = idCorso;
+        container.appendChild(hiddenCorso);
+
+        let hiddenCompenso = document.createElement("input");
+        hiddenCompenso.type = "hidden";
+        hiddenCompenso.name = "compenso_orario";
+        hiddenCompenso.value = compenso;
+        container.appendChild(hiddenCompenso);
+
+        // Se materia e orari sono unici, chiedo quei campi UNA volta sola
+        if (materiaUnica) {
+            let divMat = document.createElement("div");
+            divMat.classList.add("mb-3");
+            divMat.innerHTML = `
+                <label class="form-label">Materia (unica per tutte)</label>
+                <input type="text" class="form-control" name="materia_unica" required>
+            `;
+            container.appendChild(divMat);
+        }
+        if (orariUnici) {
+            let divOrari = document.createElement("div");
+            divOrari.classList.add("row", "g-3", "mb-3");
+            divOrari.innerHTML = `
+                <div class="col-md-3">
+                    <label class="form-label">Ora Inizio (tutte)</label>
+                    <input type="time" class="form-control" name="ora_inizio_unica" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Ora Fine (tutte)</label>
+                    <input type="time" class="form-control" name="ora_fine_unica" required>
+                </div>
+            `;
+            container.appendChild(divOrari);
+        }
+
+        // Genera N righe
+        for (let i = 0; i < nLezioni; i++) {
+            let row = document.createElement("div");
+            row.classList.add("card", "p-2", "mb-2");
+            row.innerHTML = `
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label">Data Lezione #${i+1}</label>
+                        <input type="date" class="form-control" name="data[]" required>
+                    </div>
+                    ${ !materiaUnica ? `
+                    <div class="col-md-3">
+                        <label class="form-label">Materia</label>
+                        <input type="text" class="form-control" name="materia[]" required>
+                    </div>
+                    ` : ``}
+                    ${ !orariUnici ? `
+                    <div class="col-md-2">
+                        <label class="form-label">Ora Inizio</label>
+                        <input type="time" class="form-control" name="ora_inizio[]" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Ora Fine</label>
+                        <input type="time" class="form-control" name="ora_fine[]" required>
+                    </div>
+                    ` : ``}
+                    <div class="col-md-3">
+                        <label class="form-label">Luogo</label>
+                        <input type="text" class="form-control" name="luogo[]" placeholder="Aula/Online" required>
+                    </div>
+                </div>
+            `;
+            container.appendChild(row);
+        }
+
+        alert("Campi generati! Compila e premi 'Salva Tutte le Lezioni'.");
+    });
+});
+</script>
+
+</body>
+</html>

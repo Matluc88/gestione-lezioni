@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verifica Fatturazione</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-4">
+        <h1 class="text-center">Verifica Fatturazione Mensile</h1>
+        
+        <!-- Selettore per filtrare i corsi -->
+        <form method="GET" class="mb-3">
+            <label for="corso" class="form-label">Seleziona un corso:</label>
+            <select id="corso" name="corso" class="form-select" onchange="this.form.submit()">
+                <option value="">Tutti i corsi</option>
+                {% for corso in corsi %}
+                <option value="{{ corso }}" {% if corso == corso_selezionato %}selected{% endif %}>
+                    {{ corso }}
+                </option>
+                {% endfor %}
+            </select>
+        </form>
+
+        <!-- Sezione risultati -->
+        {% if corsi_fatturati %}
+            {% for corso, mesi in corsi_fatturati.items() %}
+                <div class="card mb-3">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">{{ corso }}</h5>
+                    </div>
+                    <div class="card-body">
+                        {% for mese, info in mesi.items() %}
+                            <h6>
+                                <strong>Mese {{ mese }}</strong>: {{ info.lezioni|length }} lezioni - Totale ore: {{ info.ore_totali|default(0.0)|round(2) }}
+                            </h6>
+                            <ul class="list-group mb-2">
+                                {% for lezione in info.lezioni %}
+                                    <li class="list-group-item">{{ lezione }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p class="alert alert-warning">Nessuna lezione fatturata trovata.</p>
+        {% endif %}
+    </div>
+</body>
+</html>
