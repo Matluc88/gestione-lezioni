@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Modifica Lezione</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-4">
+        <h2>Modifica Lezione</h2>
+        <form method="post">
+            <!-- CSRF Token -->
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        
+            <!-- Form Fields -->
+            <div class="mb-3">
+                <label for="materia" class="form-label">Materia:</label>
+                <input class="form-control" type="text" id="materia" name="materia" value="{{ lezione['materia'] }}" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="data" class="form-label">Data:</label>
+                <input class="form-control" type="date" id="data" name="data" value="{{ lezione['data'] }}" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="ora_inizio" class="form-label">Ora Inizio:</label>
+                <input class="form-control" type="time" id="ora_inizio" name="ora_inizio" value="{{ lezione['ora_inizio'] }}" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="ora_fine" class="form-label">Ora Fine:</label>
+                <input class="form-control" type="time" id="ora_fine" name="ora_fine" value="{{ lezione['ora_fine'] }}" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="luogo" class="form-label">Luogo:</label>
+                <input class="form-control" type="text" id="luogo" name="luogo" value="{{ lezione['luogo'] }}" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="compenso_orario" class="form-label">Compenso Orario (€):</label>
+                <input class="form-control" type="number" step="0.01" id="compenso_orario" name="compenso_orario" value="{{ lezione['compenso_orario'] }}" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="stato" class="form-label">Stato:</label>
+                <select class="form-control" id="stato" name="stato">
+                    <option value="Pianificato" {% if lezione['stato'] == "Pianificato" %}selected{% endif %}>Pianificato</option>
+                    <option value="Completato" {% if lezione['stato'] == "Completato" %}selected{% endif %}>Completato</option>
+                    <option value="Cancellato" {% if lezione['stato'] == "Cancellato" %}selected{% endif %}>Cancellato</option>
+                </select>
+            </div>
+
+            <!-- Submit Button -->
+            <button class="btn btn-success mt-3" type="submit">Salva Modifiche</button>
+        </form>
+
+        <br>
+        <a href="{{ url_for('lezioni.dashboard') }}" class="btn btn-secondary">Torna alla Dashboard</a>
+    </div>
+</body>
+</html>

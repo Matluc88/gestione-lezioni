@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compenso Orario per Corso</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        .card { transition: transform 0.2s; }
+        .card:hover { transform: scale(1.05); }
+        
+        @media (max-width: 768px) {
+            .card-title {
+                font-size: 0.9rem;
+            }
+            .card-text {
+                font-size: 1.2rem !important;
+            }
+            .btn {
+                width: 100%;
+                margin-bottom: 0.5rem;
+            }
+        }
+        
+        .filter-card {
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .accordion-button:not(.collapsed) {
+            background-color: #f8f9fa;
+            color: #212529;
+        }
+    </style>
+</head>
+<body class="container mt-3">
+
+    <h2 class="text-center mb-3">💰 Resoconto Compenso Orario</h2>
+
+    <!-- Filtri Avanzati -->
+    <div class="accordion mb-4" id="accordionFiltri">
+        <div class="accordion-item filter-card">
+            <h2 class="accordion-header" id="headingFiltri">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFiltri" aria-expanded="true" aria-controls="collapseFiltri">
+                    🔍 Filtri Avanzati
+                </button>
+            </h2>
+            <div id="collapseFiltri" class="accordion-collapse collapse show" aria-labelledby="headingFiltri">
+                <div class="accordion-body">
+                    <form method="GET" action="{{ url_for('lezioni.compenso') }}" class="mb-2">
+                        <div class="row g-3">
+                            <!-- Filtro Cliente -->
+                            <div class="col-md-6 col-lg-4">
+                                <label for="cliente" class="form-label">Cliente:</label>
+                                <select name="cliente" id="cliente" class="form-select">
+                                    <option value="">Tutti i clienti</option>
+                                    {% for cliente_nome in clienti %}
+                                        <option value="{{ cliente_nome }}" {% if cliente_nome == cliente_filtro %}selected{% endif %}>{{ cliente_nome }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <!-- Filtro Corso -->
+                            <div class="col-md-6 col-lg-4">
+                                <label for="corso" class="form-label">Corso:</label>
+                                <select name="corso" id="corso" class="form-select" onchange="abilitaBottone()">
+                                    <option value="">Tutti i corsi</option>
+                                    {% for corso_id in corsi %}
+                                        <option value="{{ corso_id }}" {% if corso_id == corso_filtro %}selected{% endif %}>{{ corso_id }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <!-- Filtro Periodo -->
+                            <div class="col-md-6 col-lg-4">
+                                <label for="periodo" class="form-label">Periodo:</label>
+                                <select name="periodo" id="periodo" class="form-select" onchange="mostraCampiData()">
+                                    <option value="tutti" {% if periodo_filtro == 'tutti' %}selected{% endif %}>Tutti i periodi</option>
+                                    <option value="giorno" {% if periodo_filtro == 'giorno' %}selected{% endif %}>Giorno specifico</option>
+                                    <option value="settimana" {% if periodo_filtro == 'settimana' %}selected{% endif %}>Settimana</option>
+                                    <option value="mese" {% if periodo_filtro == 'mese' %}selected{% endif %}>Mese</option>
+                                    <option value="anno" {% if periodo_filtro == 'anno' %}selected{% endif %}>Anno</option>
+                                    <option value="intervallo" {% if periodo_filtro == 'intervallo' %}selected{% endif %}>Intervallo date</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Data Inizio -->
+                            <div class="col-md-6 col-lg-4" id="div_data_inizio" style="display: none;">
+                                <label for="data_inizio" class="form-label">Data inizio:</label>
+                                <input type="date" name="data_inizio" id="data_inizio" class="form-control" value="{{ data_inizio }}">
+                            </div>
+                            
+                            <!-- Data Fine -->
+                            <div class="col-md-6 col-lg-4" id="div_data_fine" style="display: none;">
+                                <label for="data_fine" class="form-label">Data fine:</label>
+                                <input type="date" name="data_fine" id="data_fine" class="form-control" value="{{ data_fine }}">
+                            </div>
+                            
+                            <!-- Pulsanti -->
+                            <div class="col-12 mt-3">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-search"></i> Filtra
+                                </button>
+                                <a href="{{ url_for('lezioni.compenso') }}" class="btn btn-secondary">
+                                    <i class="bi bi-x-circle"></i> Resetta Filtri
+                                </a>
+                                <a id="dettagliBtn" href="#" class="btn btn-info disabled">
+                                    <i class="bi bi-info-circle"></i> Dettagli Corso
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sezione Compensi Totali -->
+    <h3 class="text-center mb-3">📊 Compensi Totali</h3>
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card border-success shadow h-100">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-success">✔️ Completate</h5>
+                    <p class="card-text fs-4">€{{ compensi.completate | round(2) }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-primary shadow h-100">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-primary">💰 Fatturate</h5>
+                    <p class="card-text fs-4">€{{ compensi.fatturate | round(2) }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-warning shadow h-100">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-warning">📑 Da Fatturare</h5>
+                    <p class="card-text fs-4">€{{ compensi.da_fatturare | round(2) }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-info shadow h-100">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-info">📅 Pianificate</h5>
+                    <p class="card-text fs-4">€{{ compensi.pianificate | round(2) }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sezione Compensi per Cliente -->
+    {% if compensi_cliente %}
+    <div class="mt-4">
+        <h3 class="text-center mb-3">👥 Compensi per Cliente</h3>
+        
+        <!-- Grafico compensi per cliente -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">📊 Distribuzione Compensi per Cliente</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="compensiPerClienteChart" height="200"></canvas>
+            </div>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped text-center">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Completate (€)</th>
+                        <th>Fatturate (€)</th>
+                        <th>Da Fatturare (€)</th>
+                        <th>Pianificate (€)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cliente, dati in compensi_cliente.items() %}
+                    <tr>
+                        <td class="fw-bold">{{ cliente }}</td>
+                        <td class="text-success">{{ dati.completate | round(2) }}</td>
+                        <td class="text-primary">{{ dati.fatturate | round(2) }}</td>
+                        <td class="text-warning">{{ dati.da_fatturare | round(2) }}</td>
+                        <td class="text-info">{{ dati.pianificate | round(2) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Tabella riassuntiva delle lezioni -->
+    <div class="mt-4">
+        <h3 class="text-center mb-3">📊 Dettaglio Lezioni</h3>
+        <div class="table-responsive">
+            <table class="table table-bordered text-center">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Tipo</th>
+                        <th>Importo Totale (€)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="text-success">✔️ Completate</td>
+                        <td>€{{ compensi.completate | round(2) }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-primary">💰 Fatturate</td>
+                        <td>€{{ compensi.fatturate | round(2) }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-warning">📑 Ancora da Fatturare</td>
+                        <td>€{{ compensi.da_fatturare | round(2) }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-info">📅 Pianificate</td>
+                        <td>€{{ compensi.pianificate | round(2) }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-danger">❌ Cancellate</td>
+                        <td>€{{ compensi.cancellate | round(2) }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pulsante per tornare alla dashboard -->
+    <div class="text-center mt-4 mb-5">
+        <a href="{{ url_for('lezioni.dashboard') }}" class="btn btn-primary">
+            <i class="bi bi-arrow-left"></i> Torna alla Dashboard
+        </a>
+    </div>
+
+    <!-- Script per abilitare il pulsante e gestire i campi data -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        function abilitaBottone() {
+            let select = document.getElementById("corso");
+            let btn = document.getElementById("dettagliBtn");
+            let corsoSelezionato = select.value;
+
+            if (corsoSelezionato) {
+                btn.href = "{{ url_for('corsi.dettagli_corso', corso='PLACEHOLDER') }}".replace('PLACEHOLDER', encodeURIComponent(corsoSelezionato));
+                btn.classList.remove("disabled");
+            } else {
+                btn.href = "#";
+                btn.classList.add("disabled");
+            }
+        }
+        
+        function mostraCampiData() {
+            let periodo = document.getElementById("periodo").value;
+            let divDataInizio = document.getElementById("div_data_inizio");
+            let divDataFine = document.getElementById("div_data_fine");
+            
+            if (periodo === "tutti") {
+                divDataInizio.style.display = "none";
+                divDataFine.style.display = "none";
+            } else if (periodo === "intervallo") {
+                divDataInizio.style.display = "block";
+                divDataFine.style.display = "block";
+            } else {
+                divDataInizio.style.display = "block";
+                divDataFine.style.display = "none";
+            }
+        }
+
+        // Avvia al load per pre-attivare il bottone e mostrare i campi data corretti
+        window.addEventListener("DOMContentLoaded", function() {
+            abilitaBottone();
+            mostraCampiData();
+            
+            // Inizializza il grafico compensi per cliente
+            const clientiChart = document.getElementById('compensiPerClienteChart');
+            if (clientiChart) {
+                const compensiCliente = {};
+                {% for cliente, dati in compensi_cliente.items() %}
+                compensiCliente["{{ cliente }}"] = {
+                    completate: {{ dati.completate }},
+                    fatturate: {{ dati.fatturate }},
+                    da_fatturare: {{ dati.da_fatturare }},
+                    pianificate: {{ dati.pianificate }}
+                };
+                {% endfor %}
+                
+                const clienti = Object.keys(compensiCliente);
+                const datiCompletate = clienti.map(c => compensiCliente[c].completate);
+                const datiFatturate = clienti.map(c => compensiCliente[c].fatturate);
+                const datiDaFatturare = clienti.map(c => compensiCliente[c].da_fatturare);
+                const datiPianificate = clienti.map(c => compensiCliente[c].pianificate);
+                
+                new Chart(clientiChart, {
+                    type: 'bar',
+                    data: {
+                        labels: clienti,
+                        datasets: [
+                            {
+                                label: 'Completate',
+                                data: datiCompletate,
+                                backgroundColor: 'rgba(40, 167, 69, 0.7)',
+                                borderColor: 'rgba(40, 167, 69, 1)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Fatturate',
+                                data: datiFatturate,
+                                backgroundColor: 'rgba(0, 123, 255, 0.7)',
+                                borderColor: 'rgba(0, 123, 255, 1)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Da Fatturare',
+                                data: datiDaFatturare,
+                                backgroundColor: 'rgba(255, 193, 7, 0.7)',
+                                borderColor: 'rgba(255, 193, 7, 1)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Pianificate',
+                                data: datiPianificate,
+                                backgroundColor: 'rgba(23, 162, 184, 0.7)',
+                                borderColor: 'rgba(23, 162, 184, 1)',
+                                borderWidth: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: {
+                                stacked: false
+                            },
+                            y: {
+                                stacked: false,
+                                beginAtZero: true
+                            }
+                        },
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Compensi per Cliente',
+                                font: {
+                                    size: 16
+                                }
+                            },
+                            legend: {
+                                position: 'top',
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+
+</body>
+</html>

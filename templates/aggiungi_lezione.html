@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aggiungi Lezioni (Date Multiple NON consecutive)</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/it.js"></script>
+
+    <script>
+        // Array per memorizzare le date selezionate
+        let dateSelezionate = [];
+        
+        // Funzione che apre il calendario per selezionare date multiple
+        function selezionaDateCalendario() {
+            // Crea un elemento input temporaneo per il calendario
+            const tempInput = document.createElement('input');
+            document.body.appendChild(tempInput);
+            
+            // Inizializza flatpickr sul campo temporaneo
+            const fp = flatpickr(tempInput, {
+                mode: "multiple",
+                dateFormat: "Y-m-d",
+                locale: "it",
+                inline: false,
+                position: "auto",
+                minDate: "today",
+                showMonths: 2,
+                weekNumbers: true,
+                altInput: true,
+                altFormat: "j F Y",
+                theme: "material_blue",
+                closeOnSelect: false,
+                onChange: function() {
+                    // Aggiorna il contatore delle date selezionate
+                    const count = this.selectedDates.length;
+                    document.getElementById('dateCounter').textContent = count;
+                },
+                onClose: function(selectedDates, dateStr, instance) {
+                    // Quando l'utente chiude il calendario, salva le date selezionate
+                    if (selectedDates.length > 0) {
+                        for (let date of selectedDates) {
+                            const formattedDate = date.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+                            if (!dateSelezionate.includes(formattedDate)) {
+                                dateSelezionate.push(formattedDate);
+                            }
+                        }
+                        // Aggiorna la visualizzazione delle date
+                        aggiornaListaDate();
+                    }
+                    
+                    // Rimuovi l'input temporaneo
+                    document.body.removeChild(tempInput);
+                    // Nascondi il contatore
+                    document.getElementById('calendarModal').style.display = 'none';
+                    
+                    // Mostra il pannello delle date selezionate
+                    document.getElementById('dateSelezionatePanel').style.display = 'block';
+                }
+            });
+            
+            // Mostra il calendario
+            fp.open();
+            
+            // Mostra il contatore delle date selezionate
+            document.getElementById('calendarModal').style.display = 'block';
+        }
+        
+        // Funzione per aggiornare la lista delle date selezionate
+        function aggiornaListaDate() {
+            const container = document.getElementById('dateSelezionateList');
+            container.innerHTML = '';
+            
+            // Ordina le date
+            dateSelezionate.sort();
+            
+            // Crea un elemento per ogni data
+            dateSelezionate.forEach((data, index) => {
+                const dataObj = new Date(data);
+                const dataFormattata = dataObj.toLocaleDateString('it-IT', { 
+                    weekday: 'short', 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric' 
+                });
+                
+                const item = document.createElement('div');
+                item.className = 'date-item';
+                item.innerHTML = `
+                    <span>${dataFormattata}</span>
+                    <button type="button" class="btn btn-sm btn-danger" onclick="rimuoviData(${index})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                container.appendChild(item);
+            });
+            
+            // Aggiorna il contatore
+            document.getElementById('dateCount').textContent = dateSelezionate.length;
+            
+            // Abilita/disabilita il pulsante di inserimento
+            document.getElementById('btnInserisciLezioni').disabled = dateSelezionate.length === 0;
+        }
+        
+        // Funzione per rimuovere una data dall'elenco
+        function rimuoviData(index) {
+            dateSelezionate.splice(index, 1);
+            aggiornaListaDate();
+        }
+        
+        // Funzione per creare le righe di lezione per tutte le date selezionate
+        function inserisciLezioni() {
+            const container = document.getElementById("lezioniContainer");
+            
+            // Rimuovi tutte le righe esistenti
+            container.innerHTML = '';
+            
+            // Crea una riga per ogni data selezionata
+            dateSelezionate.forEach(data => {
+                const riga = document.createElement('div');
+                riga.className = 'row row-lezione g-2 align-items-center mb-2';
+                riga.innerHTML = `
+                    <div class="col-md-2 col-6">
+                        <select name="id_corso[]" class="form-select" required>
+                            <option value="" disabled selected>Seleziona corso</option>
+                            {% for c in corsi %}
+                               <option value="{{ c.id_corso }}">{{ c.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2 col-6">
+                        <input type="text" name="materia[]" class="form-control" placeholder="Materia" required>
+                    </div>
+                    <div class="col-md-2 col-6">
+                        <input type="date" name="data[]" class="form-control" value="${data}" readonly>
+                    </div>
+                    <div class="col-md-1 col-3">
+                        <input type="time" name="ora_inizio[]" class="form-control">
+                    </div>
+                    <div class="col-md-1 col-3">
+                        <input type="time" name="ora_fine[]" class="form-control">
+                    </div>
+                    <div class="col-md-1 col-6">
+                        <input type="text" name="luogo[]" class="form-control" placeholder="Luogo">
+                    </div>
+                    <div class="col-md-1 col-6">
+                        <input type="number" name="compenso_orario[]" step="0.01" class="form-control" placeholder="€/ora">
+                    </div>
+                    <div class="col-md-1 col-6">
+                        <select name="stato[]" class="form-select">
+                            <option value="Pianificato" selected>Pianificato</option>
+                            <option value="Confermato">Confermato</option>
+                            <option value="Completato">Completato</option>
+                            <option value="Cancellato">Cancellato</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1 col-6 d-flex align-items-center">
+                        <button type="button" class="btn btn-sm btn-danger" onclick="this.parentNode.parentNode.remove()">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(riga);
+            });
+            
+            // Nascondi il pannello delle date selezionate
+            document.getElementById('dateSelezionatePanel').style.display = 'none';
+            
+            // Mostra il form di inserimento
+            document.getElementById('lezioniForm').style.display = 'block';
+            
+            // Inizializza flatpickr su tutti gli input di data
+            document.querySelectorAll('input[name="data[]"]').forEach(input => {
+                flatpickr(input, {
+                    dateFormat: "Y-m-d",
+                    locale: "it",
+                    altInput: true,
+                    altFormat: "j F Y",
+                    theme: "material_blue"
+                });
+            });
+        }
+        
+        // Funzione per copiare i valori dalla prima riga a tutte le altre
+        function copiaValoriPrimaRiga() {
+            const righe = document.querySelectorAll('.row-lezione');
+            if (righe.length <= 1) return;
+            
+            const primaRiga = righe[0];
+            const corso = primaRiga.querySelector('select[name="id_corso[]"]').value;
+            const materia = primaRiga.querySelector('input[name="materia[]"]').value;
+            const luogo = primaRiga.querySelector('input[name="luogo[]"]').value;
+            const compenso = primaRiga.querySelector('input[name="compenso_orario[]"]').value;
+            const oraInizio = primaRiga.querySelector('input[name="ora_inizio[]"]').value;
+            const oraFine = primaRiga.querySelector('input[name="ora_fine[]"]').value;
+            const stato = primaRiga.querySelector('select[name="stato[]"]').value;
+            
+            // Applica i valori a tutte le altre righe
+            for (let i = 1; i < righe.length; i++) {
+                righe[i].querySelector('select[name="id_corso[]"]').value = corso;
+                righe[i].querySelector('input[name="materia[]"]').value = materia;
+                righe[i].querySelector('input[name="luogo[]"]').value = luogo;
+                righe[i].querySelector('input[name="compenso_orario[]"]').value = compenso;
+                righe[i].querySelector('input[name="ora_inizio[]"]').value = oraInizio;
+                righe[i].querySelector('input[name="ora_fine[]"]').value = oraFine;
+                righe[i].querySelector('select[name="stato[]"]').value = stato;
+            }
+        }
+        
+        // Verifica se la data è nel passato
+        function verificaDataPassata(inputElement) {
+            const dataSelezionata = new Date(inputElement.value);
+            const oggi = new Date();
+            oggi.setHours(0, 0, 0, 0); // Resetta l'ora a mezzanotte per confrontare solo le date
+            
+            if (dataSelezionata < oggi) {
+                inputElement.classList.add('border-warning');
+                inputElement.setAttribute('data-passata', 'true');
+            } else {
+                inputElement.classList.remove('border-warning');
+                inputElement.removeAttribute('data-passata');
+            }
+        }
+        
+        // Verifica tutte le date prima dell'invio del form
+        function verificaDatePrimaDiInviare(event) {
+            const form = event.target;
+            const inputsData = form.querySelectorAll('input[name="data[]"]');
+            let datePassate = [];
+            
+            inputsData.forEach(input => {
+                if (input.value) {
+                    const dataSelezionata = new Date(input.value);
+                    const oggi = new Date();
+                    oggi.setHours(0, 0, 0, 0);
+                    
+                    if (dataSelezionata < oggi) {
+                        datePassate.push(input.value);
+                    }
+                }
+            });
+            
+            if (datePassate.length > 0) {
+                const conferma = confirm(`⚠️ ATTENZIONE: Stai inserendo ${datePassate.length} lezione/i in data/e passata/e (${datePassate.join(', ')}). Vuoi continuare?`);
+                if (!conferma) {
+                    event.preventDefault();
+                }
+            }
+        }
+        
+        // Inizializza gli eventi quando il documento è pronto
+        document.addEventListener('DOMContentLoaded', function() {
+            // Aggiungi l'evento submit al form
+            document.querySelector('form').addEventListener('submit', verificaDatePrimaDiInviare);
+        });
+    </script>
+    <style>
+        .col-md-1.d-flex.align-items-center {
+            padding-top: 1.5rem;
+        }
+        input[data-passata="true"] {
+            background-color: #fff3cd;
+        }
+        #calendarModal {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background-color: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            z-index: 9999;
+            display: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        .flatpickr-calendar {
+            box-shadow: 0 3px 15px rgba(0,0,0,0.2) !important;
+        }
+        #dateSelezionatePanel {
+            display: none;
+            margin-bottom: 20px;
+        }
+        .date-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            margin-bottom: 5px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+        }
+        #lezioniForm {
+            display: none;
+        }
+        
+        /* Stili per dispositivi mobili */
+        @media (max-width: 768px) {
+            .row-lezione {
+                margin-bottom: 15px;
+                padding-bottom: 15px;
+                border-bottom: 1px solid #dee2e6;
+            }
+            .col-md-1, .col-md-2 {
+                margin-bottom: 10px;
+            }
+            .btn {
+                padding: 10px 15px;
+                font-size: 16px;
+            }
+            .form-control, .form-select {
+                height: 45px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="container mt-4">
+    <h2 class="text-center mb-4">➕ Aggiungi Lezioni (Date NON consecutive)</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, msg in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ msg }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- Contatore date selezionate -->
+    <div id="calendarModal">
+        <strong>Date selezionate: <span id="dateCounter">0</span></strong>
+    </div>
+    
+    <!-- Pannello date selezionate -->
+    <div id="dateSelezionatePanel" class="card p-4 shadow-sm">
+        <h4 class="mb-3">Date selezionate (<span id="dateCount">0</span>)</h4>
+        <div id="dateSelezionateList" class="mb-3"></div>
+        <div class="d-flex justify-content-between">
+            <button type="button" class="btn btn-primary" onclick="selezionaDateCalendario()">
+                📅 Aggiungi altre date
+            </button>
+            <button type="button" id="btnInserisciLezioni" class="btn btn-success" onclick="inserisciLezioni()" disabled>
+                ✅ Inserisci lezioni
+            </button>
+        </div>
+    </div>
+
+    <form method="POST" class="card p-4 shadow-sm" id="lezioniForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div id="lezioniContainer">
+            <!-- Le righe di lezione verranno aggiunte dinamicamente -->
+        </div>
+
+        <hr class="my-3">
+        
+        <div class="d-flex flex-wrap gap-2 justify-content-between">
+            <button type="button" class="btn btn-primary" onclick="copiaValoriPrimaRiga()">
+                📋 Copia valori dalla prima riga
+            </button>
+            
+            <div class="ms-auto">
+                <a href="{{ url_for('lezioni.dashboard') }}" class="btn btn-secondary">↩ Annulla</a>
+                <button type="submit" class="btn btn-success">✅ Salva Lezioni</button>
+            </div>
+        </div>
+    </form>
+    
+    <!-- Pulsante per iniziare la selezione delle date -->
+    <div class="text-center mt-4">
+        <button type="button" class="btn btn-lg btn-primary" onclick="selezionaDateCalendario()" id="btnSelezionaDate">
+            📅 Seleziona Date dal Calendario
+        </button>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

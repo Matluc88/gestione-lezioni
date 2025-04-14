@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gestione Fatture - Calendario Lezioni</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+  <style>
+    body { background-color: #f4f6f9; }
+    .navbar { background: linear-gradient(45deg, #007bff, #6610f2); }
+    .section-header { margin-top: 2rem; margin-bottom: 1rem; color: #0d6efd; text-align: center; font-weight: bold; }
+    #calendar { max-width: 1000px; margin: 0 auto; }
+    .card { border-radius: 15px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); }
+    .table thead { background-color: #007bff; color: white; }
+    .btn-custom { background: linear-gradient(45deg, #ff416c, #ff4b2b); color: white; border: none; }
+    .btn-custom:hover { opacity: 0.9; }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark shadow">
+    <div class="container">
+      <a class="navbar-brand" href="#">Gestione Fatture</a>
+    </div>
+  </nav>
+
+  <div class="container my-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4>Seleziona un corso</h4>
+          <div>
+            <a href="{{ url_for('fatture.aggiungi_fattura') }}" class="btn btn-success me-2">📝 Nuova Fattura</a>
+            <a href="{{ url_for('lezioni.dashboard') }}" class="btn btn-secondary">🏠 Ritorna alla Dashboard</a>
+          </div>
+        </div>
+
+        <form method="GET" class="row g-3">
+          <div class="col-md-6">
+            <select id="corso_scelto" name="corso_scelto" class="form-select" onchange="this.form.submit()">
+              <option value="">-- Seleziona un corso --</option>
+              {% for corso in corsi %}
+              <option value="{{ corso }}" {% if corso == corso_scelto %}selected{% endif %}>
+                {{ corso }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    {% if corso_scelto %}
+      <div class="alert alert-info shadow">
+        <h5 class="alert-heading">Stato del corso "{{ corso_scelto }}"</h5>
+        <p><strong>Totale ore fatturate:</strong> {{ ore_fatturate_totali }} ore</p>
+        <p>{{ corso_status }}</p>
+      </div>
+
+      <!-- Rimosso il pulsante "Fattura Corso" come richiesto dall'utente -->
+      <!-- La funzionalità di fusione corsi è stata rimossa come richiesto dall'utente -->
+    
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h4 class="card-title section-header">Calendario Lezioni</h4>
+          <div id="calendar"></div>
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h4 class="card-title section-header">Fatture Emesse</h4>
+        <div class="table-responsive">
+          <table class="table table-striped table-hover">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Corso</th>
+                <th>Data Fattura</th>
+                <th>Importo</th>
+                <th>Tipo Fatturazione</th>
+                <th>Lezioni Fatturate</th>
+                <th>PDF</th>
+                <th>Azioni</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for fattura in fatture %}
+              <tr>
+                <td>{{ fattura[0] }}</td>
+                <td>{{ fattura[1] }}</td>
+                <td>{{ fattura[2] }}</td>
+                <td>€{{ fattura[3] }}</td>
+                <td>{{ fattura[4] }}</td>
+                <td>
+                  {% if fattura[6] %}
+                    {{ fattura[6] }}
+                  {% else %}
+                    <span class="text-danger">Nessuna lezione</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if fattura[5] %}
+                    <a href="{{ url_for('fatture.download_file', filename=fattura[5]) }}" class="btn btn-custom btn-sm">Scarica PDF</a>
+                  {% else %}
+                    <span class="text-danger">Nessun file</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <form action="{{ url_for('fatture.elimina_fattura', id_fattura=fattura[0]) }}" method="POST" onsubmit="return confirm('Sei sicuro di voler eliminare questa fattura? Le lezioni associate torneranno allo stato non fatturato.');">
+                    <button type="submit" class="btn btn-danger btn-sm">🗑️ Elimina</button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var lezioni = {{ lezioni_fatturate|tojson|safe }};
+      var events = [];
+
+      lezioni.forEach(function(lezione) {
+        if (lezione.data && lezione.ora_inizio && lezione.ora_fine) {
+          var start = lezione.data + "T" + lezione.ora_inizio;
+          var end = lezione.data + "T" + lezione.ora_fine;
+          events.push({
+            title: 'Lezione (' + lezione.ora_inizio + '-' + lezione.ora_fine + ')',
+            start: start,
+            end: end,
+            color: '#28a745'
+          });
+        }
+      });
+
+      var calendarEl = document.getElementById('calendar');
+      var calendarOptions = {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,timeGridDay,listMonth'
+        },
+        events: events,
+        editable: false,
+        eventTimeFormat: { hour: '2-digit', minute: '2-digit', meridiem: false },
+        initialDate: events.length ? events[0].start : new Date()
+      };
+
+      var calendar = new FullCalendar.Calendar(calendarEl, calendarOptions);
+      calendar.render();
+    });
+  </script>
+</body>
+</html>

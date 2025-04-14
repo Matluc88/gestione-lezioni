@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8" />
+    <title>Dashboard Lezioni</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/it.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="container mt-4">
+    <h2 class="mb-4 text-center">📚 Lezioni Attive</h2>
+
+    <!-- Grafico lezioni per mese -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">📊 Distribuzione Lezioni per Mese</h5>
+        </div>
+        <div class="card-body">
+            <canvas id="lezioniPerMeseChart" height="100"></canvas>
+        </div>
+    </div>
+
+    <div class="container text-center">
+        <div class="row row-cols-2 row-cols-md-4 g-3">
+            <div class="col"><a href="{{ url_for('calendario.calendario') }}" class="btn btn-primary w-100">📅 Calendario</a></div>
+            <div class="col"><a href="{{ url_for('corsi.lista_corsi') }}" class="btn btn-success w-100">📚 Corsi</a></div>
+            <div class="col"><a href="{{ url_for('export.importa_csv') }}" class="btn btn-info w-100">📂 Importa CSV</a></div>
+            <div class="col"><a href="{{ url_for('export.esporta_csv') }}" class="btn btn-secondary w-100">📥 Esporta CSV</a></div>
+            <div class="col"><a href="{{ url_for('lezioni.aggiungi_lezione') }}" class="btn btn-warning w-100">➕ Aggiungi Lezione</a></div>
+            <div class="col"><a href="{{ url_for('archivio.lezioni_archiviate') }}" class="btn btn-danger w-100">📂 Lezioni Archiviate</a></div>
+            <div class="col"><a href="{{ url_for('fatture.index') }}" class="btn btn-dark w-100">📄 Fatture</a></div>
+            <div class="col"><a href="{{ url_for('lezioni.compenso') }}" class="btn btn-primary w-100">💰 Compenso</a></div>
+            <div class="col"><a href="{{ url_for('resoconto.resoconto_annuale') }}" class="btn btn-info w-100">📊 Resoconto Annuale</a></div>
+        </div>
+
+        <div class="d-flex flex-column flex-md-row justify-content-center gap-2 mt-3">
+            <button type="button" class="btn btn-outline-primary w-100" id="archivia-button">📁 Archivia</button>
+            <button type="button" class="btn btn-outline-danger w-100" id="elimina-button">🗑️ Elimina</button>
+        </div>
+
+        <div class="text-center mt-4">
+            <button class="btn btn-outline-secondary" id="toggleFilter">🔍 Filtra</button>
+        </div>
+
+        <div id="filterSection" class="card p-3 mt-3 mb-4" style="display: none;">
+            <form method="GET" action="{{ url_for('lezioni.dashboard') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Materia</label>
+                        <input type="text" name="materia" class="form-control" value="{{ request.args.get('materia', '') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Data</label>
+                        <input type="date" name="data" class="form-control" value="{{ request.args.get('data', '') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Stato</label>
+                        <select name="stato" class="form-select">
+                            <option value="">Tutti</option>
+                            <option value="Pianificato">Pianificato</option>
+                            <option value="Completato">Completato</option>
+                            <option value="Cancellato">Cancellato</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Luogo</label>
+                        <input type="text" name="luogo" class="form-control" value="{{ request.args.get('luogo', '') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Corso</label>
+                        <select name="corso" class="form-select">
+                            <option value="">Tutti</option>
+                            {% for corso in corsi %}
+                                <option value="{{ corso.id_corso }}">{{ corso.nome }} ({{ corso.id_corso }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary mt-3 w-100">🔍 Applica Filtro</button>
+            </form>
+        </div>
+    </div>
+
+    {% include 'components/lezioni_table.html' %}
+    {% include 'components/lezioni_scripts.html' %}
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Grafico lezioni per mese
+            var ctx = document.getElementById('lezioniPerMeseChart').getContext('2d');
+            var mesi = {{ mesi|tojson }};
+            var conteggi = {{ conteggi|tojson }};
+            
+            // Formatta i mesi per una visualizzazione più leggibile (es. "2023-01" -> "Gen 2023")
+            var mesiFormattati = mesi.map(function(mese) {
+                var anno = mese.split('-')[0];
+                var numeroMese = parseInt(mese.split('-')[1]);
+                var nomiMesi = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
+                return nomiMesi[numeroMese - 1] + ' ' + anno;
+            });
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: mesiFormattati,
+                    datasets: [{
+                        label: 'Numero di Lezioni',
+                        data: conteggi,
+                        backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Distribuzione Lezioni per Mese',
+                            font: {
+                                size: 16
+                            }
+                        },
+                        legend: {
+                            position: 'top',
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

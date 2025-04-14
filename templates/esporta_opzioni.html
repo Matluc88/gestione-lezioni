@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Esporta Lezioni - Opzioni</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f6f9; }
+        .navbar { background: linear-gradient(45deg, #007bff, #6610f2); }
+        .card { border-radius: 15px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark shadow">
+        <div class="container">
+            <a class="navbar-brand" href="#">📊 Esporta Dati</a>
+        </div>
+    </nav>
+
+    <div class="container my-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h4 class="mb-4 text-center">📥 Esporta Dati</h4>
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <a href="{{ url_for('lezioni.dashboard') }}" class="btn btn-secondary">🏠 Torna alla Dashboard</a>
+                </div>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, msg in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                {{ msg }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <form action="{{ url_for('export.esporta_csv') }}" method="post" class="mt-4">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Cosa vuoi esportare?</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="tipo_export" id="tutte_lezioni" value="tutte" checked>
+                            <label class="form-check-label" for="tutte_lezioni">
+                                📚 Tutte le lezioni
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="tipo_export" id="lezioni_settimana" value="settimana">
+                            <label class="form-check-label" for="lezioni_settimana">
+                                📅 Lezioni di una settimana specifica
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="tipo_export" id="lezioni_mese" value="mese">
+                            <label class="form-check-label" for="lezioni_mese">
+                                📆 Lezioni di un mese specifico
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="tipo_export" id="lezioni_anno" value="anno">
+                            <label class="form-check-label" for="lezioni_anno">
+                                🗓️ Lezioni di un anno specifico
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="tipo_export" id="giorni_liberi" value="giorni_liberi">
+                            <label class="form-check-label" for="giorni_liberi">
+                                🏖️ Giorni liberi senza lezioni
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="tipo_export" id="formato_ridotto" value="formato_ridotto">
+                            <label class="form-check-label" for="formato_ridotto">
+                                📋 Formato ridotto (solo date e corsi)
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="settimana_container" class="mb-3" style="display: none;">
+                        <label for="data_settimana" class="form-label">Seleziona una data nella settimana desiderata:</label>
+                        <input type="date" class="form-control" id="data_settimana" name="data_settimana">
+                    </div>
+
+                    <div id="mese_container" class="mb-3" style="display: none;">
+                        <label for="mese" class="form-label">Seleziona il mese:</label>
+                        <input type="month" class="form-control" id="mese" name="mese">
+                    </div>
+
+                    <div id="anno_container" class="mb-3" style="display: none;">
+                        <label for="anno" class="form-label">Seleziona l'anno:</label>
+                        <select class="form-select" id="anno" name="anno">
+                            {% for anno in range(2020, 2031) %}
+                                <option value="{{ anno }}">{{ anno }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div id="giorni_liberi_container" class="mb-3" style="display: none;">
+                        <div class="mb-3">
+                            <label class="form-label">Seleziona il periodo:</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="tipo_periodo" id="periodo_settimana" value="settimana" checked>
+                                <label class="form-check-label" for="periodo_settimana">
+                                    📅 Settimana
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="tipo_periodo" id="periodo_mese" value="mese">
+                                <label class="form-check-label" for="periodo_mese">
+                                    📆 Mese
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="tipo_periodo" id="periodo_anno" value="anno">
+                                <label class="form-check-label" for="periodo_anno">
+                                    🗓️ Anno
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div id="periodo_settimana_container">
+                            <label for="data_settimana_libera" class="form-label">Seleziona una data nella settimana desiderata:</label>
+                            <input type="date" class="form-control" id="data_settimana_libera" name="data_settimana_libera">
+                        </div>
+                        
+                        <div id="periodo_mese_container" style="display: none;">
+                            <label for="mese_libero" class="form-label">Seleziona il mese:</label>
+                            <input type="month" class="form-control" id="mese_libero" name="mese_libero">
+                        </div>
+                        
+                        <div id="periodo_anno_container" style="display: none;">
+                            <label for="anno_libero" class="form-label">Seleziona l'anno:</label>
+                            <select class="form-select" id="anno_libero" name="anno_libero">
+                                {% for anno in range(2020, 2031) %}
+                                    <option value="{{ anno }}">{{ anno }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg">📥 Esporta CSV</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Mostra/nascondi i campi in base alla selezione
+        document.addEventListener('DOMContentLoaded', function() {
+            // Gestione dei radio button principali
+            const radioButtons = document.querySelectorAll('input[name="tipo_export"]');
+            const settimanaContainer = document.getElementById('settimana_container');
+            const meseContainer = document.getElementById('mese_container');
+            const annoContainer = document.getElementById('anno_container');
+            const giorniLiberiContainer = document.getElementById('giorni_liberi_container');
+
+            function updateVisibility() {
+                const selectedValue = document.querySelector('input[name="tipo_export"]:checked').value;
+                
+                settimanaContainer.style.display = selectedValue === 'settimana' ? 'block' : 'none';
+                meseContainer.style.display = selectedValue === 'mese' ? 'block' : 'none';
+                annoContainer.style.display = selectedValue === 'anno' ? 'block' : 'none';
+                giorniLiberiContainer.style.display = selectedValue === 'giorni_liberi' ? 'block' : 'none';
+            }
+
+            // Inizializza la visibilità
+            updateVisibility();
+
+            // Aggiorna la visibilità quando cambia la selezione
+            radioButtons.forEach(button => {
+                button.addEventListener('change', updateVisibility);
+            });
+            
+            // Gestione dei radio button per il tipo di periodo nei giorni liberi
+            const periodRadioButtons = document.querySelectorAll('input[name="tipo_periodo"]');
+            const periodoSettimanaContainer = document.getElementById('periodo_settimana_container');
+            const periodoMeseContainer = document.getElementById('periodo_mese_container');
+            const periodoAnnoContainer = document.getElementById('periodo_anno_container');
+            
+            function updatePeriodVisibility() {
+                const selectedPeriod = document.querySelector('input[name="tipo_periodo"]:checked').value;
+                
+                periodoSettimanaContainer.style.display = selectedPeriod === 'settimana' ? 'block' : 'none';
+                periodoMeseContainer.style.display = selectedPeriod === 'mese' ? 'block' : 'none';
+                periodoAnnoContainer.style.display = selectedPeriod === 'anno' ? 'block' : 'none';
+            }
+            
+            // Inizializza la visibilità dei periodi
+            updatePeriodVisibility();
+            
+            // Aggiorna la visibilità quando cambia la selezione del periodo
+            periodRadioButtons.forEach(button => {
+                button.addEventListener('change', updatePeriodVisibility);
+            });
+        });
+    </script>
+</body>
+</html>
