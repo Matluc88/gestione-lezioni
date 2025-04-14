@@ -6,11 +6,25 @@
         // Seleziona/Deseleziona tutte
         if (selectAllCheckbox) {
             selectAllCheckbox.addEventListener("change", function () {
+                // Aggiorna tutte le checkbox, sia nella vista tabella che nella vista card mobile
                 checkboxes.forEach(checkbox => {
                     checkbox.checked = selectAllCheckbox.checked;
                 });
             });
         }
+        
+        // Sincronizza le checkbox tra vista tabella e vista card
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener("change", function() {
+                // Trova tutte le checkbox con lo stesso valore (stesso ID lezione)
+                const sameIdCheckboxes = document.querySelectorAll(`input[name='lezioni_selezionate[]'][value='${this.value}']`);
+                sameIdCheckboxes.forEach(cb => {
+                    if (cb !== this) {
+                        cb.checked = this.checked;
+                    }
+                });
+            });
+        });
 
         // Funzione riutilizzabile per fetch POST
         function postLezioni(url, confermaMsg, successoMsg, erroreMsg) {
