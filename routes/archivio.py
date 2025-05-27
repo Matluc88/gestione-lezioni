@@ -11,13 +11,15 @@ def archivia_corso():
     if 'csrf_token' not in request.form:
         print("CSRF token mancante nella richiesta di archiviazione corso")
         flash("❌ Errore: Token CSRF mancante", "danger")
-        return redirect(url_for("lezioni.dashboard"))
+        filter_params = {k: v for k, v in request.args.items() if v}
+        return redirect(url_for("lezioni.dashboard", **filter_params))
         
     id_corso = request.form.get("id_corso")
 
     if not id_corso:
         flash("⚠️ Seleziona un corso da archiviare.", "warning")
-        return redirect(url_for("lezioni.dashboard"))
+        filter_params = {k: v for k, v in request.args.items() if v}
+        return redirect(url_for("lezioni.dashboard", **filter_params))
 
     try:
         with db_connection() as conn:
@@ -27,7 +29,8 @@ def archivia_corso():
 
             if not lezioni:
                 flash("⚠️ Nessuna lezione trovata per il corso selezionato.", "warning")
-                return redirect(url_for("lezioni.dashboard"))
+                filter_params = {k: v for k, v in request.args.items() if v}
+                return redirect(url_for("lezioni.dashboard", **filter_params))
 
             for lezione in lezioni:
                 cursor.execute("""

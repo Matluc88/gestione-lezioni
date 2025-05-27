@@ -181,7 +181,9 @@
                     locale: "it",
                     altInput: true,
                     altFormat: "j F Y",
-                    theme: "material_blue"
+                    theme: "material_blue",
+                    // Imposta l'ora a mezzogiorno per evitare problemi di timezone
+                    defaultHour: 12
                 });
             });
         }
@@ -192,23 +194,42 @@
             if (righe.length <= 1) return;
             
             const primaRiga = righe[0];
-            const corso = primaRiga.querySelector('select[name="id_corso[]"]').value;
-            const materia = primaRiga.querySelector('input[name="materia[]"]').value;
-            const luogo = primaRiga.querySelector('input[name="luogo[]"]').value;
-            const compenso = primaRiga.querySelector('input[name="compenso_orario[]"]').value;
-            const oraInizio = primaRiga.querySelector('input[name="ora_inizio[]"]').value;
-            const oraFine = primaRiga.querySelector('input[name="ora_fine[]"]').value;
-            const stato = primaRiga.querySelector('select[name="stato[]"]').value;
             
-            // Applica i valori a tutte le altre righe
+            // Ottieni i valori con controlli di sicurezza
+            const corsoElement = primaRiga.querySelector('select[name="id_corso[]"]');
+            const materiaElement = primaRiga.querySelector('input[name="materia[]"]');
+            const luogoElement = primaRiga.querySelector('input[name="luogo[]"]');
+            const compensoElement = primaRiga.querySelector('input[name="compenso_orario[]"]');
+            const oraInizioElement = primaRiga.querySelector('input[name="ora_inizio[]"]');
+            const oraFineElement = primaRiga.querySelector('input[name="ora_fine[]"]');
+            const statoElement = primaRiga.querySelector('select[name="stato[]"]');
+            
+            // Estrai i valori solo se gli elementi esistono
+            const corso = corsoElement ? corsoElement.value : '';
+            const materia = materiaElement ? materiaElement.value : '';
+            const luogo = luogoElement ? luogoElement.value : '';
+            const compenso = compensoElement ? compensoElement.value : '';
+            const oraInizio = oraInizioElement ? oraInizioElement.value : '';
+            const oraFine = oraFineElement ? oraFineElement.value : '';
+            const stato = statoElement ? statoElement.value : '';
+            
+            // Applica i valori a tutte le altre righe con controlli di sicurezza
             for (let i = 1; i < righe.length; i++) {
-                righe[i].querySelector('select[name="id_corso[]"]').value = corso;
-                righe[i].querySelector('input[name="materia[]"]').value = materia;
-                righe[i].querySelector('input[name="luogo[]"]').value = luogo;
-                righe[i].querySelector('input[name="compenso_orario[]"]').value = compenso;
-                righe[i].querySelector('input[name="ora_inizio[]"]').value = oraInizio;
-                righe[i].querySelector('input[name="ora_fine[]"]').value = oraFine;
-                righe[i].querySelector('select[name="stato[]"]').value = stato;
+                const corsoTarget = righe[i].querySelector('select[name="id_corso[]"]');
+                const materiaTarget = righe[i].querySelector('input[name="materia[]"]');
+                const luogoTarget = righe[i].querySelector('input[name="luogo[]"]');
+                const compensoTarget = righe[i].querySelector('input[name="compenso_orario[]"]');
+                const oraInizioTarget = righe[i].querySelector('input[name="ora_inizio[]"]');
+                const oraFineTarget = righe[i].querySelector('input[name="ora_fine[]"]');
+                const statoTarget = righe[i].querySelector('select[name="stato[]"]');
+                
+                if (corsoTarget && corso) corsoTarget.value = corso;
+                if (materiaTarget && materia) materiaTarget.value = materia;
+                if (luogoTarget && luogo) luogoTarget.value = luogo;
+                if (compensoTarget && compenso) compensoTarget.value = compenso;
+                if (oraInizioTarget && oraInizio) oraInizioTarget.value = oraInizio;
+                if (oraFineTarget && oraFine) oraFineTarget.value = oraFine;
+                if (statoTarget && stato) statoTarget.value = stato;
             }
         }
         
