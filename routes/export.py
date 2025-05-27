@@ -235,14 +235,15 @@ def esporta_csv():
             except (KeyError, IndexError):
                 corsi_clienti[corso["id_corso"]] = ""
             
-        header = "id_corso,materia,data,ora_inizio,ora_fine,luogo,compenso_orario,stato,fatturato,mese_fatturato,cliente\n"
+        header = "id_corso,materia,data,ora_inizio,ora_fine,luogo,compenso_orario,stato,fatturato,mese_fatturato,ore_fatturate,cliente\n"
         rows = []
         for lezione in lezioni:
             cliente = corsi_clienti[lezione["id_corso"]] if lezione["id_corso"] in corsi_clienti else ""
             rows.append(
                 f'{lezione["id_corso"]},{lezione["materia"]},{lezione["data"]},{lezione["ora_inizio"]},'
                 f'{lezione["ora_fine"]},{lezione["luogo"]},{lezione["compenso_orario"]},'
-                f'{lezione["stato"]},{lezione["fatturato"]},{lezione["mese_fatturato"] or ""},{cliente}'
+                f'{lezione["stato"]},{lezione["fatturato"]},{lezione["mese_fatturato"] or ""},'
+                f'{lezione.get("ore_fatturate", 0)},{cliente}'
             )
         output = header + "\n".join(rows)
         
@@ -271,11 +272,13 @@ def importa_csv():
         file = request.files.get("file")
         if not file or file.filename == "":
             flash("❌ Nessun file selezionato!", "danger")
-            return redirect(url_for("lezioni.dashboard"))
+            filter_params = {k: v for k, v in request.args.items() if v}
+            return redirect(url_for("lezioni.dashboard", **filter_params))
 
         if not file.filename.endswith(".csv"):
             flash("❌ Formato non supportato. Carica un file CSV.", "danger")
-            return redirect(url_for("lezioni.dashboard"))
+            filter_params = {k: v for k, v in request.args.items() if v}
+            return redirect(url_for("lezioni.dashboard", **filter_params))
 
         try:
             stream = file.stream.read().decode("utf-8").splitlines()
@@ -283,12 +286,14 @@ def importa_csv():
 
             colonne_necessarie = [
                 "id_corso", "materia", "data", "ora_inizio", "ora_fine",
-                "luogo", "compenso_orario", "stato", "fatturato", "mese_fatturato"
+                "luogo", "compenso_orario", "stato", "fatturato", "mese_fatturato", "ore_fatturate"
             ]
-            colonne_mancanti = [col for col in colonne_necessarie if col not in csv_reader.fieldnames]
+            fieldnames = csv_reader.fieldnames or []
+            colonne_mancanti = [col for col in colonne_necessarie if col not in fieldnames]
             if colonne_mancanti:
                 flash(f"❌ Colonne mancanti nel CSV: {', '.join(colonne_mancanti)}", "danger")
-                return redirect(url_for("lezioni.dashboard"))
+                filter_params = {k: v for k, v in request.args.items() if v}
+                return redirect(url_for("lezioni.dashboard", **filter_params))
 
             with db_connection() as conn:
                 cursor = conn.cursor()
@@ -317,9 +322,22 @@ def importa_csv():
                         except ValueError:
                             fatturato_val = 0
 
+                        try:
+                            ore_fatturate = float(row.get("ore_fatturate", 0))
+                        except ValueError:
+                            ore_fatturate = 0.0
+                            
+                        if fatturato_val > 0 and ore_fatturate == 0:
+                            cursor.execute("""
+                                SELECT (strftime('%s', '2000-01-01 ' || ?) - 
+                                       strftime('%s', '2000-01-01 ' || ?)) / 3600.0 as ore_totali
+                            """, (ora_fine, ora_inizio))
+                            ore_totali = cursor.fetchone()["ore_totali"]
+                            ore_fatturate = ore_totali
+                            
                         cursor.execute("""
-                            INSERT INTO lezioni (id_corso, materia, data, ora_inizio, ora_fine, luogo, compenso_orario, stato, fatturato, mese_fatturato)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            INSERT INTO lezioni (id_corso, materia, data, ora_inizio, ora_fine, luogo, compenso_orario, stato, fatturato, mese_fatturato, ore_fatturate)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """, (
                             id_corso,
                             row.get("materia", "").strip(),
@@ -330,7 +348,8 @@ def importa_csv():
                             float(row.get("compenso_orario", 0)),
                             row.get("stato", "").strip(),
                             fatturato_val,
-                            row.get("mese_fatturato", "").strip() or None
+                            row.get("mese_fatturato", "").strip() or None,
+                            ore_fatturate
                         ))
 
                     except Exception as e:
@@ -344,7 +363,8 @@ def importa_csv():
         except Exception as e:
             flash(f"❌ Errore durante la lettura del file: {str(e)}", "danger")
 
-        return redirect(url_for("lezioni.dashboard"))
+        filter_params = {k: v for k, v in request.args.items() if v}
+        return redirect(url_for("lezioni.dashboard", **filter_params))
 
     return render_template("importa_csv.html")
 
