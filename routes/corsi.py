@@ -50,7 +50,8 @@ def elimina_corso(id_corso):
         else:
             flash("❌ Corso non trovato!", "danger")
 
-    return redirect(url_for("lezioni.dashboard"))
+    filter_params = {k: v for k, v in request.args.items() if v}
+    return redirect(url_for("lezioni.dashboard", **filter_params))
 
 
 @corsi_bp.route("/dettagli_corso/<string:corso>")
@@ -92,15 +93,13 @@ def dettagli_corso(corso):
         """)
 
         ore_fatturate = ore("""
-            SELECT SUM((strftime('%s', '2000-01-01 ' || substr('0' || ora_fine, -5)) -
-                       strftime('%s', '2000-01-01 ' || substr('0' || ora_inizio, -5))) / 3600.0)
-            FROM lezioni WHERE id_corso = ? AND fatturato = 1
+            SELECT SUM(ore_fatturate)
+            FROM lezioni WHERE id_corso = ? AND fatturato > 0
         """)
 
         cursor.execute("""
-            SELECT SUM(((strftime('%s', '2000-01-01 ' || substr('0' || ora_fine, -5)) -
-                         strftime('%s', '2000-01-01 ' || substr('0' || ora_inizio, -5))) / 3600.0) * compenso_orario)
-            FROM lezioni WHERE id_corso = ? AND fatturato = 1
+            SELECT SUM(ore_fatturate * compenso_orario)
+            FROM lezioni WHERE id_corso = ? AND fatturato > 0
         """, (corso,))
         totale_fatturato_lordo = cursor.fetchone()[0] or 0
 
@@ -126,17 +125,29 @@ def lista_corsi():
         for corso_row in corsi_rows:
             corso = dict(corso_row)
             cursor.execute("""
-                SELECT COUNT(*) as totale, 
-                       SUM(CASE WHEN fatturato = 1 THEN 1 ELSE 0 END) as fatturate 
+                SELECT 
+                    COUNT(*) as totale,
+                    SUM(CASE WHEN fatturato = 1 THEN 1 ELSE 0 END) as completamente_fatturate,
+                    SUM(CASE WHEN fatturato = 2 THEN 1 ELSE 0 END) as parzialmente_fatturate,
+                    SUM((strftime('%s', '2000-01-01 ' || ora_fine) - strftime('%s', '2000-01-01 ' || ora_inizio)) / 3600.0) as ore_totali,
+                    SUM(ore_fatturate) as ore_fatturate
                 FROM lezioni 
                 WHERE id_corso = ?
             """, (corso['id_corso'],))
             
             result = cursor.fetchone()
             if result and result['totale'] > 0:
-                corso['completamente_fatturato'] = (result['totale'] == result['fatturate'])
+                corso['completamente_fatturato'] = (result['totale'] == result['completamente_fatturate'])
+                corso['parzialmente_fatturato'] = (result['parzialmente_fatturate'] > 0)
+                corso['ore_totali'] = result['ore_totali'] or 0
+                corso['ore_fatturate'] = result['ore_fatturate'] or 0
+                corso['ore_rimanenti'] = corso['ore_totali'] - corso['ore_fatturate']
             else:
                 corso['completamente_fatturato'] = False
+                corso['parzialmente_fatturato'] = False
+                corso['ore_totali'] = 0
+                corso['ore_fatturate'] = 0
+                corso['ore_rimanenti'] = 0
             
             corsi.append(corso)
                 
@@ -188,12 +199,13 @@ def archivia_corso(id_corso):
 
             for lezione in lezioni:
                 cursor.execute("""
-                    INSERT INTO archiviate (id_corso, materia, data, ora_inizio, ora_fine, luogo, compenso_orario, stato, fatturato, mese_fatturato)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    INSERT INTO archiviate (id_corso, materia, data, ora_inizio, ora_fine, luogo, compenso_orario, stato, fatturato, mese_fatturato, ore_fatturate)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     lezione["id_corso"], lezione["materia"], lezione["data"],
                     lezione["ora_inizio"], lezione["ora_fine"], lezione["luogo"],
-                    lezione["compenso_orario"], lezione["stato"], lezione["fatturato"], lezione["mese_fatturato"]
+                    lezione["compenso_orario"], lezione["stato"], lezione["fatturato"], 
+                    lezione["mese_fatturato"], lezione.get("ore_fatturate", 0)
                 ))
 
             cursor.execute("SELECT * FROM corsi WHERE id_corso = ?", (id_corso,))
@@ -275,12 +287,13 @@ def archivia_corsi_multipli():
                 if lezioni:
                     for lezione in lezioni:
                         cursor.execute("""
-                            INSERT INTO archiviate (id_corso, materia, data, ora_inizio, ora_fine, luogo, compenso_orario, stato, fatturato, mese_fatturato)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            INSERT INTO archiviate (id_corso, materia, data, ora_inizio, ora_fine, luogo, compenso_orario, stato, fatturato, mese_fatturato, ore_fatturate)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """, (
                             lezione["id_corso"], lezione["materia"], lezione["data"],
                             lezione["ora_inizio"], lezione["ora_fine"], lezione["luogo"],
-                            lezione["compenso_orario"], lezione["stato"], lezione["fatturato"], lezione["mese_fatturato"]
+                            lezione["compenso_orario"], lezione["stato"], lezione["fatturato"], 
+                            lezione["mese_fatturato"], lezione.get("ore_fatturate", 0)
                         ))
                     
                     cursor.execute("SELECT * FROM corsi WHERE id_corso = ?", (id_corso,))
