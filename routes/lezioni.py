@@ -110,7 +110,8 @@ def aggiungi_lezione():
                 conn.commit()
 
             flash("✅ Lezioni aggiunte con successo!", "success")
-            return redirect(url_for("lezioni.dashboard"))
+            filter_params = {k: v for k, v in request.args.items() if v}
+            return redirect(url_for("lezioni.dashboard", **filter_params))
 
         except Exception as e:
             flash(f"❌ Errore durante l'aggiunta delle lezioni: {str(e)}", "danger")
@@ -153,7 +154,14 @@ def modifica_lezione(lezione_id):
             """, (nuova_materia, nuova_data, nuova_ora_inizio, nuova_ora_fine, nuovo_luogo, nuovo_compenso_orario, nuovo_stato, lezione_id))
             conn.commit()
             flash("Lezione modificata con successo.", "success")
-            return redirect(url_for("lezioni.dashboard"))
+            
+            # Recupera i parametri di filtro dal form
+            filter_params = {}
+            for key, value in request.form.items():
+                if key.startswith('filter_'):
+                    filter_params[key[7:]] = value  # Rimuove il prefisso 'filter_'
+            
+            return redirect(url_for("lezioni.dashboard", **filter_params))
 
         cursor.execute("SELECT * FROM lezioni WHERE id=?", (lezione_id,))
         lezione = cursor.fetchone()
@@ -168,7 +176,8 @@ def elimina_lezione(id_lezione):
         if 'csrf_token' not in request.form:
             print("CSRF token mancante nella richiesta")
             flash("❌ Errore: Token CSRF mancante", "danger")
-            return redirect(url_for("lezioni.dashboard"))
+            filter_params = {k: v for k, v in request.args.items() if v}
+            return redirect(url_for("lezioni.dashboard", **filter_params))
             
         with db_connection() as conn:
             cursor = conn.cursor()
@@ -176,11 +185,13 @@ def elimina_lezione(id_lezione):
             conn.commit()
 
         flash("✅ Lezione eliminata con successo!", "success")
-        return redirect(url_for("lezioni.dashboard"))
+        filter_params = {k: v for k, v in request.args.items() if v}
+        return redirect(url_for("lezioni.dashboard", **filter_params))
     except Exception as e:
         print(f"Errore in elimina_lezione: {e}")
         flash("❌ Errore durante l'eliminazione della lezione", "danger")
-        return redirect(url_for("lezioni.dashboard"))
+        filter_params = {k: v for k, v in request.args.items() if v}
+        return redirect(url_for("lezioni.dashboard", **filter_params))
 
 
 @lezioni_bp.route("/completa_lezione/<int:id_lezione>", methods=["POST"])

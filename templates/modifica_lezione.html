@@ -12,6 +12,11 @@
         <form method="post">
             <!-- CSRF Token -->
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <!-- Hidden fields for filter parameters -->
+            {% for key, value in request.args.items() %}
+                <input type="hidden" name="filter_{{ key }}" value="{{ value }}">
+            {% endfor %}
         
             <!-- Form Fields -->
             <div class="mb-3">

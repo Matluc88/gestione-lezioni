@@ -223,10 +223,12 @@ def aggiungi_fattura():
     if request.method == "POST":
         try:
             numero_fattura = request.form.get("numero_fattura")
-            corsi_selezionati = request.form.get("corsi_selezionati", "").split(",") if request.form.get("corsi_selezionati") else []
             data_fattura = request.form.get("data_fattura")
             importo = float(request.form.get("importo"))
-            tipo_fatturazione = request.form.get("tipo_fatturazione")
+            tipo_fatturazione = request.form.get("tipo_fatturazione", "totale")
+            if tipo_fatturazione not in ['parziale', 'totale']:
+                tipo_fatturazione = 'totale'  # Default to 'totale' if invalid value
+            print(f"DEBUG: tipo_fatturazione = {tipo_fatturazione}")
             note = request.form.get("note", "")
             lezioni_selezionate = request.form.getlist("lezioni")
             
@@ -241,17 +243,31 @@ def aggiungi_fattura():
                     file.save(file_path)
                     file_pdf = filename
             
-            id_corso_principale = corsi_selezionati[0] if corsi_selezionati else ""
+            # Determine id_corso_principale from lezioni_selezionate
+            id_corso_principale = ""
+            if lezioni_selezionate:
+                cursor.execute("SELECT id_corso FROM lezioni WHERE id = ? LIMIT 1", (lezioni_selezionate[0],))
+                corso_result = cursor.fetchone()
+                if corso_result:
+                    id_corso_principale = corso_result['id_corso']
+            
+            print(f"DEBUG: id_fattura={numero_fattura}, type={type(numero_fattura)}")
+            print(f"DEBUG: id_corso={id_corso_principale}, type={type(id_corso_principale)}")
+            print(f"DEBUG: data_fattura={data_fattura}, type={type(data_fattura)}")
+            print(f"DEBUG: importo={importo}, type={type(importo)}")
+            print(f"DEBUG: tipo_fatturazione={tipo_fatturazione}, type={type(tipo_fatturazione)}")
+            print(f"DEBUG: note={note}, type={type(note)}")
+            print(f"DEBUG: file_pdf={file_pdf}, type={type(file_pdf)}")
             
             cursor.execute("""
                 INSERT INTO fatture (id_fattura, id_corso, data_fattura, importo, tipo_fatturazione, note, file_pdf)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
-            """, (numero_fattura, id_corso_principale, data_fattura, importo, tipo_fatturazione, note, file_pdf))
+            """, (str(numero_fattura), id_corso_principale, data_fattura, importo, str(tipo_fatturazione), note, file_pdf))
             
             id_fattura = cursor.lastrowid
             
             mese_fatturato = datetime.strptime(data_fattura, "%Y-%m-%d").strftime("%Y-%m")
-            tipo_fatturazione_val = int(tipo_fatturazione)  # Convert to integer (1=Partita IVA, 2=Prestazione Occasionale, 3=Altro)
+            tipo_fatturazione_val = 1  # 1 = completamente fatturato
             
             for id_lezione in lezioni_selezionate:
                 cursor.execute("""
@@ -264,6 +280,14 @@ def aggiungi_fattura():
                     INSERT INTO fatture_lezioni (id_fattura, id_lezione)
                     VALUES (?, ?)
                 """, (id_fattura, id_lezione))
+            
+            # Determine corsi_selezionati from lezioni_selezionate
+            cursor.execute("""
+                SELECT DISTINCT id_corso FROM lezioni 
+                WHERE id IN ({})
+            """.format(','.join(['?'] * len(lezioni_selezionate))), lezioni_selezionate)
+            
+            corsi_selezionati = [row['id_corso'] for row in cursor.fetchall()]
             
             for id_corso in corsi_selezionati:
                 cursor.execute("""
