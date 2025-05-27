@@ -251,7 +251,7 @@ def aggiungi_fattura():
             id_fattura = cursor.lastrowid
             
             mese_fatturato = datetime.strptime(data_fattura, "%Y-%m-%d").strftime("%Y-%m")
-            tipo_fatturazione_val = int(tipo_fatturazione)  # Convert to integer (1=Partita IVA, 2=Prestazione Occasionale, 3=Altro)
+            tipo_fatturazione_val = 1  # 1 = completamente fatturato
             
             for id_lezione in lezioni_selezionate:
                 cursor.execute("""
@@ -264,6 +264,14 @@ def aggiungi_fattura():
                     INSERT INTO fatture_lezioni (id_fattura, id_lezione)
                     VALUES (?, ?)
                 """, (id_fattura, id_lezione))
+            
+            # Determine corsi_selezionati from lezioni_selezionate
+            cursor.execute("""
+                SELECT DISTINCT id_corso FROM lezioni 
+                WHERE id IN ({})
+            """.format(','.join(['?'] * len(lezioni_selezionate))), lezioni_selezionate)
+            
+            corsi_selezionati = [row['id_corso'] for row in cursor.fetchall()]
             
             for id_corso in corsi_selezionati:
                 cursor.execute("""

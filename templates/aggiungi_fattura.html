@@ -50,39 +50,7 @@
             <input type="text" class="form-control" id="numero_fattura" name="numero_fattura" required>
           </div>
           
-          <div class="col-md-12">
-            <label class="form-label">Corsi da Fatturare</label>
-            <div class="card p-3 mb-3">
-              <div class="row">
-                {% for corso in corsi %}
-                <div class="col-md-6 mb-2">
-                  <div class="form-check">
-                    <input class="form-check-input corso-checkbox" type="checkbox" id="corso_{{ loop.index }}" value="{{ corso }}" data-corso="{{ corso }}">
-                    <label class="form-check-label" for="corso_{{ loop.index }}">
-                      {{ corso }}
-                    </label>
-                  </div>
-                  <div class="ms-4 mt-1">
-                    <div class="form-check form-check-inline">
-                      <input class="form-check-input fatturazione-tipo" type="radio" name="tipo_fatturazione_{{ corso }}" id="fatturazione_totale_{{ loop.index }}" value="totale" checked data-corso="{{ corso }}">
-                      <label class="form-check-label" for="fatturazione_totale_{{ loop.index }}">
-                        Fatturazione Totale
-                      </label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                      <input class="form-check-input fatturazione-tipo" type="radio" name="tipo_fatturazione_{{ corso }}" id="fatturazione_parziale_{{ loop.index }}" value="parziale" data-corso="{{ corso }}">
-                      <label class="form-check-label" for="fatturazione_parziale_{{ loop.index }}">
-                        Fatturazione Parziale
-                      </label>
-                    </div>
-                    <div class="corso-status mt-1" id="corso_status_{{ corso }}"></div>
-                  </div>
-                </div>
-                {% endfor %}
-              </div>
-              <input type="hidden" id="corsi_selezionati" name="corsi_selezionati" value="">
-            </div>
-          </div>
+          <!-- Removed complex course selection section -->
           
           <div class="col-md-6">
             <label for="data_fattura" class="form-label">Data Fattura</label>
@@ -97,9 +65,9 @@
           <div class="col-md-6">
             <label for="tipo_fatturazione" class="form-label">Tipo Fatturazione</label>
             <select class="form-select" id="tipo_fatturazione" name="tipo_fatturazione" required>
-              <option value="2">Prestazione Occasionale (2)</option>
-              <option value="1">Partita IVA (1)</option>
-              <option value="3">Altro (3)</option>
+              <option value="totale">Prestazione Occasionale</option>
+              <option value="parziale">Partita IVA</option>
+              <option value="totale">Altro</option>
             </select>
           </div>
           
@@ -128,7 +96,7 @@
               <div class="collapse" id="filtriAvanzati">
                 <div class="card-body">
                   <div class="row g-3">
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                       <label class="form-label">Cliente</label>
                       <select class="form-select" id="filtro-cliente">
                         <option value="">Tutti i clienti</option>
@@ -137,11 +105,20 @@
                         {% endfor %}
                       </select>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
+                      <label class="form-label">Corso</label>
+                      <select class="form-select" id="filtro-corso">
+                        <option value="">Tutti i corsi</option>
+                        {% for corso in corsi %}
+                          <option value="{{ corso }}">{{ corso }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                    <div class="col-md-3">
                       <label class="form-label">Mese</label>
                       <input type="month" class="form-control" id="filtro-mese">
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                       <label class="form-label">Intervallo Date</label>
                       <div class="d-flex gap-2">
                         <input type="date" class="form-control" id="filtro-data-inizio" placeholder="Da">
@@ -203,140 +180,13 @@
       // Elementi DOM
       const checkboxes = document.querySelectorAll('input[name="lezioni"]');
       const importoInput = document.getElementById('importo');
-      const corsiCheckboxes = document.querySelectorAll('.corso-checkbox');
-      const corsiSelezionatiInput = document.getElementById('corsi_selezionati');
       const filtroCliente = document.getElementById('filtro-cliente');
+      const filtroCorso = document.getElementById('filtro-corso');
       const filtroMese = document.getElementById('filtro-mese');
       const filtroDataInizio = document.getElementById('filtro-data-inizio');
       const filtroDataFine = document.getElementById('filtro-data-fine');
       const applicaFiltriBtn = document.getElementById('applica-filtri');
       const resetFiltriBtn = document.getElementById('reset-filtri');
-      
-      // Inizializza gli stati di fatturazione dei corsi
-      const corsiStati = {};
-      
-      // Gestione selezione corsi
-      corsiCheckboxes.forEach(checkbox => {
-        const corso = checkbox.value;
-        const statusDiv = document.getElementById(`corso_status_${corso}`);
-        const radioTotale = document.querySelector(`input[name="tipo_fatturazione_${corso}"][value="totale"]`);
-        const radioParziale = document.querySelector(`input[name="tipo_fatturazione_${corso}"][value="parziale"]`);
-        
-        // Disabilita inizialmente i radio buttons
-        radioTotale.disabled = true;
-        radioParziale.disabled = true;
-        
-        checkbox.addEventListener('change', function() {
-          // Abilita/disabilita i radio buttons in base allo stato del checkbox
-          radioTotale.disabled = !this.checked;
-          radioParziale.disabled = !this.checked;
-          
-          // Aggiorna l'elenco dei corsi selezionati
-          updateCorsiSelezionati();
-          
-          // Aggiorna la visualizzazione delle lezioni
-          updateLezioniVisibility();
-          
-          // Aggiorna lo stato di fatturazione del corso
-          updateCorsoStatus(corso);
-        });
-        
-        // Gestione cambio tipo fatturazione
-        [radioTotale, radioParziale].forEach(radio => {
-          radio.addEventListener('change', function() {
-            updateLezioniVisibility();
-          });
-        });
-      });
-      
-      // Funzione per aggiornare l'input nascosto con i corsi selezionati
-      function updateCorsiSelezionati() {
-        const corsiSelezionati = Array.from(corsiCheckboxes)
-          .filter(cb => cb.checked)
-          .map(cb => cb.value);
-        
-        corsiSelezionatiInput.value = corsiSelezionati.join(',');
-      }
-      
-      // Funzione per aggiornare la visibilità delle lezioni in base ai corsi selezionati
-      function updateLezioniVisibility() {
-        // Raccogli i corsi selezionati e il loro tipo di fatturazione
-        const corsiSelezionati = {};
-        corsiCheckboxes.forEach(checkbox => {
-          if (checkbox.checked) {
-            const corso = checkbox.value;
-            const tipoFatturazione = document.querySelector(`input[name="tipo_fatturazione_${corso}"]:checked`).value;
-            corsiSelezionati[corso] = tipoFatturazione;
-          }
-        });
-        
-        // Aggiorna la visibilità delle lezioni
-        checkboxes.forEach(checkbox => {
-          const row = checkbox.closest('tr');
-          const corsoCella = row.querySelector('td:nth-child(2)').textContent;
-          
-          if (Object.keys(corsiSelezionati).length === 0 || corsoCella in corsiSelezionati) {
-            row.style.display = '';
-            
-            // Se il corso è selezionato per fatturazione totale, seleziona automaticamente tutte le lezioni
-            if (corsiSelezionati[corsoCella] === 'totale') {
-              checkbox.checked = true;
-              checkbox.disabled = true; // Disabilita il checkbox per evitare deselezionamenti
-            } else {
-              checkbox.disabled = false; // Riabilita il checkbox per fatturazione parziale
-            }
-          } else {
-            row.style.display = 'none';
-            checkbox.checked = false;
-          }
-        });
-        
-        // Ricalcola l'importo totale
-        calcolaImportoTotale();
-      }
-      
-      // Funzione per aggiornare lo stato di fatturazione di un corso
-      function updateCorsoStatus(corso) {
-        const statusDiv = document.getElementById(`corso_status_${corso}`);
-        
-        // Conta le lezioni totali e fatturate per il corso
-        let lezioniTotali = 0;
-        let lezioniFatturate = 0;
-        
-        checkboxes.forEach(checkbox => {
-          const row = checkbox.closest('tr');
-          const corsoCella = row.querySelector('td:nth-child(2)').textContent;
-          
-          if (corsoCella === corso) {
-            lezioniTotali++;
-            // Controlla se la lezione è già fatturata
-            if (row.dataset.fatturato === '1' || row.dataset.fatturato === '2' || row.dataset.fatturato === '3') {
-              lezioniFatturate++;
-            }
-          }
-        });
-        
-        // Aggiorna lo stato del corso
-        if (lezioniTotali === 0) {
-          statusDiv.innerHTML = '❓ Nessuna lezione trovata';
-          statusDiv.className = 'mt-1 fw-bold text-secondary';
-        } else if (lezioniFatturate === 0) {
-          statusDiv.innerHTML = '❌ Non fatturato';
-          statusDiv.className = 'mt-1 fw-bold text-danger';
-        } else if (lezioniFatturate < lezioniTotali) {
-          statusDiv.innerHTML = `⚠️ Parzialmente fatturato (${lezioniFatturate}/${lezioniTotali})`;
-          statusDiv.className = 'mt-1 fw-bold text-warning';
-        } else {
-          statusDiv.innerHTML = '✅ Totalmente fatturato';
-          statusDiv.className = 'mt-1 fw-bold text-success';
-        }
-        
-        // Salva lo stato nel dizionario
-        corsiStati[corso] = {
-          totale: lezioniTotali,
-          fatturate: lezioniFatturate
-        };
-      }
       
       // Calcola l'importo totale in base alle lezioni selezionate
       checkboxes.forEach(checkbox => {
@@ -367,45 +217,37 @@
         importoInput.value = importoTotale.toFixed(2);
       }
       
-      // Inizializza gli stati dei corsi
-      corsiCheckboxes.forEach(checkbox => {
-        updateCorsoStatus(checkbox.value);
-      });
-      
       // Gestione filtri avanzati
       applicaFiltriBtn.addEventListener('click', applicaFiltri);
       resetFiltriBtn.addEventListener('click', resetFiltri);
       
       function applicaFiltri() {
         const cliente = filtroCliente.value;
+        const corso = filtroCorso.value;
         const mese = filtroMese.value;
         const dataInizio = filtroDataInizio.value;
         const dataFine = filtroDataFine.value;
         
-        // Raccogli i corsi selezionati
-        const corsiSelezionati = {};
-        corsiCheckboxes.forEach(checkbox => {
-          if (checkbox.checked) {
-            const corso = checkbox.value;
-            const tipoFatturazione = document.querySelector(`input[name="tipo_fatturazione_${corso}"]:checked`).value;
-            corsiSelezionati[corso] = tipoFatturazione;
-          }
-        });
-        
         checkboxes.forEach(checkbox => {
           const row = checkbox.closest('tr');
-          const corsoCella = row.querySelector('td:nth-child(2)').textContent;
-          const clienteCella = row.querySelector('td:nth-child(3)').textContent;
+          const corsoCella = row.querySelector('td:nth-child(2)').textContent.trim();
+          const clienteCella = row.querySelector('td:nth-child(3)').textContent.trim();
           const dataCella = row.dataset.data;
           
           // Verifica se la riga corrisponde al corso selezionato (se c'è)
-          const corsoMatch = Object.keys(corsiSelezionati).length === 0 || corsoCella in corsiSelezionati;
+          const corsoMatch = !corso || corsoCella === corso;
           
           // Verifica se la riga corrisponde al cliente selezionato (se c'è)
           const clienteMatch = !cliente || clienteCella === cliente;
           
           // Verifica se la riga corrisponde al mese selezionato (se c'è)
-          const meseMatch = !mese || dataCella.startsWith(mese);
+          let meseMatch = true;
+          if (mese) {
+            const meseDaFiltro = mese.split('-')[0] + '-' + mese.split('-')[1];
+            const dataLezione = new Date(dataCella);
+            const meseDellaRiga = dataLezione.getFullYear() + '-' + String(dataLezione.getMonth() + 1).padStart(2, '0');
+            meseMatch = meseDaFiltro === meseDellaRiga;
+          }
           
           // Verifica se la riga è nell'intervallo di date (se specificato)
           let dataMatch = true;
@@ -419,14 +261,6 @@
           // Mostra o nascondi la riga in base ai filtri
           if (corsoMatch && clienteMatch && meseMatch && dataMatch) {
             row.style.display = '';
-            
-            // Se il corso è selezionato per fatturazione totale, seleziona automaticamente tutte le lezioni
-            if (corsiSelezionati[corsoCella] === 'totale') {
-              checkbox.checked = true;
-              checkbox.disabled = true;
-            } else {
-              checkbox.disabled = false;
-            }
           } else {
             row.style.display = 'none';
             checkbox.checked = false;
@@ -438,16 +272,22 @@
       
       function resetFiltri() {
         filtroCliente.value = '';
+        filtroCorso.value = '';
         filtroMese.value = '';
         filtroDataInizio.value = '';
         filtroDataFine.value = '';
         
-        // Riapplica la visibilità in base ai corsi selezionati
-        updateLezioniVisibility();
+        // Mostra tutte le lezioni
+        checkboxes.forEach(checkbox => {
+          const row = checkbox.closest('tr');
+          row.style.display = '';
+        });
+        
+        calcolaImportoTotale();
       }
       
-      // Inizializza la visibilità delle lezioni
-      updateLezioniVisibility();
+      // Inizializza applicando i filtri
+      applicaFiltri();
     });
   </script>
 </body>
