@@ -40,9 +40,10 @@ def esporta_csv():
                 flash("❌ Seleziona una data valida", "danger")
                 return redirect(url_for("export.esporta_csv"))
                 
-            query = """
+            placeholder = get_placeholder()
+            query = f"""
                 SELECT * FROM lezioni 
-                WHERE extract_year_week(data) = extract_year_week(%s)
+                WHERE extract_year_week(data) = extract_year_week({placeholder})
             """
             cursor.execute(query, (data_settimana,))
             lezioni = cursor.fetchall()
@@ -54,9 +55,10 @@ def esporta_csv():
                 flash("❌ Seleziona un mese valido", "danger")
                 return redirect(url_for("export.esporta_csv"))
                 
-            query = """
+            placeholder = get_placeholder()
+            query = f"""
                 SELECT * FROM lezioni 
-                WHERE extract_year_month(data) = %s
+                WHERE extract_year_month(data) = {placeholder}
             """
             cursor.execute(query, (mese,))
             lezioni = cursor.fetchall()
@@ -68,9 +70,10 @@ def esporta_csv():
                 flash("❌ Seleziona un anno valido", "danger")
                 return redirect(url_for("export.esporta_csv"))
                 
-            query = """
+            placeholder = get_placeholder()
+            query = f"""
                 SELECT * FROM lezioni 
-                WHERE extract_year(data) = %s
+                WHERE extract_year(data) = {placeholder}
             """
             cursor.execute(query, (anno,))
             lezioni = cursor.fetchall()
@@ -88,15 +91,16 @@ def esporta_csv():
                     flash("❌ Seleziona una data valida", "danger")
                     return redirect(url_for("export.esporta_csv"))
                 
-                query_date = """
+                placeholder = get_placeholder()
+                query_date = f"""
                     WITH RECURSIVE dates(date) AS (
-                        SELECT (TO_DATE(%s, 'YYYY-MM-DD') - INTERVAL '7 days' + 
-                               ((1 - EXTRACT(DOW FROM TO_DATE(%s, 'YYYY-MM-DD')))::INTEGER % 7) * INTERVAL '1 day')::DATE
+                        SELECT (TO_DATE({placeholder}, 'YYYY-MM-DD') - INTERVAL '7 days' + 
+                               ((1 - EXTRACT(DOW FROM TO_DATE({placeholder}, 'YYYY-MM-DD')))::INTEGER % 7) * INTERVAL '1 day')::DATE
                         UNION ALL
                         SELECT (date + INTERVAL '1 day')::DATE
                         FROM dates
-                        WHERE date < (TO_DATE(%s, 'YYYY-MM-DD') - INTERVAL '7 days' + 
-                                     ((7 - EXTRACT(DOW FROM TO_DATE(%s, 'YYYY-MM-DD')))::INTEGER % 7) * INTERVAL '1 day')::DATE
+                        WHERE date < (TO_DATE({placeholder}, 'YYYY-MM-DD') - INTERVAL '7 days' + 
+                                     ((7 - EXTRACT(DOW FROM TO_DATE({placeholder}, 'YYYY-MM-DD')))::INTEGER % 7) * INTERVAL '1 day')::DATE
                     )
                     SELECT date::TEXT FROM dates
                     WHERE extract_weekday(date::TEXT) NOT IN ('0', '6')  -- Esclude sabato e domenica
@@ -113,13 +117,14 @@ def esporta_csv():
                     return redirect(url_for("export.esporta_csv"))
                 
                 anno, mese_num = mese.split('-')
-                query_date = """
+                placeholder = get_placeholder()
+                query_date = f"""
                     WITH RECURSIVE dates(date) AS (
-                        SELECT TO_DATE(%s, 'YYYY-MM-DD')::DATE
+                        SELECT TO_DATE({placeholder}, 'YYYY-MM-DD')::DATE
                         UNION ALL
                         SELECT (date + INTERVAL '1 day')::DATE
                         FROM dates
-                        WHERE extract_year_month(date::TEXT) = %s
+                        WHERE extract_year_month(date::TEXT) = {placeholder}
                     )
                     SELECT date::TEXT FROM dates
                     WHERE extract_weekday(date::TEXT) NOT IN ('0', '6')  -- Esclude sabato e domenica
@@ -135,13 +140,14 @@ def esporta_csv():
                     flash("❌ Seleziona un anno valido", "danger")
                     return redirect(url_for("export.esporta_csv"))
                 
-                query_date = """
+                placeholder = get_placeholder()
+                query_date = f"""
                     WITH RECURSIVE dates(date) AS (
-                        SELECT TO_DATE(%s || '-01-01', 'YYYY-MM-DD')::DATE
+                        SELECT TO_DATE({placeholder} || '-01-01', 'YYYY-MM-DD')::DATE
                         UNION ALL
                         SELECT (date + INTERVAL '1 day')::DATE
                         FROM dates
-                        WHERE extract_year(date::TEXT) = %s
+                        WHERE extract_year(date::TEXT) = {placeholder}
                     )
                     SELECT date::TEXT FROM dates
                     WHERE extract_weekday(date::TEXT) NOT IN ('0', '6')  -- Esclude sabato e domenica
@@ -159,17 +165,19 @@ def esporta_csv():
             
             for giorno in giorni:
                 data = giorno["date"]
-                giorno_settimana = ["Domenica", "Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato"][int(cursor.execute("SELECT extract_weekday(%s)", (data,)).fetchone()[0])]
+                placeholder = get_placeholder()
+                giorno_settimana = ["Domenica", "Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato"][int(cursor.execute(f"SELECT extract_weekday({placeholder})", (data,)).fetchone()[0])]
                 
                 ore_libere = []
                 for ora in fasce_orarie:
-                    query_lezioni = """
+                    placeholder = get_placeholder()
+                    query_lezioni = f"""
                         SELECT COUNT(*) FROM lezioni 
-                        WHERE data = %s 
+                        WHERE data = {placeholder} 
                         AND (
-                            (ora_inizio <= %s AND ora_fine > %s) OR
-                            (ora_inizio < %s AND ora_fine >= %s) OR
-                            (ora_inizio >= %s AND ora_fine <= %s)
+                            (ora_inizio <= {placeholder} AND ora_fine > {placeholder}) OR
+                            (ora_inizio < {placeholder} AND ora_fine >= {placeholder}) OR
+                            (ora_inizio >= {placeholder} AND ora_fine <= {placeholder})
                         )
                     """
                     cursor.execute(query_lezioni, (data, ora, ora, ora, ora, ora, ora))
@@ -332,8 +340,9 @@ def importa_csv():
                         if mese_fatturato == "":
                             mese_fatturato = None
                             
-                        cursor.execute("""
-                            SELECT calcola_ore(%s, %s) as ore_totali
+                        placeholder = get_placeholder()
+                        cursor.execute(f"""
+                            SELECT calcola_ore({placeholder}, {placeholder}) as ore_totali
                         """, (ora_inizio, ora_fine))
                         ore_totali = cursor.fetchone()["ore_totali"]
                         
@@ -341,15 +350,18 @@ def importa_csv():
                         
                         data_convertita = parse(data_originale).strftime("%Y-%m-%d") if data_originale else None
                         
-                        cursor.execute("SELECT COUNT(*) FROM corsi WHERE id_corso = %s", (id_corso,))
+                        placeholder = get_placeholder()
+                        cursor.execute(f"SELECT COUNT(*) FROM corsi WHERE id_corso = {placeholder}", (id_corso,))
                         if cursor.fetchone()[0] == 0:
                             nome_corso = f"Corso {id_corso}"
-                            cursor.execute("INSERT INTO corsi (id_corso, nome, cliente) VALUES (%s, %s, %s)", 
+                            placeholder = get_placeholder()
+                            cursor.execute(f"INSERT INTO corsi (id_corso, nome, cliente) VALUES ({placeholder}, {placeholder}, {placeholder})", 
                                           (id_corso, nome_corso, cliente))
                             
-                        cursor.execute("""
+                        placeholder = get_placeholder()
+                        cursor.execute(f"""
                             INSERT INTO lezioni (id_corso, materia, data, ora_inizio, ora_fine, luogo, compenso_orario, stato, fatturato, mese_fatturato, ore_fatturate)
-                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                            VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})
                         """, (
                             id_corso,
                             materia,
@@ -396,10 +408,11 @@ def segnala_fatturato():
     try:
         with db_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("""
+            placeholder = get_placeholder()
+            cursor.execute(f"""
                 UPDATE lezioni
-                SET fatturato = 1, mese_fatturato = %s
-                WHERE id_corso = %s AND stato = 'Completato' AND fatturato = 0
+                SET fatturato = 1, mese_fatturato = {placeholder}
+                WHERE id_corso = {placeholder} AND stato = 'Completato' AND fatturato = 0
             """, (mese_fatturato, corso))
             conn.commit()
         flash("✅ Lezioni marcate come fatturate con successo!", "success")
