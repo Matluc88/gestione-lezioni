@@ -197,32 +197,46 @@ def fattura_corso():
 @login_required
 def aggiungi_fattura():
     """ Pagina per aggiungere una nuova fattura con tutti i dettagli """
-    conn = get_db_connection()
-    cursor = conn.cursor()
+    conn_read = None
+    conn_write = None
     
-    cursor.execute("SELECT DISTINCT id_corso FROM lezioni ORDER BY id_corso")
-    corsi = [row[0] for row in cursor.fetchall()]
-    
-    cursor.execute("""
-        SELECT DISTINCT c.cliente 
-        FROM corsi c 
-        WHERE c.cliente IS NOT NULL AND c.cliente != ''
-        ORDER BY c.cliente
-    """)
-    clienti = [row[0] for row in cursor.fetchall()]
-    
-    cursor.execute("""
-        SELECT l.id, l.id_corso, l.materia, l.data, l.ora_inizio, l.ora_fine, l.compenso_orario, 
-               COALESCE(c.cliente, 'Sconosciuto') as cliente
-        FROM lezioni l
-        LEFT JOIN corsi c ON l.id_corso = c.id_corso
-        WHERE l.fatturato = 0
-        ORDER BY l.id_corso, l.data
-    """)
-    lezioni_non_fatturate = cursor.fetchall()
+    try:
+        conn_read = get_db_connection()
+        cursor_read = conn_read.cursor()
+        
+        cursor_read.execute("SELECT DISTINCT id_corso FROM lezioni ORDER BY id_corso")
+        corsi = [row[0] for row in cursor_read.fetchall()]
+        
+        cursor_read.execute("""
+            SELECT DISTINCT c.cliente 
+            FROM corsi c 
+            WHERE c.cliente IS NOT NULL AND c.cliente != ''
+            ORDER BY c.cliente
+        """)
+        clienti = [row[0] for row in cursor_read.fetchall()]
+        
+        cursor_read.execute("""
+            SELECT l.id, l.id_corso, l.materia, l.data, l.ora_inizio, l.ora_fine, l.compenso_orario, 
+                   COALESCE(c.cliente, 'Sconosciuto') as cliente
+            FROM lezioni l
+            LEFT JOIN corsi c ON l.id_corso = c.id_corso
+            WHERE l.fatturato = 0
+            ORDER BY l.id_corso, l.data
+        """)
+        lezioni_non_fatturate = cursor_read.fetchall()
+        
+    except Exception as e:
+        flash(f"❌ Errore durante il caricamento dei dati: {str(e)}", "danger")
+        return render_template("aggiungi_fattura.html", corsi=[], lezioni=[], clienti=[], now=datetime.now())
+    finally:
+        if conn_read:
+            conn_read.close()
     
     if request.method == "POST":
         try:
+            conn_write = get_db_connection()
+            cursor_write = conn_write.cursor()
+            
             numero_fattura = request.form.get("numero_fattura")
             data_fattura = request.form.get("data_fattura")
             importo = float(request.form.get("importo"))
@@ -234,8 +248,8 @@ def aggiungi_fattura():
             lezioni_selezionate = request.form.getlist("lezioni")
             
             placeholder = get_placeholder()
-            cursor.execute(f"SELECT COUNT(*) FROM fatture WHERE numero_fattura = {placeholder}", (numero_fattura,))
-            if cursor.fetchone()[0] > 0:
+            cursor_write.execute(f"SELECT COUNT(*) FROM fatture WHERE numero_fattura = {placeholder}", (numero_fattura,))
+            if cursor_write.fetchone()[0] > 0:
                 flash(f"❌ Esiste già una fattura con il numero '{numero_fattura}'. Scegli un numero diverso.", "danger")
                 return render_template("aggiungi_fattura.html", corsi=corsi, lezioni=lezioni_non_fatturate, clienti=clienti, now=datetime.now())
             
@@ -254,8 +268,8 @@ def aggiungi_fattura():
             id_corso_principale = ""
             if lezioni_selezionate:
                 placeholder = get_placeholder()
-                cursor.execute(f"SELECT id_corso FROM lezioni WHERE id = {placeholder} LIMIT 1", (lezioni_selezionate[0],))
-                corso_result = cursor.fetchone()
+                cursor_write.execute(f"SELECT id_corso FROM lezioni WHERE id = {placeholder} LIMIT 1", (lezioni_selezionate[0],))
+                corso_result = cursor_write.fetchone()
                 if corso_result:
                     id_corso_principale = corso_result['id_corso']
             
@@ -268,27 +282,27 @@ def aggiungi_fattura():
             print(f"DEBUG: file_pdf={file_pdf}, type={type(file_pdf)}")
             
             placeholder = get_placeholder()
-            cursor.execute(f"""
+            cursor_write.execute(f"""
                 INSERT INTO fatture (numero_fattura, id_corso, data_fattura, importo, tipo_fatturazione, note, file_pdf)
                 VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})
                 RETURNING id_fattura
             """, (str(numero_fattura), id_corso_principale, data_fattura, importo, str(tipo_fatturazione), note, file_pdf))
             
-            id_fattura = cursor.fetchone()[0]
+            id_fattura = cursor_write.fetchone()[0]
             
             mese_fatturato = datetime.strptime(data_fattura, "%Y-%m-%d").strftime("%Y-%m")
             tipo_fatturazione_val = 1  # 1 = completamente fatturato
             
             for id_lezione in lezioni_selezionate:
                 placeholder = get_placeholder()
-                cursor.execute(f"""
+                cursor_write.execute(f"""
                     UPDATE lezioni 
                     SET fatturato = {placeholder}, mese_fatturato = {placeholder}
                     WHERE id = {placeholder}
                 """, (tipo_fatturazione_val, mese_fatturato, id_lezione))
                 
                 placeholder = get_placeholder()
-                cursor.execute(f"""
+                cursor_write.execute(f"""
                     INSERT INTO fatture_lezioni (id_fattura, id_lezione)
                     VALUES ({placeholder}, {placeholder})
                 """, (id_fattura, id_lezione))
@@ -296,32 +310,32 @@ def aggiungi_fattura():
             # Determine corsi_selezionati from lezioni_selezionate
             placeholder = get_placeholder()
             placeholders = ','.join([placeholder] * len(lezioni_selezionate))
-            cursor.execute(f"""
+            cursor_write.execute(f"""
                 SELECT DISTINCT id_corso FROM lezioni 
                 WHERE id IN ({placeholders})
             """, lezioni_selezionate)
             
-            corsi_selezionati = [row['id_corso'] for row in cursor.fetchall()]
+            corsi_selezionati = [row['id_corso'] for row in cursor_write.fetchall()]
             
             for id_corso in corsi_selezionati:
                 placeholder = get_placeholder()
-                cursor.execute(f"""
+                cursor_write.execute(f"""
                     SELECT COUNT(*) as totale, 
                            SUM(CASE WHEN fatturato > 0 THEN 1 ELSE 0 END) as fatturate 
                     FROM lezioni 
                     WHERE id_corso = {placeholder}
                 """, (id_corso,))
                 
-                result = cursor.fetchone()
+                result = cursor_write.fetchone()
                 if result and result['totale'] > 0 and result['totale'] == result['fatturate']:
                     try:
                         placeholder = get_placeholder()
-                        cursor.execute(f"SELECT * FROM lezioni WHERE id_corso = {placeholder}", (id_corso,))
-                        lezioni = cursor.fetchall()
+                        cursor_write.execute(f"SELECT * FROM lezioni WHERE id_corso = {placeholder}", (id_corso,))
+                        lezioni = cursor_write.fetchall()
                         
                         for lezione in lezioni:
                             placeholder = get_placeholder()
-                            cursor.execute(f"""
+                            cursor_write.execute(f"""
                                 INSERT INTO archiviate (id_corso, materia, data, ora_inizio, ora_fine, luogo, compenso_orario, stato, fatturato, mese_fatturato)
                                 VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})
                             """, (
@@ -331,36 +345,39 @@ def aggiungi_fattura():
                             ))
                         
                         placeholder = get_placeholder()
-                        cursor.execute(f"SELECT * FROM corsi WHERE id_corso = {placeholder}", (id_corso,))
-                        corso = cursor.fetchone()
+                        cursor_write.execute(f"SELECT * FROM corsi WHERE id_corso = {placeholder}", (id_corso,))
+                        corso = cursor_write.fetchone()
                         
                         if corso:
                             data_archiviazione = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                             placeholder = get_placeholder()
-                            cursor.execute(f"""
+                            cursor_write.execute(f"""
                                 INSERT INTO corsi_archiviati (id_corso, nome, cliente, data_archiviazione)
                                 VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder})
                             """, (corso["id_corso"], corso["nome"], corso.get("cliente", ""), data_archiviazione))
                         
                         placeholder = get_placeholder()
-                        cursor.execute(f"DELETE FROM lezioni WHERE id_corso = {placeholder}", (id_corso,))
+                        cursor_write.execute(f"DELETE FROM lezioni WHERE id_corso = {placeholder}", (id_corso,))
                         
                         placeholder = get_placeholder()
-                        cursor.execute(f"DELETE FROM corsi WHERE id_corso = {placeholder}", (id_corso,))
+                        cursor_write.execute(f"DELETE FROM corsi WHERE id_corso = {placeholder}", (id_corso,))
                         
                         flash(f"✅ Corso '{id_corso}' completamente fatturato e archiviato automaticamente!", "success")
                     except Exception as e:
                         print(f"Errore durante l'archiviazione automatica del corso: {e}")
             
-            conn.commit()
+            conn_write.commit()
             flash("✅ Fattura aggiunta con successo!", "success")
             return redirect(url_for("fatture.index"))
             
         except Exception as e:
-            conn.rollback()
+            if conn_write:
+                conn_write.rollback()
             flash(f"❌ Errore durante l'aggiunta della fattura: {str(e)}", "danger")
+        finally:
+            if conn_write:
+                conn_write.close()
     
-    conn.close()
     return render_template("aggiungi_fattura.html", corsi=corsi, lezioni=lezioni_non_fatturate, clienti=clienti, now=datetime.now())
 
 @fatture_bp.route("/download_file/<filename>")
@@ -374,6 +391,7 @@ def download_file(filename):
 @login_required
 def elimina_fattura(id_fattura):
     """ Elimina una fattura e ripristina lo stato delle lezioni associate """
+    conn = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -408,9 +426,11 @@ def elimina_fattura(id_fattura):
         conn.commit()
         flash("✅ Fattura eliminata con successo!", "success")
     except Exception as e:
-        conn.rollback()
+        if conn:
+            conn.rollback()
         flash(f"❌ Errore durante l'eliminazione della fattura: {str(e)}", "danger")
     finally:
-        conn.close()
+        if conn:
+            conn.close()
     
     return redirect(url_for("fatture.index"))
