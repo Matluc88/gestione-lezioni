@@ -16,10 +16,10 @@ def resoconto_annuale():
         cursor = conn.cursor()
         
         cursor.execute("""
-            SELECT DISTINCT strftime('%Y', data) as anno 
+            SELECT DISTINCT extract_year(data) as anno 
             FROM lezioni 
             UNION 
-            SELECT DISTINCT strftime('%Y', data) as anno 
+            SELECT DISTINCT extract_year(data) as anno 
             FROM archiviate
             ORDER BY anno DESC
         """)
@@ -37,24 +37,24 @@ def resoconto_annuale():
         
         cursor.execute("""
             SELECT l.*, 
-                   strftime('%m', l.data) as mese,
+                   EXTRACT(MONTH FROM TO_DATE(l.data, 'YYYY-MM-DD'))::TEXT as mese,
                    COALESCE(c.cliente, ca.cliente, 'Sconosciuto') as cliente
             FROM lezioni l
             LEFT JOIN corsi c ON l.id_corso = c.id_corso
             LEFT JOIN corsi_archiviati ca ON l.id_corso = ca.id_corso
-            WHERE strftime('%Y', l.data) = ?
+            WHERE extract_year(l.data) = %s
         """, (anno_selezionato,))
         
         lezioni = cursor.fetchall()
         
         cursor.execute("""
             SELECT a.*, 
-                   strftime('%m', a.data) as mese,
+                   EXTRACT(MONTH FROM TO_DATE(a.data, 'YYYY-MM-DD'))::TEXT as mese,
                    COALESCE(c.cliente, ca.cliente, 'Sconosciuto') as cliente
             FROM archiviate a
             LEFT JOIN corsi c ON a.id_corso = c.id_corso
             LEFT JOIN corsi_archiviati ca ON a.id_corso = ca.id_corso
-            WHERE strftime('%Y', a.data) = ?
+            WHERE extract_year(a.data) = %s
         """, (anno_selezionato,))
         
         lezioni_archiviate = cursor.fetchall()
@@ -133,13 +133,13 @@ def resoconto_annuale():
         totali_per_anno = {}
         
         cursor.execute("""
-            SELECT l.*, strftime('%Y', l.data) as anno,
+            SELECT l.*, extract_year(l.data) as anno,
                    COALESCE(c.cliente, ca.cliente, 'Sconosciuto') as cliente
             FROM lezioni l
             LEFT JOIN corsi c ON l.id_corso = c.id_corso
             LEFT JOIN corsi_archiviati ca ON l.id_corso = ca.id_corso
             UNION ALL
-            SELECT a.*, strftime('%Y', a.data) as anno,
+            SELECT a.*, extract_year(a.data) as anno,
                    COALESCE(c.cliente, ca.cliente, 'Sconosciuto') as cliente
             FROM archiviate a
             LEFT JOIN corsi c ON a.id_corso = c.id_corso
