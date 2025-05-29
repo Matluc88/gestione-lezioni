@@ -24,7 +24,7 @@ def archivia_corso():
     try:
         with db_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM lezioni WHERE id_corso = ?", (id_corso,))
+            cursor.execute("SELECT * FROM lezioni WHERE id_corso = %s", (id_corso,))
             lezioni = cursor.fetchall()
 
             if not lezioni:
@@ -35,25 +35,25 @@ def archivia_corso():
             for lezione in lezioni:
                 cursor.execute("""
                     INSERT INTO archiviate (id_corso, materia, data, ora_inizio, ora_fine, luogo, compenso_orario, stato, fatturato, mese_fatturato)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
                     lezione["id_corso"], lezione["materia"], lezione["data"],
                     lezione["ora_inizio"], lezione["ora_fine"], lezione["luogo"],
                     lezione["compenso_orario"], lezione["stato"], lezione["fatturato"], lezione["mese_fatturato"]
                 ))
 
-            cursor.execute("SELECT * FROM corsi WHERE id_corso = ?", (id_corso,))
+            cursor.execute("SELECT * FROM corsi WHERE id_corso = %s", (id_corso,))
             corso = cursor.fetchone()
             
             if corso:
                 data_archiviazione = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 cursor.execute("""
                     INSERT INTO corsi_archiviati (id_corso, nome, data_archiviazione)
-                    VALUES (?, ?, ?)
+                    VALUES (%s, %s, %s)
                 """, (corso["id_corso"], corso["nome"], data_archiviazione))
             
-            cursor.execute("DELETE FROM lezioni WHERE id_corso = ?", (id_corso,))
-            cursor.execute("DELETE FROM corsi WHERE id_corso = ?", (id_corso,))
+            cursor.execute("DELETE FROM lezioni WHERE id_corso = %s", (id_corso,))
+            cursor.execute("DELETE FROM corsi WHERE id_corso = %s", (id_corso,))
             conn.commit()
 
         flash(f"✅ Corso '{id_corso}' e relative lezioni archiviate con successo!", "success")
@@ -89,7 +89,7 @@ def ripristina_lezioni():
         with db_connection() as conn:
             cursor = conn.cursor()
 
-            query_select = f"SELECT * FROM archiviate WHERE id IN ({','.join(['?'] * len(lezioni_da_ripristinare))})"
+            query_select = f"SELECT * FROM archiviate WHERE id IN ({','.join(['%s'] * len(lezioni_da_ripristinare))})"
             cursor.execute(query_select, lezioni_da_ripristinare)
             lezioni = cursor.fetchall()
 
@@ -100,14 +100,14 @@ def ripristina_lezioni():
             for lezione in lezioni:
                 cursor.execute("""
                     INSERT INTO lezioni (id_corso, materia, data, ora_inizio, ora_fine, luogo, compenso_orario, stato, fatturato, mese_fatturato)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
                     lezione["id_corso"], lezione["materia"], lezione["data"],
                     lezione["ora_inizio"], lezione["ora_fine"], lezione["luogo"],
                     lezione["compenso_orario"], lezione["stato"], lezione["fatturato"], lezione["mese_fatturato"]
                 ))
 
-            query_delete = f"DELETE FROM archiviate WHERE id IN ({','.join(['?'] * len(lezioni_da_ripristinare))})"
+            query_delete = f"DELETE FROM archiviate WHERE id IN ({','.join(['%s'] * len(lezioni_da_ripristinare))})"
             cursor.execute(query_delete, lezioni_da_ripristinare)
             conn.commit()
 
@@ -136,9 +136,9 @@ def elimina_corso_archiviato(id_corso):
         with db_connection() as conn:
             cursor = conn.cursor()
             
-            cursor.execute("DELETE FROM archiviate WHERE id_corso = ?", (id_corso,))
+            cursor.execute("DELETE FROM archiviate WHERE id_corso = %s", (id_corso,))
             
-            cursor.execute("DELETE FROM corsi_archiviati WHERE id_corso = ?", (id_corso,))
+            cursor.execute("DELETE FROM corsi_archiviati WHERE id_corso = %s", (id_corso,))
             conn.commit()
             
         flash(f"✅ Corso archiviato '{id_corso}' e relative lezioni eliminate con successo!", "success")
@@ -162,7 +162,7 @@ def elimina_lezioni_archiviate():
         with db_connection() as conn:
             cursor = conn.cursor()
             
-            query_delete = f"DELETE FROM archiviate WHERE id IN ({','.join(['?'] * len(lezioni_da_eliminare))})"
+            query_delete = f"DELETE FROM archiviate WHERE id IN ({','.join(['%s'] * len(lezioni_da_eliminare))})"
             cursor.execute(query_delete, lezioni_da_eliminare)
             conn.commit()
             
@@ -187,7 +187,7 @@ def elimina_lezioni_archiviate_ajax():
         with db_connection() as conn:
             cursor = conn.cursor()
             
-            query_delete = f"DELETE FROM archiviate WHERE id IN ({','.join(['?'] * len(lezioni_da_eliminare))})"
+            query_delete = f"DELETE FROM archiviate WHERE id IN ({','.join(['%s'] * len(lezioni_da_eliminare))})"
             cursor.execute(query_delete, lezioni_da_eliminare)
             conn.commit()
             

@@ -13,7 +13,7 @@ def dashboard():
         cursor = conn.cursor()
 
         # Recupera l'utente
-        cursor.execute("SELECT username FROM users WHERE id = ?", (current_user.id,))
+        cursor.execute("SELECT username FROM users WHERE id = %s", (current_user.id,))
         user = cursor.fetchone()
 
         # Filtro dai parametri GET
@@ -28,19 +28,19 @@ def dashboard():
         params = []
 
         if materia:
-            query += " AND materia LIKE ?"
+            query += " AND materia LIKE %s"
             params.append(f"%{materia}%")
         if data:
-            query += " AND data = ?"
+            query += " AND data = %s"
             params.append(data)
         if stato:
-            query += " AND stato = ?"
+            query += " AND stato = %s"
             params.append(stato)
         if luogo:
-            query += " AND luogo LIKE ?"
+            query += " AND luogo LIKE %s"
             params.append(f"%{luogo}%")
         if corso:
-            query += " AND id_corso = ?"
+            query += " AND id_corso = %s"
             params.append(corso)
 
         # Esegui query lezioni filtrate
@@ -51,7 +51,7 @@ def dashboard():
         corsi = cursor.fetchall()
         
         cursor.execute("""
-            SELECT strftime('%Y-%m', data) as mese, COUNT(*) as numero_lezioni
+            SELECT extract_year_month(data) as mese, COUNT(*) as numero_lezioni
             FROM lezioni
             GROUP BY mese
             ORDER BY mese
@@ -105,7 +105,7 @@ def aggiungi_lezione():
 
                     cursor.execute("""
                         INSERT INTO lezioni (id_corso, materia, data, ora_inizio, ora_fine, luogo, compenso_orario, stato)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                     """, (id_corso, materia, data, ora_inizio, ora_fine, luogo, compenso_orario, stato))
                 conn.commit()
 
@@ -149,8 +149,8 @@ def modifica_lezione(lezione_id):
 
             cursor.execute("""
                 UPDATE lezioni
-                SET materia=?, data=?, ora_inizio=?, ora_fine=?, luogo=?, compenso_orario=?, stato=?
-                WHERE id=?
+                SET materia=%s, data=%s, ora_inizio=%s, ora_fine=%s, luogo=%s, compenso_orario=%s, stato=%s
+                WHERE id=%s
             """, (nuova_materia, nuova_data, nuova_ora_inizio, nuova_ora_fine, nuovo_luogo, nuovo_compenso_orario, nuovo_stato, lezione_id))
             conn.commit()
             flash("Lezione modificata con successo.", "success")
@@ -163,7 +163,7 @@ def modifica_lezione(lezione_id):
             
             return redirect(url_for("lezioni.dashboard", **filter_params))
 
-        cursor.execute("SELECT * FROM lezioni WHERE id=?", (lezione_id,))
+        cursor.execute("SELECT * FROM lezioni WHERE id=%s", (lezione_id,))
         lezione = cursor.fetchone()
 
     return render_template("modifica_lezione.html", lezione=lezione)
@@ -181,7 +181,7 @@ def elimina_lezione(id_lezione):
             
         with db_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("DELETE FROM lezioni WHERE id = ?", (id_lezione,))
+            cursor.execute("DELETE FROM lezioni WHERE id = %s", (id_lezione,))
             conn.commit()
 
         flash("✅ Lezione eliminata con successo!", "success")
@@ -199,7 +199,7 @@ def elimina_lezione(id_lezione):
 def completa_lezione(id_lezione):
     with db_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute("UPDATE lezioni SET stato = 'Completato' WHERE id = ?", (id_lezione,))
+        cursor.execute("UPDATE lezioni SET stato = 'Completato' WHERE id = %s", (id_lezione,))
         conn.commit()
 
     flash("✅ Lezione segnata come completata!", "success")
@@ -257,33 +257,33 @@ def compenso():
         params = []
         
         if cliente_filtro:
-            query += " AND (c.cliente = ? OR ca.cliente = ?)"
+            query += " AND (c.cliente = %s OR ca.cliente = %s)"
             params.append(cliente_filtro)
             params.append(cliente_filtro)
             
         params_archiviate = []
             
         if corso_filtro:
-            query += " AND l.id_corso = ?"
+            query += " AND l.id_corso = %s"
             params.append(corso_filtro)
             
         if periodo_filtro != "tutti":
             oggi = datetime.now().strftime("%Y-%m-%d")
             
             if periodo_filtro == "giorno" and data_inizio:
-                query += " AND l.data = ?"
+                query += " AND l.data = %s"
                 params.append(data_inizio)
             elif periodo_filtro == "settimana" and data_inizio:
-                query += " AND strftime('%Y-%W', l.data) = strftime('%Y-%W', ?)"
+                query += " AND extract_year_week(l.data) = extract_year_week(%s)"
                 params.append(data_inizio)
             elif periodo_filtro == "mese" and data_inizio:
-                query += " AND strftime('%Y-%m', l.data) = ?"
+                query += " AND extract_year_month(l.data) = %s"
                 params.append(data_inizio)
             elif periodo_filtro == "anno" and data_inizio:
-                query += " AND strftime('%Y', l.data) = ?"
+                query += " AND extract_year(l.data) = %s"
                 params.append(data_inizio)
             elif periodo_filtro == "intervallo" and data_inizio and data_fine:
-                query += " AND l.data BETWEEN ? AND ?"
+                query += " AND l.data BETWEEN %s AND %s"
                 params.append(data_inizio)
                 params.append(data_fine)
         
@@ -302,29 +302,29 @@ def compenso():
         params_archiviate = []
         
         if cliente_filtro:
-            query_archiviate += " AND (c.cliente = ? OR ca.cliente = ?)"
+            query_archiviate += " AND (c.cliente = %s OR ca.cliente = %s)"
             params_archiviate.append(cliente_filtro)
             params_archiviate.append(cliente_filtro)
             
         if corso_filtro:
-            query_archiviate += " AND l.id_corso = ?"
+            query_archiviate += " AND l.id_corso = %s"
             params_archiviate.append(corso_filtro)
             
         if periodo_filtro != "tutti":
             if periodo_filtro == "giorno" and data_inizio:
-                query_archiviate += " AND l.data = ?"
+                query_archiviate += " AND l.data = %s"
                 params_archiviate.append(data_inizio)
             elif periodo_filtro == "settimana" and data_inizio:
-                query_archiviate += " AND strftime('%Y-%W', l.data) = strftime('%Y-%W', ?)"
+                query_archiviate += " AND extract_year_week(l.data) = extract_year_week(%s)"
                 params_archiviate.append(data_inizio)
             elif periodo_filtro == "mese" and data_inizio:
-                query_archiviate += " AND strftime('%Y-%m', l.data) = ?"
+                query_archiviate += " AND extract_year_month(l.data) = %s"
                 params_archiviate.append(data_inizio)
             elif periodo_filtro == "anno" and data_inizio:
-                query_archiviate += " AND strftime('%Y', l.data) = ?"
+                query_archiviate += " AND extract_year(l.data) = %s"
                 params_archiviate.append(data_inizio)
             elif periodo_filtro == "intervallo" and data_inizio and data_fine:
-                query_archiviate += " AND l.data BETWEEN ? AND ?"
+                query_archiviate += " AND l.data BETWEEN %s AND %s"
                 params_archiviate.append(data_inizio)
                 params_archiviate.append(data_fine)
         
@@ -417,7 +417,7 @@ def elimina_lezioni():
 
         with db_connection() as conn:
             cursor = conn.cursor()
-            query = f"DELETE FROM lezioni WHERE id IN ({','.join(['?'] * len(ids))})"
+            query = f"DELETE FROM lezioni WHERE id IN ({','.join(['%s'] * len(ids))})"
             cursor.execute(query, ids)
             conn.commit()
         return "", 200
@@ -506,21 +506,21 @@ def archivia_lezioni():
         with db_connection() as conn:
             cursor = conn.cursor()
             
-            query_select = f"SELECT * FROM lezioni WHERE id IN ({','.join(['?'] * len(ids))})"
+            query_select = f"SELECT * FROM lezioni WHERE id IN ({','.join(['%s'] * len(ids))})"
             cursor.execute(query_select, ids)
             lezioni = cursor.fetchall()
             
             for lezione in lezioni:
                 cursor.execute("""
                     INSERT INTO archiviate (id_corso, materia, data, ora_inizio, ora_fine, luogo, compenso_orario, stato, fatturato, mese_fatturato)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
                     lezione["id_corso"], lezione["materia"], lezione["data"],
                     lezione["ora_inizio"], lezione["ora_fine"], lezione["luogo"],
                     lezione["compenso_orario"], lezione["stato"], lezione["fatturato"], lezione["mese_fatturato"]
                 ))
             
-            query_delete = f"DELETE FROM lezioni WHERE id IN ({','.join(['?'] * len(ids))})"
+            query_delete = f"DELETE FROM lezioni WHERE id IN ({','.join(['%s'] * len(ids))})"
             cursor.execute(query_delete, ids)
             conn.commit()
             
