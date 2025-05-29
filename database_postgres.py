@@ -113,6 +113,30 @@ def ensure_database():
             
             print("✅ Colonna 'ore_fatturate' aggiunta con successo alla tabella 'archiviate'")
         
+        # Verifica e aggiunge la colonna numero_fattura alla tabella fatture
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.columns 
+                WHERE table_schema = 'public' AND table_name = 'fatture' AND column_name = 'numero_fattura'
+            )
+        """)
+        
+        if not cursor.fetchone()[0]:
+            print("La colonna 'numero_fattura' non esiste nella tabella 'fatture'. Aggiunta in corso...")
+            cursor.execute("ALTER TABLE fatture ADD COLUMN numero_fattura TEXT")
+            
+            # Inizializza numero_fattura con id_fattura per le fatture esistenti
+            cursor.execute("""
+                UPDATE fatture 
+                SET numero_fattura = id_fattura::TEXT
+                WHERE numero_fattura IS NULL
+            """)
+            
+            # Aggiunge il vincolo UNIQUE
+            cursor.execute("ALTER TABLE fatture ADD CONSTRAINT numero_fattura_unique UNIQUE (numero_fattura)")
+            
+            print("✅ Colonna 'numero_fattura' aggiunta con successo alla tabella 'fatture'")
+        
         conn.commit()
     
     print("✅ Database verificato e aggiornato con successo!")

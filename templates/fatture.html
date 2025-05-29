@@ -75,7 +75,7 @@
           <table class="table table-striped table-hover">
             <thead>
               <tr>
-                <th>ID</th>
+                <th>Numero</th>
                 <th>Corso</th>
                 <th>Data Fattura</th>
                 <th>Importo</th>
@@ -88,21 +88,21 @@
             <tbody>
               {% for fattura in fatture %}
               <tr>
-                <td>{{ fattura[0] }}</td>
                 <td>{{ fattura[1] }}</td>
                 <td>{{ fattura[2] }}</td>
-                <td>€{{ fattura[3] }}</td>
-                <td>{{ fattura[4] }}</td>
+                <td>{{ fattura[3] }}</td>
+                <td>€{{ fattura[4] }}</td>
+                <td>{{ fattura[5] }}</td>
                 <td>
-                  {% if fattura[6] %}
-                    {{ fattura[6] }}
+                  {% if fattura[7] %}
+                    {{ fattura[7] }}
                   {% else %}
                     <span class="text-danger">Nessuna lezione</span>
                   {% endif %}
                 </td>
                 <td>
-                  {% if fattura[5] %}
-                    <a href="{{ url_for('fatture.download_file', filename=fattura[5]) }}" class="btn btn-custom btn-sm">Scarica PDF</a>
+                  {% if fattura[6] %}
+                    <a href="{{ url_for('fatture.download_file', filename=fattura[6]) }}" class="btn btn-custom btn-sm">Scarica PDF</a>
                   {% else %}
                     <span class="text-danger">Nessun file</span>
                   {% endif %}

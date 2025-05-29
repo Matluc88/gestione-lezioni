@@ -30,7 +30,7 @@ def get_fatture():
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute('''
-        SELECT f.id_fattura, f.id_corso, f.data_fattura, f.importo, f.tipo_fatturazione,
+        SELECT f.id_fattura, f.numero_fattura, f.id_corso, f.data_fattura, f.importo, f.tipo_fatturazione,
                f.file_pdf, GROUP_CONCAT(l.data, ', ') AS lezioni_fatturate
         FROM fatture f
         LEFT JOIN fatture_lezioni fl ON f.id_fattura = fl.id_fattura
@@ -259,7 +259,7 @@ def aggiungi_fattura():
             
             placeholder = get_placeholder()
             cursor.execute(f"""
-                INSERT INTO fatture (id_fattura, id_corso, data_fattura, importo, tipo_fatturazione, note, file_pdf)
+                INSERT INTO fatture (numero_fattura, id_corso, data_fattura, importo, tipo_fatturazione, note, file_pdf)
                 VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})
                 RETURNING id_fattura
             """, (str(numero_fattura), id_corso_principale, data_fattura, importo, str(tipo_fatturazione), note, file_pdf))
