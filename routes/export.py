@@ -286,16 +286,22 @@ def importa_csv():
             stream = file.stream.read().decode("utf-8").splitlines()
             csv_reader = csv.DictReader(stream)
 
-            colonne_necessarie = [
-                "id_corso", "materia", "data", "ora_inizio", "ora_fine",
+            colonne_minime = [
+                "id_corso", "materia", "data", "ora_inizio", "ora_fine"
+            ]
+            colonne_opzionali = [
                 "luogo", "compenso_orario", "stato", "fatturato", "mese_fatturato", "ore_fatturate"
             ]
             fieldnames = csv_reader.fieldnames or []
-            colonne_mancanti = [col for col in colonne_necessarie if col not in fieldnames]
+            colonne_mancanti = [col for col in colonne_minime if col not in fieldnames]
             if colonne_mancanti:
-                flash(f"❌ Colonne mancanti nel CSV: {', '.join(colonne_mancanti)}", "danger")
+                flash(f"❌ Colonne essenziali mancanti nel CSV: {', '.join(colonne_mancanti)}", "danger")
                 filter_params = {k: v for k, v in request.args.items() if v}
                 return redirect(url_for("lezioni.dashboard", **filter_params))
+                
+            colonne_opzionali_mancanti = [col for col in colonne_opzionali if col not in fieldnames]
+            if colonne_opzionali_mancanti:
+                flash(f"ℹ️ Colonne opzionali mancanti (verranno usati valori predefiniti): {', '.join(colonne_opzionali_mancanti)}", "info")
 
             with db_connection() as conn:
                 cursor = conn.cursor()
@@ -303,55 +309,62 @@ def importa_csv():
                 for row in csv_reader:
                     try:
                         id_corso = row.get("id_corso", "").strip()
-                        cliente = row.get("cliente", "").strip() if "cliente" in row else ""
+                        materia = row.get("materia", "").strip()
+                        data_originale = row.get("data", "").strip()
+                        ora_inizio = correggi_orario(row.get("ora_inizio", "").strip())
+                        ora_fine = correggi_orario(row.get("ora_fine", "").strip())
+                        
+                        if not ora_inizio or not ora_fine:
+                            flash(f"❌ Orario non valido per la lezione '{materia}'", "danger")
+                            continue
+                            
+                        luogo = row.get("luogo", "").strip() if "luogo" in fieldnames else ""
+                        compenso_orario = row.get("compenso_orario", "0").strip() if "compenso_orario" in fieldnames else "0"
+                        stato = row.get("stato", "Pianificato").strip() if "stato" in fieldnames else "Pianificato"
+                        cliente = row.get("cliente", "").strip() if "cliente" in fieldnames else ""
+                        
+                        try:
+                            fatturato_val = int(row.get("fatturato", "0").strip()) if "fatturato" in fieldnames else 0
+                        except ValueError:
+                            fatturato_val = 0
+                            
+                        mese_fatturato = row.get("mese_fatturato", "").strip() if "mese_fatturato" in fieldnames else None
+                        if mese_fatturato == "":
+                            mese_fatturato = None
+                            
+                        cursor.execute("""
+                            SELECT calcola_ore(%s, %s) as ore_totali
+                        """, (ora_inizio, ora_fine))
+                        ore_totali = cursor.fetchone()["ore_totali"]
+                        
+                        ore_fatturate = ore_totali if fatturato_val > 0 else 0.0
+                        
+                        data_convertita = parse(data_originale).strftime("%Y-%m-%d") if data_originale else None
+                        
                         cursor.execute("SELECT COUNT(*) FROM corsi WHERE id_corso = %s", (id_corso,))
                         if cursor.fetchone()[0] == 0:
                             nome_corso = f"Corso {id_corso}"
                             cursor.execute("INSERT INTO corsi (id_corso, nome, cliente) VALUES (%s, %s, %s)", 
                                           (id_corso, nome_corso, cliente))
-
-                        data_originale = row.get("data", "").strip()
-                        data_convertita = parse(data_originale).strftime("%Y-%m-%d") if data_originale else None
-
-                        ora_inizio = correggi_orario(row.get("ora_inizio", "").strip())
-                        ora_fine = correggi_orario(row.get("ora_fine", "").strip())
-                        if not ora_inizio or not ora_fine:
-                            flash(f"❌ Orario non valido per la lezione '{row.get('materia', '')}'", "danger")
-                            continue
-
-                        try:
-                            fatturato_val = int(row.get("fatturato", "0").strip())
-                        except ValueError:
-                            fatturato_val = 0
-
-                        try:
-                            ore_fatturate = float(row.get("ore_fatturate", 0))
-                        except ValueError:
-                            ore_fatturate = 0.0
-                            
-                        if fatturato_val > 0 and ore_fatturate == 0:
-                            cursor.execute("""
-                                SELECT calcola_ore(%s, %s) as ore_totali
-                            """, (ora_inizio, ora_fine))
-                            ore_totali = cursor.fetchone()["ore_totali"]
-                            ore_fatturate = ore_totali
                             
                         cursor.execute("""
                             INSERT INTO lezioni (id_corso, materia, data, ora_inizio, ora_fine, luogo, compenso_orario, stato, fatturato, mese_fatturato, ore_fatturate)
                             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                         """, (
                             id_corso,
-                            row.get("materia", "").strip(),
+                            materia,
                             data_convertita,
                             ora_inizio,
                             ora_fine,
-                            row.get("luogo", "").strip(),
-                            float(row.get("compenso_orario", 0)),
-                            row.get("stato", "").strip(),
+                            luogo,
+                            float(compenso_orario.replace(',', '.')) if compenso_orario else 0.0,
+                            stato,
                             fatturato_val,
-                            row.get("mese_fatturato", "").strip() or None,
+                            mese_fatturato,
                             ore_fatturate
                         ))
+                        
+                        print(f"✅ Lezione importata: {materia} - {data_convertita} ({ora_inizio}-{ora_fine})")
 
                     except Exception as e:
                         print(f"❌ Errore durante l'inserimento della riga: {row} → {str(e)}")
