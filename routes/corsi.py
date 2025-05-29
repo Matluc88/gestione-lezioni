@@ -19,12 +19,14 @@ def aggiungi_corso():
 
         with db_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT COUNT(*) FROM corsi WHERE id_corso = %s", (id_corso,))
+            placeholder = get_placeholder()
+            cursor.execute(f"SELECT COUNT(*) FROM corsi WHERE id_corso = {placeholder}", (id_corso,))
             if cursor.fetchone()[0] > 0:
                 flash("⚠️ Questo corso esiste già!", "warning")
                 return redirect(url_for("corsi.aggiungi_corso"))
 
-            cursor.execute("INSERT INTO corsi (id_corso, nome, cliente) VALUES (%s, %s, %s)", 
+            placeholder = get_placeholder()
+            cursor.execute(f"INSERT INTO corsi (id_corso, nome, cliente) VALUES ({placeholder}, {placeholder}, {placeholder})", 
                           (id_corso, nome, cliente))
             conn.commit()
 
@@ -39,12 +41,13 @@ def aggiungi_corso():
 def elimina_corso(id_corso):
     with db_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT id_corso FROM corsi WHERE id_corso = %s", (id_corso,))
+        placeholder = get_placeholder()
+        cursor.execute(f"SELECT id_corso FROM corsi WHERE id_corso = {placeholder}", (id_corso,))
         corso = cursor.fetchone()
 
         if corso:
-            cursor.execute("DELETE FROM lezioni WHERE id_corso = %s", (id_corso,))
-            cursor.execute("DELETE FROM corsi WHERE id_corso = %s", (id_corso,))
+            cursor.execute(f"DELETE FROM lezioni WHERE id_corso = {placeholder}", (id_corso,))
+            cursor.execute(f"DELETE FROM corsi WHERE id_corso = {placeholder}", (id_corso,))
             conn.commit()
             flash("🗑️ Corso e lezioni associate eliminati con successo!", "success")
         else:
@@ -64,7 +67,8 @@ def dettagli_corso(corso):
     with db_connection() as conn:
         cursor = conn.cursor()
         
-        cursor.execute("SELECT nome FROM corsi WHERE id_corso = %s", (corso,))
+        placeholder = get_placeholder()
+        cursor.execute(f"SELECT nome FROM corsi WHERE id_corso = {placeholder}", (corso,))
         corso_info = cursor.fetchone()
         if not corso_info:
             flash("Corso non trovato!", "danger")
@@ -72,32 +76,36 @@ def dettagli_corso(corso):
             
         nome_corso = corso_info["nome"]
         
-        cursor.execute("SELECT COUNT(*) FROM lezioni WHERE id_corso = %s", (corso,))
+        cursor.execute(f"SELECT COUNT(*) FROM lezioni WHERE id_corso = {placeholder}", (corso,))
         esiste = cursor.fetchone()[0]
         ha_lezioni = esiste > 0
 
+        placeholder = get_placeholder()
         def ore(sql):
             cursor.execute(sql, (corso,))
             return cursor.fetchone()[0] or 0
 
-        ore_totali = ore("""
+        ore_totali = ore(f"""
             SELECT SUM(calcola_ore(ora_inizio, ora_fine))
-            FROM lezioni WHERE id_corso = %s
+            FROM lezioni WHERE id_corso = {placeholder}
         """)
 
-        ore_completate = ore("""
+        placeholder = get_placeholder()
+        ore_completate = ore(f"""
             SELECT SUM(calcola_ore(ora_inizio, ora_fine))
-            FROM lezioni WHERE id_corso = %s AND stato = 'Completato'
+            FROM lezioni WHERE id_corso = {placeholder} AND stato = 'Completato'
         """)
 
-        ore_fatturate = ore("""
+        placeholder = get_placeholder()
+        ore_fatturate = ore(f"""
             SELECT SUM(ore_fatturate)
-            FROM lezioni WHERE id_corso = %s AND fatturato > 0
+            FROM lezioni WHERE id_corso = {placeholder} AND fatturato > 0
         """)
 
-        cursor.execute("""
+        placeholder = get_placeholder()
+        cursor.execute(f"""
             SELECT SUM(ore_fatturate * compenso_orario)
-            FROM lezioni WHERE id_corso = %s AND fatturato > 0
+            FROM lezioni WHERE id_corso = {placeholder} AND fatturato > 0
         """, (corso,))
         totale_fatturato_lordo = cursor.fetchone()[0] or 0
 
@@ -122,7 +130,8 @@ def lista_corsi():
         corsi = []
         for corso_row in corsi_rows:
             corso = dict(corso_row)
-            cursor.execute("""
+            placeholder = get_placeholder()
+            cursor.execute(f"""
                 SELECT 
                     COUNT(*) as totale,
                     SUM(CASE WHEN fatturato = 1 THEN 1 ELSE 0 END) as completamente_fatturate,
@@ -130,7 +139,7 @@ def lista_corsi():
                     SUM(calcola_ore(ora_inizio, ora_fine)) as ore_totali,
                     SUM(ore_fatturate) as ore_fatturate
                 FROM lezioni 
-                WHERE id_corso = %s
+                WHERE id_corso = {placeholder}
             """, (corso['id_corso'],))
             
             result = cursor.fetchone()
@@ -157,7 +166,8 @@ def lista_corsi():
 def modifica_corso(id_corso):
     with db_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM corsi WHERE id_corso = %s", (id_corso,))
+        placeholder = get_placeholder()
+        cursor.execute(f"SELECT * FROM corsi WHERE id_corso = {placeholder}", (id_corso,))
         corso = cursor.fetchone()
         
         if not corso:
@@ -172,7 +182,8 @@ def modifica_corso(id_corso):
                 flash("⚠️ Il nome del corso è obbligatorio!", "danger")
                 return render_template("modifica_corso.html", corso=corso)
             
-            cursor.execute("UPDATE corsi SET nome = %s, cliente = %s WHERE id_corso = %s", 
+            placeholder = get_placeholder()
+            cursor.execute(f"UPDATE corsi SET nome = {placeholder}, cliente = {placeholder} WHERE id_corso = {placeholder}", 
                           (nuovo_nome, nuovo_cliente, id_corso))
             conn.commit()
             
@@ -188,7 +199,8 @@ def archivia_corso(id_corso):
     try:
         with db_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM lezioni WHERE id_corso = %s", (id_corso,))
+            placeholder = get_placeholder()
+            cursor.execute(f"SELECT * FROM lezioni WHERE id_corso = {placeholder}", (id_corso,))
             lezioni = cursor.fetchall()
 
             if not lezioni:
@@ -196,9 +208,10 @@ def archivia_corso(id_corso):
                 return redirect(url_for("corsi.lista_corsi"))
 
             for lezione in lezioni:
-                cursor.execute("""
+                placeholder = get_placeholder()
+                cursor.execute(f"""
                     INSERT INTO archiviate (id_corso, materia, data, ora_inizio, ora_fine, luogo, compenso_orario, stato, fatturato, mese_fatturato, ore_fatturate)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})
                 """, (
                     lezione["id_corso"], lezione["materia"], lezione["data"],
                     lezione["ora_inizio"], lezione["ora_fine"], lezione["luogo"],
@@ -206,18 +219,21 @@ def archivia_corso(id_corso):
                     lezione["mese_fatturato"], lezione.get("ore_fatturate", 0)
                 ))
 
-            cursor.execute("SELECT * FROM corsi WHERE id_corso = %s", (id_corso,))
+            placeholder = get_placeholder()
+            cursor.execute(f"SELECT * FROM corsi WHERE id_corso = {placeholder}", (id_corso,))
             corso = cursor.fetchone()
             
             if corso:
                 data_archiviazione = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                cursor.execute("""
+                placeholder = get_placeholder()
+                cursor.execute(f"""
                     INSERT INTO corsi_archiviati (id_corso, nome, cliente, data_archiviazione)
-                    VALUES (%s, %s, %s, %s)
+                    VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder})
                 """, (corso["id_corso"], corso["nome"], corso.get("cliente", ""), data_archiviazione))
             
-            cursor.execute("DELETE FROM lezioni WHERE id_corso = %s", (id_corso,))
-            cursor.execute("DELETE FROM corsi WHERE id_corso = %s", (id_corso,))
+            placeholder = get_placeholder()
+            cursor.execute(f"DELETE FROM lezioni WHERE id_corso = {placeholder}", (id_corso,))
+            cursor.execute(f"DELETE FROM corsi WHERE id_corso = {placeholder}", (id_corso,))
             conn.commit()
 
         flash(f"✅ Corso '{id_corso}' e relative lezioni archiviate con successo!", "success")
@@ -243,12 +259,13 @@ def elimina_corsi_multipli():
             corsi_eliminati = 0
             
             for id_corso in corsi_selezionati:
-                cursor.execute("SELECT id_corso FROM corsi WHERE id_corso = %s", (id_corso,))
+                placeholder = get_placeholder()
+                cursor.execute(f"SELECT id_corso FROM corsi WHERE id_corso = {placeholder}", (id_corso,))
                 corso = cursor.fetchone()
                 
                 if corso:
-                    cursor.execute("DELETE FROM lezioni WHERE id_corso = %s", (id_corso,))
-                    cursor.execute("DELETE FROM corsi WHERE id_corso = %s", (id_corso,))
+                    cursor.execute(f"DELETE FROM lezioni WHERE id_corso = {placeholder}", (id_corso,))
+                    cursor.execute(f"DELETE FROM corsi WHERE id_corso = {placeholder}", (id_corso,))
                     corsi_eliminati += 1
             
             conn.commit()
@@ -279,14 +296,16 @@ def archivia_corsi_multipli():
             corsi_archiviati = 0
             
             for id_corso in corsi_selezionati:
-                cursor.execute("SELECT * FROM lezioni WHERE id_corso = %s", (id_corso,))
+                placeholder = get_placeholder()
+                cursor.execute(f"SELECT * FROM lezioni WHERE id_corso = {placeholder}", (id_corso,))
                 lezioni = cursor.fetchall()
                 
                 if lezioni:
                     for lezione in lezioni:
-                        cursor.execute("""
+                        placeholder = get_placeholder()
+                        cursor.execute(f"""
                             INSERT INTO archiviate (id_corso, materia, data, ora_inizio, ora_fine, luogo, compenso_orario, stato, fatturato, mese_fatturato, ore_fatturate)
-                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                            VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})
                         """, (
                             lezione["id_corso"], lezione["materia"], lezione["data"],
                             lezione["ora_inizio"], lezione["ora_fine"], lezione["luogo"],
@@ -294,18 +313,21 @@ def archivia_corsi_multipli():
                             lezione["mese_fatturato"], lezione.get("ore_fatturate", 0)
                         ))
                     
-                    cursor.execute("SELECT * FROM corsi WHERE id_corso = %s", (id_corso,))
+                    placeholder = get_placeholder()
+                    cursor.execute(f"SELECT * FROM corsi WHERE id_corso = {placeholder}", (id_corso,))
                     corso = cursor.fetchone()
                     
                     if corso:
                         data_archiviazione = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                        cursor.execute("""
+                        placeholder = get_placeholder()
+                        cursor.execute(f"""
                             INSERT INTO corsi_archiviati (id_corso, nome, cliente, data_archiviazione)
-                            VALUES (%s, %s, %s, %s)
+                            VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder})
                         """, (corso["id_corso"], corso["nome"], corso.get("cliente", ""), data_archiviazione))
                     
-                    cursor.execute("DELETE FROM lezioni WHERE id_corso = %s", (id_corso,))
-                    cursor.execute("DELETE FROM corsi WHERE id_corso = %s", (id_corso,))
+                    placeholder = get_placeholder()
+                    cursor.execute(f"DELETE FROM lezioni WHERE id_corso = {placeholder}", (id_corso,))
+                    cursor.execute(f"DELETE FROM corsi WHERE id_corso = {placeholder}", (id_corso,))
                     corsi_archiviati += 1
             
             conn.commit()

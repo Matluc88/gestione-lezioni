@@ -257,9 +257,10 @@ def aggiungi_fattura():
             print(f"DEBUG: note={note}, type={type(note)}")
             print(f"DEBUG: file_pdf={file_pdf}, type={type(file_pdf)}")
             
-            cursor.execute("""
+            placeholder = get_placeholder()
+            cursor.execute(f"""
                 INSERT INTO fatture (id_fattura, id_corso, data_fattura, importo, tipo_fatturazione, note, file_pdf)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})
                 RETURNING id_fattura
             """, (str(numero_fattura), id_corso_principale, data_fattura, importo, str(tipo_fatturazione), note, file_pdf))
             
