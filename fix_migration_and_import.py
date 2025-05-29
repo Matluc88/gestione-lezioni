@@ -230,16 +230,21 @@ def importa_csv(file_path, delimiter=';'):
             
             reader = csv.DictReader(f, delimiter=delimiter)
             
-            colonne_richieste = ['id_corso', 'materia', 'data', 'ora_inizio', 'ora_fine', 
-                                'luogo', 'compenso_orario', 'stato', 'fatturato']
+            colonne_minime = ['id_corso', 'materia', 'data', 'ora_inizio', 'ora_fine']
+            colonne_opzionali = ['luogo', 'compenso_orario', 'stato', 'fatturato', 'mese_fatturato', 'ore_fatturate', 'cliente']
             
             colonne_csv = reader.fieldnames
-            colonne_mancanti = [col for col in colonne_richieste if col not in colonne_csv]
+            colonne_mancanti = [col for col in colonne_minime if col not in colonne_csv]
             
             if colonne_mancanti:
-                print(f"❌ Colonne mancanti nel CSV: {', '.join(colonne_mancanti)}")
+                print(f"❌ Colonne essenziali mancanti nel CSV: {', '.join(colonne_mancanti)}")
                 print("Colonne disponibili:", ", ".join(colonne_csv))
                 return False
+                
+            print(f"Colonne trovate: {', '.join(colonne_csv)}")
+            colonne_opzionali_mancanti = [col for col in colonne_opzionali if col not in colonne_csv]
+            if colonne_opzionali_mancanti:
+                print(f"ℹ️ Colonne opzionali mancanti (verranno usati valori predefiniti): {', '.join(colonne_opzionali_mancanti)}")
             
             print(f"Colonne trovate: {', '.join(colonne_csv)}")
             
@@ -257,13 +262,20 @@ def importa_csv(file_path, delimiter=';'):
                     data_str = row['data'].strip() if row.get('data') else None
                     ora_inizio = row['ora_inizio'].strip() if row.get('ora_inizio') else None
                     ora_fine = row['ora_fine'].strip() if row.get('ora_fine') else None
-                    luogo = row['luogo'].strip() if row.get('luogo') else None
-                    compenso_orario = row['compenso_orario'].strip() if row.get('compenso_orario') else "0"
-                    stato = row['stato'].strip() if row.get('stato') else "Pianificato"
-                    fatturato = row['fatturato'].strip() if row.get('fatturato') else "0"
-                    mese_fatturato = row['mese_fatturato'].strip() if row.get('mese_fatturato') else None
-                    ore_fatturate = row['ore_fatturate'].strip() if row.get('ore_fatturate') else "0"
-                    cliente = row['cliente'].strip() if row.get('cliente') else None
+                    
+                    luogo = row['luogo'].strip() if 'luogo' in colonne_csv and row.get('luogo') else None
+                    compenso_orario = row['compenso_orario'].strip() if 'compenso_orario' in colonne_csv and row.get('compenso_orario') else "0"
+                    stato = row['stato'].strip() if 'stato' in colonne_csv and row.get('stato') else "Pianificato"
+                    fatturato = row['fatturato'].strip() if 'fatturato' in colonne_csv and row.get('fatturato') else "0"
+                    mese_fatturato = row['mese_fatturato'].strip() if 'mese_fatturato' in colonne_csv and row.get('mese_fatturato') else None
+                    cliente = row['cliente'].strip() if 'cliente' in colonne_csv and row.get('cliente') else None
+                    
+                    # Gestione ore_fatturate
+                    ore_fatturate = "0"
+                    if 'ore_fatturate' in colonne_csv and row.get('ore_fatturate'):
+                        ore_fatturate = row['ore_fatturate'].strip()
+                    elif fatturato == "1":
+                        ore_fatturate = str(calcola_ore(ora_inizio, ora_fine))
                     
                     if not id_corso or not materia or not data_str or not ora_inizio or not ora_fine:
                         print(f"⚠️ Riga {righe_totali}: Dati obbligatori mancanti, saltata")
