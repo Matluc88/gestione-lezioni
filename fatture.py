@@ -61,10 +61,11 @@ def index():
         cursor = conn.cursor()
 
         # Recupera le lezioni FATTURATE
-        cursor.execute("""
+        placeholder = get_placeholder()
+        cursor.execute(f"""
             SELECT id, data, ora_inizio, ora_fine
             FROM lezioni
-            WHERE id_corso = ? AND fatturato = 1
+            WHERE id_corso = {placeholder} AND fatturato = 1
             ORDER BY data
         """, (corso_scelto,))
         lezioni_fatturate_rows = cursor.fetchall()
@@ -76,21 +77,21 @@ def index():
         ]
 
         # Recupera il numero totale di lezioni del corso
-        cursor.execute("""
-            SELECT COUNT(*) as totale FROM lezioni WHERE id_corso = ?
+        cursor.execute(f"""
+            SELECT COUNT(*) as totale FROM lezioni WHERE id_corso = {placeholder}
         """, (corso_scelto,))
         totale_lezioni = cursor.fetchone()["totale"]
         
-        cursor.execute("""
-            SELECT COUNT(*) as non_fatturate FROM lezioni WHERE id_corso = ? AND fatturato = 0
+        cursor.execute(f"""
+            SELECT COUNT(*) as non_fatturate FROM lezioni WHERE id_corso = {placeholder} AND fatturato = 0
         """, (corso_scelto,))
         lezioni_non_fatturate = cursor.fetchone()["non_fatturate"]
         
-        cursor.execute("""
+        cursor.execute(f"""
             SELECT f.id_fattura, f.data_fattura, f.importo, f.tipo_fatturazione, COUNT(fl.id_lezione) as num_lezioni
             FROM fatture f
             LEFT JOIN fatture_lezioni fl ON f.id_fattura = fl.id_fattura
-            WHERE f.id_corso = ?
+            WHERE f.id_corso = {placeholder}
             GROUP BY f.id_fattura
             ORDER BY f.data_fattura DESC
         """, (corso_scelto,))
@@ -147,18 +148,20 @@ def fattura_corso():
 
         if fattura_tutto:
             # Fatturare tutte le lezioni del corso
-            cursor.execute("""
+            placeholder = get_placeholder()
+            cursor.execute(f"""
                 UPDATE lezioni 
-                SET fatturato = 1, mese_fatturato = ?
-                WHERE id_corso = ? AND fatturato = 0
+                SET fatturato = 1, mese_fatturato = {placeholder}
+                WHERE id_corso = {placeholder} AND fatturato = 0
             """, (mese_corrente, corso_scelto))
         else:
             # Fatturare solo le lezioni selezionate
             for id_lezione in lezioni_selezionate:
-                cursor.execute("""
+                placeholder = get_placeholder()
+                cursor.execute(f"""
                     UPDATE lezioni 
-                    SET fatturato = 1, mese_fatturato = ?
-                    WHERE id = ?
+                    SET fatturato = 1, mese_fatturato = {placeholder}
+                    WHERE id = {placeholder}
                 """, (mese_corrente, id_lezione))
 
         conn.commit()
@@ -168,10 +171,11 @@ def fattura_corso():
         return redirect(url_for("fatture.index", corso_scelto=corso_scelto))
 
     # Recupera le lezioni NON fatturate
-    cursor.execute("""
+    placeholder = get_placeholder()
+    cursor.execute(f"""
         SELECT id, data, ora_inizio, ora_fine
         FROM lezioni
-        WHERE id_corso = ? AND fatturato = 0
+        WHERE id_corso = {placeholder} AND fatturato = 0
         ORDER BY data
     """, (corso_scelto,))
     lezioni_non_fatturate_rows = cursor.fetchall()
@@ -239,7 +243,8 @@ def aggiungi_fattura():
             # Determine id_corso_principale from lezioni_selezionate
             id_corso_principale = ""
             if lezioni_selezionate:
-                cursor.execute("SELECT id_corso FROM lezioni WHERE id = ? LIMIT 1", (lezioni_selezionate[0],))
+                placeholder = get_placeholder()
+                cursor.execute(f"SELECT id_corso FROM lezioni WHERE id = {placeholder} LIMIT 1", (lezioni_selezionate[0],))
                 corso_result = cursor.fetchone()
                 if corso_result:
                     id_corso_principale = corso_result['id_corso']
@@ -264,62 +269,73 @@ def aggiungi_fattura():
             tipo_fatturazione_val = 1  # 1 = completamente fatturato
             
             for id_lezione in lezioni_selezionate:
-                cursor.execute("""
+                placeholder = get_placeholder()
+                cursor.execute(f"""
                     UPDATE lezioni 
-                    SET fatturato = ?, mese_fatturato = ?
-                    WHERE id = ?
+                    SET fatturato = {placeholder}, mese_fatturato = {placeholder}
+                    WHERE id = {placeholder}
                 """, (tipo_fatturazione_val, mese_fatturato, id_lezione))
                 
-                cursor.execute("""
+                placeholder = get_placeholder()
+                cursor.execute(f"""
                     INSERT INTO fatture_lezioni (id_fattura, id_lezione)
-                    VALUES (?, ?)
+                    VALUES ({placeholder}, {placeholder})
                 """, (id_fattura, id_lezione))
             
             # Determine corsi_selezionati from lezioni_selezionate
-            cursor.execute("""
+            placeholder = get_placeholder()
+            placeholders = ','.join([placeholder] * len(lezioni_selezionate))
+            cursor.execute(f"""
                 SELECT DISTINCT id_corso FROM lezioni 
-                WHERE id IN ({})
-            """.format(','.join(['?'] * len(lezioni_selezionate))), lezioni_selezionate)
+                WHERE id IN ({placeholders})
+            """, lezioni_selezionate)
             
             corsi_selezionati = [row['id_corso'] for row in cursor.fetchall()]
             
             for id_corso in corsi_selezionati:
-                cursor.execute("""
+                placeholder = get_placeholder()
+                cursor.execute(f"""
                     SELECT COUNT(*) as totale, 
                            SUM(CASE WHEN fatturato > 0 THEN 1 ELSE 0 END) as fatturate 
                     FROM lezioni 
-                    WHERE id_corso = ?
+                    WHERE id_corso = {placeholder}
                 """, (id_corso,))
                 
                 result = cursor.fetchone()
                 if result and result['totale'] > 0 and result['totale'] == result['fatturate']:
                     try:
-                        cursor.execute("SELECT * FROM lezioni WHERE id_corso = ?", (id_corso,))
+                        placeholder = get_placeholder()
+                        cursor.execute(f"SELECT * FROM lezioni WHERE id_corso = {placeholder}", (id_corso,))
                         lezioni = cursor.fetchall()
                         
                         for lezione in lezioni:
-                            cursor.execute("""
+                            placeholder = get_placeholder()
+                            cursor.execute(f"""
                                 INSERT INTO archiviate (id_corso, materia, data, ora_inizio, ora_fine, luogo, compenso_orario, stato, fatturato, mese_fatturato)
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})
                             """, (
                                 lezione["id_corso"], lezione["materia"], lezione["data"],
                                 lezione["ora_inizio"], lezione["ora_fine"], lezione["luogo"],
                                 lezione["compenso_orario"], lezione["stato"], lezione["fatturato"], lezione["mese_fatturato"]
                             ))
                         
-                        cursor.execute("SELECT * FROM corsi WHERE id_corso = ?", (id_corso,))
+                        placeholder = get_placeholder()
+                        cursor.execute(f"SELECT * FROM corsi WHERE id_corso = {placeholder}", (id_corso,))
                         corso = cursor.fetchone()
                         
                         if corso:
                             data_archiviazione = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                            cursor.execute("""
+                            placeholder = get_placeholder()
+                            cursor.execute(f"""
                                 INSERT INTO corsi_archiviati (id_corso, nome, cliente, data_archiviazione)
-                                VALUES (?, ?, ?, ?)
+                                VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder})
                             """, (corso["id_corso"], corso["nome"], corso.get("cliente", ""), data_archiviazione))
                         
-                        cursor.execute("DELETE FROM lezioni WHERE id_corso = ?", (id_corso,))
+                        placeholder = get_placeholder()
+                        cursor.execute(f"DELETE FROM lezioni WHERE id_corso = {placeholder}", (id_corso,))
                         
-                        cursor.execute("DELETE FROM corsi WHERE id_corso = ?", (id_corso,))
+                        placeholder = get_placeholder()
+                        cursor.execute(f"DELETE FROM corsi WHERE id_corso = {placeholder}", (id_corso,))
                         
                         flash(f"✅ Corso '{id_corso}' completamente fatturato e archiviato automaticamente!", "success")
                     except Exception as e:
@@ -351,22 +367,27 @@ def elimina_fattura(id_fattura):
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        cursor.execute("SELECT file_pdf FROM fatture WHERE id_fattura = ?", (id_fattura,))
+        placeholder = get_placeholder()
+        cursor.execute(f"SELECT file_pdf FROM fatture WHERE id_fattura = {placeholder}", (id_fattura,))
         fattura = cursor.fetchone()
         
-        cursor.execute("SELECT id_lezione FROM fatture_lezioni WHERE id_fattura = ?", (id_fattura,))
+        placeholder = get_placeholder()
+        cursor.execute(f"SELECT id_lezione FROM fatture_lezioni WHERE id_fattura = {placeholder}", (id_fattura,))
         lezioni = [row["id_lezione"] for row in cursor.fetchall()]
         
         for id_lezione in lezioni:
-            cursor.execute("""
+            placeholder = get_placeholder()
+            cursor.execute(f"""
                 UPDATE lezioni 
                 SET fatturato = 0, mese_fatturato = NULL
-                WHERE id = ?
+                WHERE id = {placeholder}
             """, (id_lezione,))
         
-        cursor.execute("DELETE FROM fatture_lezioni WHERE id_fattura = ?", (id_fattura,))
+        placeholder = get_placeholder()
+        cursor.execute(f"DELETE FROM fatture_lezioni WHERE id_fattura = {placeholder}", (id_fattura,))
         
-        cursor.execute("DELETE FROM fatture WHERE id_fattura = ?", (id_fattura,))
+        placeholder = get_placeholder()
+        cursor.execute(f"DELETE FROM fatture WHERE id_fattura = {placeholder}", (id_fattura,))
         
         if fattura and fattura["file_pdf"]:
             file_path = os.path.join(UPLOAD_FOLDER, fattura["file_pdf"])
