@@ -37,6 +37,7 @@ def aggiorna_db():
     try:
         cursor.execute("ALTER TABLE lezioni ADD COLUMN fatturato INTEGER DEFAULT 0")
         cursor.execute("ALTER TABLE lezioni ADD COLUMN mese_fatturato TEXT DEFAULT NULL")
+        cursor.execute("ALTER TABLE lezioni ADD COLUMN ore_fatturate REAL DEFAULT 0")
     except sqlite3.OperationalError:
         print("Le colonne 'fatturato' e 'mese_fatturato' esistono già in 'lezioni'.")
 
@@ -44,8 +45,18 @@ def aggiorna_db():
     try:
         cursor.execute("ALTER TABLE archiviate ADD COLUMN fatturato INTEGER DEFAULT 0")
         cursor.execute("ALTER TABLE archiviate ADD COLUMN mese_fatturato TEXT DEFAULT NULL")
+        cursor.execute("ALTER TABLE archiviate ADD COLUMN ore_fatturate REAL DEFAULT 0")
     except sqlite3.OperationalError:
         print("Le colonne 'fatturato' e 'mese_fatturato' esistono già in 'archiviate'.")
+    
+    # Aggiunta colonna numero_fattura a fatture
+    try:
+        cursor.execute("ALTER TABLE fatture ADD COLUMN numero_fattura TEXT")
+        # Inizializza numero_fattura con id_fattura per le fatture esistenti
+        cursor.execute("UPDATE fatture SET numero_fattura = id_fattura WHERE numero_fattura IS NULL")
+        print("✅ Colonna 'numero_fattura' aggiunta con successo alla tabella 'fatture'")
+    except sqlite3.OperationalError:
+        print("La colonna 'numero_fattura' esiste già nella tabella 'fatture'.")
 
     conn.commit()
     conn.close()
@@ -104,7 +115,8 @@ if __name__ == "__main__":
                 compenso_orario REAL NOT NULL,
                 stato TEXT NOT NULL,
                 fatturato INTEGER DEFAULT 0,
-                mese_fatturato TEXT DEFAULT NULL
+                mese_fatturato TEXT DEFAULT NULL,
+                ore_fatturate REAL DEFAULT 0
             )
             """)
 
@@ -120,7 +132,8 @@ if __name__ == "__main__":
                 compenso_orario REAL NOT NULL,
                 stato TEXT NOT NULL,
                 fatturato INTEGER DEFAULT 0,
-                mese_fatturato TEXT DEFAULT NULL
+                mese_fatturato TEXT DEFAULT NULL,
+                ore_fatturate REAL DEFAULT 0
             )
             """)
 
