@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
 from flask_login import login_required
-from database import db_connection
+from db_utils import db_connection, get_placeholder
 from datetime import datetime
 
 archivio_bp = Blueprint('archivio', __name__)
