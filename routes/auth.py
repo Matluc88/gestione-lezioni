@@ -3,7 +3,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import check_password_hash
 from forms import LoginForm
 from models.user import User, load_user_from_db
-from database import db_connection
+from db_utils import db_connection, get_placeholder
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -16,10 +16,11 @@ def login():
     if form.validate_on_submit():
         username = form.username.data
         password = form.password.data
+        placeholder = get_placeholder()
 
         with db_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
+            cursor.execute(f"SELECT * FROM users WHERE username = {placeholder}", (username,))
             user = cursor.fetchone()
 
         if user and check_password_hash(user["password"], password):

@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from datetime import datetime, timedelta
-from database import db_connection
+from db_utils import db_connection, get_placeholder
 from utils import correggi_orario, calcola_ore
 
 lezioni_bp = Blueprint('lezioni', __name__)
