@@ -229,6 +229,12 @@ def aggiungi_fattura():
             note = request.form.get("note", "")
             lezioni_selezionate = request.form.getlist("lezioni")
             
+            placeholder = get_placeholder()
+            cursor.execute(f"SELECT COUNT(*) FROM fatture WHERE numero_fattura = {placeholder}", (numero_fattura,))
+            if cursor.fetchone()[0] > 0:
+                flash(f"❌ Esiste già una fattura con il numero '{numero_fattura}'. Scegli un numero diverso.", "danger")
+                return render_template("aggiungi_fattura.html", corsi=corsi, lezioni=lezioni_non_fatturate, clienti=clienti, now=datetime.now())
+            
             file_pdf = ""  # Valore predefinito vuoto invece di None
             if 'file_pdf' in request.files:
                 file = request.files['file_pdf']
