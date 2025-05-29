@@ -29,12 +29,33 @@ def ensure_database():
             compenso_orario REAL NOT NULL,
             stato TEXT NOT NULL,
             fatturato INTEGER DEFAULT 0,
-            mese_fatturato TEXT DEFAULT NULL
+            mese_fatturato TEXT DEFAULT NULL,
+            ore_fatturate REAL DEFAULT 0
         )
         """)
         print("✅ Tabella 'lezioni' creata con successo")
     else:
         print("✅ La tabella 'lezioni' esiste già")
+        
+        cursor.execute("PRAGMA table_info(lezioni)")
+        columns = cursor.fetchall()
+        column_names = [column[1] for column in columns]
+        
+        if 'ore_fatturate' not in column_names:
+            print("La colonna 'ore_fatturate' non esiste nella tabella 'lezioni'. Aggiunta in corso...")
+            cursor.execute("ALTER TABLE lezioni ADD COLUMN ore_fatturate REAL DEFAULT 0")
+            
+            cursor.execute("""
+                UPDATE lezioni 
+                SET ore_fatturate = (
+                    (strftime('%s', '2000-01-01 ' || substr('0' || ora_fine, -5)) - 
+                    strftime('%s', '2000-01-01 ' || substr('0' || ora_inizio, -5))
+                ) / 3600.0
+                WHERE fatturato = 1
+            """)
+            print("✅ Colonna 'ore_fatturate' aggiunta con successo alla tabella 'lezioni'")
+        else:
+            print("✅ La tabella 'lezioni' esiste già con la colonna 'ore_fatturate'")
     
     cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='archiviate'")
     if not cursor.fetchone():
@@ -51,12 +72,33 @@ def ensure_database():
             compenso_orario REAL NOT NULL,
             stato TEXT NOT NULL,
             fatturato INTEGER DEFAULT 0,
-            mese_fatturato TEXT DEFAULT NULL
+            mese_fatturato TEXT DEFAULT NULL,
+            ore_fatturate REAL DEFAULT 0
         )
         """)
         print("✅ Tabella 'archiviate' creata con successo")
     else:
         print("✅ La tabella 'archiviate' esiste già")
+        
+        cursor.execute("PRAGMA table_info(archiviate)")
+        columns = cursor.fetchall()
+        column_names = [column[1] for column in columns]
+        
+        if 'ore_fatturate' not in column_names:
+            print("La colonna 'ore_fatturate' non esiste nella tabella 'archiviate'. Aggiunta in corso...")
+            cursor.execute("ALTER TABLE archiviate ADD COLUMN ore_fatturate REAL DEFAULT 0")
+            
+            cursor.execute("""
+                UPDATE archiviate 
+                SET ore_fatturate = (
+                    (strftime('%s', '2000-01-01 ' || substr('0' || ora_fine, -5)) - 
+                    strftime('%s', '2000-01-01 ' || substr('0' || ora_inizio, -5))
+                ) / 3600.0
+                WHERE fatturato = 1
+            """)
+            print("✅ Colonna 'ore_fatturate' aggiunta con successo alla tabella 'archiviate'")
+        else:
+            print("✅ La tabella 'archiviate' esiste già con la colonna 'ore_fatturate'")
     
     cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='fatture'")
     if not cursor.fetchone():
