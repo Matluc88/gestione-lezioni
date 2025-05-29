@@ -9,7 +9,8 @@ CREATE TABLE lezioni (
     compenso_orario REAL NOT NULL,
     stato TEXT NOT NULL,
     fatturato INTEGER DEFAULT 0, 
-    mese_fatturato TEXT DEFAULT NULL
+    mese_fatturato TEXT DEFAULT NULL,
+    ore_fatturate REAL DEFAULT 0
 );
 CREATE TABLE archiviate (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -20,10 +21,14 @@ CREATE TABLE archiviate (
     ora_fine TEXT NOT NULL,
     luogo TEXT NOT NULL,
     compenso_orario REAL NOT NULL,
-    stato TEXT NOT NULL
-, fatturato INTEGER DEFAULT 0, mese_fatturato TEXT DEFAULT NULL);
+    stato TEXT NOT NULL,
+    fatturato INTEGER DEFAULT 0, 
+    mese_fatturato TEXT DEFAULT NULL,
+    ore_fatturate REAL DEFAULT 0
+);
 CREATE TABLE fatture (
     id_fattura INTEGER PRIMARY KEY AUTOINCREMENT,
+    numero_fattura TEXT NOT NULL UNIQUE,
     id_corso TEXT,
     data_fattura TEXT NOT NULL,
     importo REAL NOT NULL,

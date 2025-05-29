@@ -30,7 +30,7 @@ def get_fatture():
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute('''
-        SELECT f.id_fattura, f.id_corso, f.data_fattura, f.importo, f.tipo_fatturazione,
+        SELECT f.id_fattura, f.numero_fattura, f.id_corso, f.data_fattura, f.importo, f.tipo_fatturazione,
                f.file_pdf, GROUP_CONCAT(l.data, ', ') AS lezioni_fatturate
         FROM fatture f
         LEFT JOIN fatture_lezioni fl ON f.id_fattura = fl.id_fattura
@@ -229,6 +229,12 @@ def aggiungi_fattura():
             note = request.form.get("note", "")
             lezioni_selezionate = request.form.getlist("lezioni")
             
+            placeholder = get_placeholder()
+            cursor.execute(f"SELECT COUNT(*) FROM fatture WHERE numero_fattura = {placeholder}", (numero_fattura,))
+            if cursor.fetchone()[0] > 0:
+                flash(f"❌ Esiste già una fattura con il numero '{numero_fattura}'. Scegli un numero diverso.", "danger")
+                return render_template("aggiungi_fattura.html", corsi=corsi, lezioni=lezioni_non_fatturate, clienti=clienti, now=datetime.now())
+            
             file_pdf = ""  # Valore predefinito vuoto invece di None
             if 'file_pdf' in request.files:
                 file = request.files['file_pdf']
@@ -259,7 +265,7 @@ def aggiungi_fattura():
             
             placeholder = get_placeholder()
             cursor.execute(f"""
-                INSERT INTO fatture (id_fattura, id_corso, data_fattura, importo, tipo_fatturazione, note, file_pdf)
+                INSERT INTO fatture (numero_fattura, id_corso, data_fattura, importo, tipo_fatturazione, note, file_pdf)
                 VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})
                 RETURNING id_fattura
             """, (str(numero_fattura), id_corso_principale, data_fattura, importo, str(tipo_fatturazione), note, file_pdf))
