@@ -14,10 +14,16 @@ from routes.archivio import archivio_bp
 from routes.calendario import calendario_bp
 from routes.export import export_bp
 from routes.resoconto import resoconto_bp
-from ensure_db import ensure_database
 
 # Carica variabili ambiente
 load_dotenv()
+
+if os.environ.get("DATABASE_URL") and "postgresql" in os.environ.get("DATABASE_URL"):
+    print("Utilizzo database PostgreSQL...")
+    from database_postgres import ensure_database
+else:
+    print("Utilizzo database SQLite...")
+    from ensure_db import ensure_database
 
 print("Verifica e inizializzazione del database...")
 ensure_database()

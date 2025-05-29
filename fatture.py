@@ -1,9 +1,9 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required
-import sqlite3
-from datetime import datetime
 import os
+from datetime import datetime
 from werkzeug.utils import secure_filename
+from database import db_connection, get_db_connection
 
 fatture_bp = Blueprint('fatture', __name__, url_prefix='/fatture')
 
@@ -15,13 +15,6 @@ print(f"✅ Cartella per le fatture verificata: {UPLOAD_FOLDER}")
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-def get_db_connection():
-    """ Crea una connessione al database SQLite """
-    DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "lezioni.db")
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
 
 def get_corsi():
     """ Recupera la lista di corsi disponibili nel database """
@@ -261,10 +254,11 @@ def aggiungi_fattura():
             
             cursor.execute("""
                 INSERT INTO fatture (id_fattura, id_corso, data_fattura, importo, tipo_fatturazione, note, file_pdf)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                RETURNING id_fattura
             """, (str(numero_fattura), id_corso_principale, data_fattura, importo, str(tipo_fatturazione), note, file_pdf))
             
-            id_fattura = cursor.lastrowid
+            id_fattura = cursor.fetchone()[0]
             
             mese_fatturato = datetime.strptime(data_fattura, "%Y-%m-%d").strftime("%Y-%m")
             tipo_fatturazione_val = 1  # 1 = completamente fatturato
