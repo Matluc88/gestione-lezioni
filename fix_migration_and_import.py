@@ -270,12 +270,9 @@ def importa_csv(file_path, delimiter=';'):
                     mese_fatturato = row['mese_fatturato'].strip() if 'mese_fatturato' in colonne_csv and row.get('mese_fatturato') else None
                     cliente = row['cliente'].strip() if 'cliente' in colonne_csv and row.get('cliente') else None
                     
-                    # Gestione ore_fatturate
-                    ore_fatturate = "0"
-                    if 'ore_fatturate' in colonne_csv and row.get('ore_fatturate'):
-                        ore_fatturate = row['ore_fatturate'].strip()
-                    elif fatturato == "1":
-                        ore_fatturate = str(calcola_ore(ora_inizio, ora_fine))
+                    ore_lezione = calcola_ore(ora_inizio, ora_fine)
+                    
+                    ore_fatturate = str(ore_lezione) if fatturato == "1" else "0"
                     
                     if not id_corso or not materia or not data_str or not ora_inizio or not ora_fine:
                         print(f"⚠️ Riga {righe_totali}: Dati obbligatori mancanti, saltata")
