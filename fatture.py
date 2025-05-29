@@ -3,7 +3,7 @@ from flask_login import login_required
 import os
 from datetime import datetime
 from werkzeug.utils import secure_filename
-from database import db_connection, get_db_connection
+from db_utils import db_connection, get_db_connection, get_placeholder
 
 fatture_bp = Blueprint('fatture', __name__, url_prefix='/fatture')
 

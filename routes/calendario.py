@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template
 from flask_login import login_required
-from database import db_connection
+from db_utils import db_connection, get_placeholder
 
 calendario_bp = Blueprint('calendario', __name__)
 
