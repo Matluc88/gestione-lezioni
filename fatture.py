@@ -29,9 +29,13 @@ def get_fatture():
     """ Recupera tutte le fatture emesse """
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute('''
+    
+    from db_utils import get_group_concat_function
+    group_concat_func = get_group_concat_function()
+    
+    cursor.execute(f'''
         SELECT f.id_fattura, f.numero_fattura, f.id_corso, f.data_fattura, f.importo, f.tipo_fatturazione,
-               f.file_pdf, GROUP_CONCAT(l.data, ', ') AS lezioni_fatturate
+               f.file_pdf, {group_concat_func}(l.data, ', ') AS lezioni_fatturate
         FROM fatture f
         LEFT JOIN fatture_lezioni fl ON f.id_fattura = fl.id_fattura
         LEFT JOIN lezioni l ON fl.id_lezione = l.id

@@ -13,3 +13,7 @@ else:
 def get_placeholder():
     """Restituisce il placeholder corretto per il database in uso (%s per PostgreSQL, ? per SQLite)"""
     return "%s" if USE_POSTGRES else "?"
+
+def get_group_concat_function():
+    """Restituisce la funzione di concatenazione di gruppo corretta per il database in uso (string_agg per PostgreSQL, GROUP_CONCAT per SQLite)"""
+    return "string_agg" if USE_POSTGRES else "GROUP_CONCAT"
