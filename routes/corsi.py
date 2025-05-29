@@ -188,7 +188,7 @@ def archivia_corso(id_corso):
     try:
         with db_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM lezioni WHERE id_corso = ?", (id_corso,))
+            cursor.execute("SELECT * FROM lezioni WHERE id_corso = %s", (id_corso,))
             lezioni = cursor.fetchall()
 
             if not lezioni:
@@ -279,7 +279,7 @@ def archivia_corsi_multipli():
             corsi_archiviati = 0
             
             for id_corso in corsi_selezionati:
-                cursor.execute("SELECT * FROM lezioni WHERE id_corso = ?", (id_corso,))
+                cursor.execute("SELECT * FROM lezioni WHERE id_corso = %s", (id_corso,))
                 lezioni = cursor.fetchall()
                 
                 if lezioni:
