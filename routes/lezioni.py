@@ -1,6 +1,6 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
-from datetime import datetime
+from datetime import datetime, timedelta
 from database import db_connection
 from utils import correggi_orario, calcola_ore
 
@@ -425,6 +425,75 @@ def elimina_lezioni():
         print("Errore eliminazione multipla:", e)
         return "Errore interno", 500
 
+
+@lezioni_bp.route("/cerca_lezioni_vocale", methods=["POST"])
+@login_required
+def cerca_lezioni_vocale():
+    """Cerca lezioni in base a una query vocale"""
+    try:
+        data = request.json
+        query = data.get('query', '').lower()
+        
+        data_cercata = None
+        
+        oggi = datetime.now().strftime("%Y-%m-%d")
+        
+        if "oggi" in query:
+            data_cercata = oggi
+        elif "domani" in query:
+            data_cercata = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
+        elif "ieri" in query:
+            data_cercata = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+        else:
+            mesi = {
+                "gennaio": "01", "febbraio": "02", "marzo": "03", "aprile": "04",
+                "maggio": "05", "giugno": "06", "luglio": "07", "agosto": "08",
+                "settembre": "09", "ottobre": "10", "novembre": "11", "dicembre": "12"
+            }
+            
+            for mese, numero in mesi.items():
+                if mese in query:
+                    for i in range(1, 32):
+                        if f" {i} {mese}" in query or f" {i}{mese}" in query:
+                            anno = datetime.now().year
+                            for anno_possibile in range(anno-1, anno+2):
+                                if str(anno_possibile) in query:
+                                    anno = anno_possibile
+                                    break
+                            
+                            giorno = f"0{i}" if i < 10 else str(i)
+                            data_cercata = f"{anno}-{numero}-{giorno}"
+                            break
+        
+        if not data_cercata:
+            return jsonify({"success": False, "message": "Nessuna data riconosciuta nella query"})
+        
+        with db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT l.*, c.nome as nome_corso
+                FROM lezioni l
+                LEFT JOIN corsi c ON l.id_corso = c.id_corso
+                WHERE l.data = %s
+                ORDER BY l.ora_inizio
+            """, (data_cercata,))
+            
+            lezioni = cursor.fetchall()
+            
+            lezioni_json = []
+            for lezione in lezioni:
+                lezione_dict = dict(lezione)
+                lezioni_json.append(lezione_dict)
+            
+            return jsonify({
+                "success": True,
+                "lezioni": lezioni_json,
+                "data": data_cercata
+            })
+    
+    except Exception as e:
+        print(f"Errore nella ricerca vocale: {e}")
+        return jsonify({"success": False, "message": f"Errore: {str(e)}"})
 
 @lezioni_bp.route("/archivia_lezioni", methods=["POST"])
 @login_required

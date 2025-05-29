@@ -19,12 +19,12 @@ def aggiungi_corso():
 
         with db_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT COUNT(*) FROM corsi WHERE id_corso = ?", (id_corso,))
+            cursor.execute("SELECT COUNT(*) FROM corsi WHERE id_corso = %s", (id_corso,))
             if cursor.fetchone()[0] > 0:
                 flash("⚠️ Questo corso esiste già!", "warning")
                 return redirect(url_for("corsi.aggiungi_corso"))
 
-            cursor.execute("INSERT INTO corsi (id_corso, nome, cliente) VALUES (?, ?, ?)", 
+            cursor.execute("INSERT INTO corsi (id_corso, nome, cliente) VALUES (%s, %s, %s)", 
                           (id_corso, nome, cliente))
             conn.commit()
 
@@ -39,12 +39,12 @@ def aggiungi_corso():
 def elimina_corso(id_corso):
     with db_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT id_corso FROM corsi WHERE id_corso = ?", (id_corso,))
+        cursor.execute("SELECT id_corso FROM corsi WHERE id_corso = %s", (id_corso,))
         corso = cursor.fetchone()
 
         if corso:
-            cursor.execute("DELETE FROM lezioni WHERE id_corso = ?", (id_corso,))
-            cursor.execute("DELETE FROM corsi WHERE id_corso = ?", (id_corso,))
+            cursor.execute("DELETE FROM lezioni WHERE id_corso = %s", (id_corso,))
+            cursor.execute("DELETE FROM corsi WHERE id_corso = %s", (id_corso,))
             conn.commit()
             flash("🗑️ Corso e lezioni associate eliminati con successo!", "success")
         else:
@@ -64,7 +64,7 @@ def dettagli_corso(corso):
     with db_connection() as conn:
         cursor = conn.cursor()
         
-        cursor.execute("SELECT nome FROM corsi WHERE id_corso = ?", (corso,))
+        cursor.execute("SELECT nome FROM corsi WHERE id_corso = %s", (corso,))
         corso_info = cursor.fetchone()
         if not corso_info:
             flash("Corso non trovato!", "danger")
@@ -72,7 +72,7 @@ def dettagli_corso(corso):
             
         nome_corso = corso_info["nome"]
         
-        cursor.execute("SELECT COUNT(*) FROM lezioni WHERE id_corso = ?", (corso,))
+        cursor.execute("SELECT COUNT(*) FROM lezioni WHERE id_corso = %s", (corso,))
         esiste = cursor.fetchone()[0]
         ha_lezioni = esiste > 0
 
@@ -81,25 +81,23 @@ def dettagli_corso(corso):
             return cursor.fetchone()[0] or 0
 
         ore_totali = ore("""
-            SELECT SUM((strftime('%s', '2000-01-01 ' || substr('0' || ora_fine, -5)) -
-                       strftime('%s', '2000-01-01 ' || substr('0' || ora_inizio, -5))) / 3600.0)
-            FROM lezioni WHERE id_corso = ?
+            SELECT SUM(calcola_ore(ora_inizio, ora_fine))
+            FROM lezioni WHERE id_corso = %s
         """)
 
         ore_completate = ore("""
-            SELECT SUM((strftime('%s', '2000-01-01 ' || substr('0' || ora_fine, -5)) -
-                       strftime('%s', '2000-01-01 ' || substr('0' || ora_inizio, -5))) / 3600.0)
-            FROM lezioni WHERE id_corso = ? AND stato = 'Completato'
+            SELECT SUM(calcola_ore(ora_inizio, ora_fine))
+            FROM lezioni WHERE id_corso = %s AND stato = 'Completato'
         """)
 
         ore_fatturate = ore("""
             SELECT SUM(ore_fatturate)
-            FROM lezioni WHERE id_corso = ? AND fatturato > 0
+            FROM lezioni WHERE id_corso = %s AND fatturato > 0
         """)
 
         cursor.execute("""
             SELECT SUM(ore_fatturate * compenso_orario)
-            FROM lezioni WHERE id_corso = ? AND fatturato > 0
+            FROM lezioni WHERE id_corso = %s AND fatturato > 0
         """, (corso,))
         totale_fatturato_lordo = cursor.fetchone()[0] or 0
 
@@ -129,10 +127,10 @@ def lista_corsi():
                     COUNT(*) as totale,
                     SUM(CASE WHEN fatturato = 1 THEN 1 ELSE 0 END) as completamente_fatturate,
                     SUM(CASE WHEN fatturato = 2 THEN 1 ELSE 0 END) as parzialmente_fatturate,
-                    SUM((strftime('%s', '2000-01-01 ' || ora_fine) - strftime('%s', '2000-01-01 ' || ora_inizio)) / 3600.0) as ore_totali,
+                    SUM(calcola_ore(ora_inizio, ora_fine)) as ore_totali,
                     SUM(ore_fatturate) as ore_fatturate
                 FROM lezioni 
-                WHERE id_corso = ?
+                WHERE id_corso = %s
             """, (corso['id_corso'],))
             
             result = cursor.fetchone()
@@ -159,7 +157,7 @@ def lista_corsi():
 def modifica_corso(id_corso):
     with db_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM corsi WHERE id_corso = ?", (id_corso,))
+        cursor.execute("SELECT * FROM corsi WHERE id_corso = %s", (id_corso,))
         corso = cursor.fetchone()
         
         if not corso:
@@ -174,7 +172,7 @@ def modifica_corso(id_corso):
                 flash("⚠️ Il nome del corso è obbligatorio!", "danger")
                 return render_template("modifica_corso.html", corso=corso)
             
-            cursor.execute("UPDATE corsi SET nome = ?, cliente = ? WHERE id_corso = ?", 
+            cursor.execute("UPDATE corsi SET nome = %s, cliente = %s WHERE id_corso = %s", 
                           (nuovo_nome, nuovo_cliente, id_corso))
             conn.commit()
             
@@ -200,7 +198,7 @@ def archivia_corso(id_corso):
             for lezione in lezioni:
                 cursor.execute("""
                     INSERT INTO archiviate (id_corso, materia, data, ora_inizio, ora_fine, luogo, compenso_orario, stato, fatturato, mese_fatturato, ore_fatturate)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
                     lezione["id_corso"], lezione["materia"], lezione["data"],
                     lezione["ora_inizio"], lezione["ora_fine"], lezione["luogo"],
@@ -208,18 +206,18 @@ def archivia_corso(id_corso):
                     lezione["mese_fatturato"], lezione.get("ore_fatturate", 0)
                 ))
 
-            cursor.execute("SELECT * FROM corsi WHERE id_corso = ?", (id_corso,))
+            cursor.execute("SELECT * FROM corsi WHERE id_corso = %s", (id_corso,))
             corso = cursor.fetchone()
             
             if corso:
                 data_archiviazione = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 cursor.execute("""
                     INSERT INTO corsi_archiviati (id_corso, nome, cliente, data_archiviazione)
-                    VALUES (?, ?, ?, ?)
+                    VALUES (%s, %s, %s, %s)
                 """, (corso["id_corso"], corso["nome"], corso.get("cliente", ""), data_archiviazione))
             
-            cursor.execute("DELETE FROM lezioni WHERE id_corso = ?", (id_corso,))
-            cursor.execute("DELETE FROM corsi WHERE id_corso = ?", (id_corso,))
+            cursor.execute("DELETE FROM lezioni WHERE id_corso = %s", (id_corso,))
+            cursor.execute("DELETE FROM corsi WHERE id_corso = %s", (id_corso,))
             conn.commit()
 
         flash(f"✅ Corso '{id_corso}' e relative lezioni archiviate con successo!", "success")
@@ -245,12 +243,12 @@ def elimina_corsi_multipli():
             corsi_eliminati = 0
             
             for id_corso in corsi_selezionati:
-                cursor.execute("SELECT id_corso FROM corsi WHERE id_corso = ?", (id_corso,))
+                cursor.execute("SELECT id_corso FROM corsi WHERE id_corso = %s", (id_corso,))
                 corso = cursor.fetchone()
                 
                 if corso:
-                    cursor.execute("DELETE FROM lezioni WHERE id_corso = ?", (id_corso,))
-                    cursor.execute("DELETE FROM corsi WHERE id_corso = ?", (id_corso,))
+                    cursor.execute("DELETE FROM lezioni WHERE id_corso = %s", (id_corso,))
+                    cursor.execute("DELETE FROM corsi WHERE id_corso = %s", (id_corso,))
                     corsi_eliminati += 1
             
             conn.commit()
@@ -288,7 +286,7 @@ def archivia_corsi_multipli():
                     for lezione in lezioni:
                         cursor.execute("""
                             INSERT INTO archiviate (id_corso, materia, data, ora_inizio, ora_fine, luogo, compenso_orario, stato, fatturato, mese_fatturato, ore_fatturate)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                         """, (
                             lezione["id_corso"], lezione["materia"], lezione["data"],
                             lezione["ora_inizio"], lezione["ora_fine"], lezione["luogo"],
@@ -296,18 +294,18 @@ def archivia_corsi_multipli():
                             lezione["mese_fatturato"], lezione.get("ore_fatturate", 0)
                         ))
                     
-                    cursor.execute("SELECT * FROM corsi WHERE id_corso = ?", (id_corso,))
+                    cursor.execute("SELECT * FROM corsi WHERE id_corso = %s", (id_corso,))
                     corso = cursor.fetchone()
                     
                     if corso:
                         data_archiviazione = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                         cursor.execute("""
                             INSERT INTO corsi_archiviati (id_corso, nome, cliente, data_archiviazione)
-                            VALUES (?, ?, ?, ?)
+                            VALUES (%s, %s, %s, %s)
                         """, (corso["id_corso"], corso["nome"], corso.get("cliente", ""), data_archiviazione))
                     
-                    cursor.execute("DELETE FROM lezioni WHERE id_corso = ?", (id_corso,))
-                    cursor.execute("DELETE FROM corsi WHERE id_corso = ?", (id_corso,))
+                    cursor.execute("DELETE FROM lezioni WHERE id_corso = %s", (id_corso,))
+                    cursor.execute("DELETE FROM corsi WHERE id_corso = %s", (id_corso,))
                     corsi_archiviati += 1
             
             conn.commit()

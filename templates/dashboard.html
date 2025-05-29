@@ -44,6 +44,7 @@
 
         <div class="text-center mt-4">
             <button class="btn btn-outline-secondary" id="toggleFilter">🔍 Filtra</button>
+            <button class="btn btn-outline-primary ms-2" id="voiceSearchButton">🎤 Ricerca Vocale</button>
         </div>
 
         <div id="filterSection" class="card p-3 mt-3 mb-4" style="display: none;">
@@ -89,6 +90,35 @@
     {% include 'components/lezioni_table.html' %}
     {% include 'components/lezioni_scripts.html' %}
     
+    <!-- Modal per la ricerca vocale -->
+    <div class="modal fade" id="voiceSearchModal" tabindex="-1" aria-labelledby="voiceSearchModalLabel" aria-hidden="true" style="display: none;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="voiceSearchModalLabel">🎤 Ricerca Vocale Lezioni</h5>
+                    <button type="button" class="btn-close" id="closeVoiceModal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <p>Pronuncia una data per cercare le lezioni (es. "15 maggio 2023", "domani", "oggi").</p>
+                    </div>
+                    <div class="text-center mb-4">
+                        <button class="btn btn-primary" id="startVoiceSearch">
+                            <i class="bi bi-mic-fill"></i> Inizia Ascolto
+                        </button>
+                    </div>
+                    <div class="alert alert-secondary" id="voiceSearchStatus">
+                        Pronto per ascoltare...
+                    </div>
+                    <div id="voiceSearchResults" class="mt-3">
+                        <!-- I risultati della ricerca verranno mostrati qui -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/voice-search.js') }}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Grafico lezioni per mese
