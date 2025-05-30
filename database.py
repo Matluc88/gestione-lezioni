@@ -1,7 +1,7 @@
 import os
 import sqlite3
 from contextlib import contextmanager
-from werkzeug.security import generate_password_hash
+from flask_bcrypt import generate_password_hash
 
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "lezioni.db")
 SCHEMA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "schema.sql")
@@ -74,7 +74,7 @@ def init_db():
     cursor = conn.cursor()
     username = "admin"
     password = "admin123"
-    hashed_password = generate_password_hash(password)
+    hashed_password = generate_password_hash(password).decode('utf-8')
     
     cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
     if cursor.fetchone() is None:
@@ -148,7 +148,7 @@ if __name__ == "__main__":
             # Inserisci utente admin di test (se non già presente)
             username = "admin"
             password = "admin123"
-            hashed_password = generate_password_hash(password)
+            hashed_password = generate_password_hash(password).decode('utf-8')
 
             cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
             if cursor.fetchone() is None:

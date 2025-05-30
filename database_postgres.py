@@ -2,7 +2,7 @@ import os
 import psycopg2
 from psycopg2.extras import DictCursor
 from contextlib import contextmanager
-from werkzeug.security import generate_password_hash
+from flask_bcrypt import generate_password_hash
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -45,7 +45,7 @@ def init_db():
         if cursor.fetchone() is None:
             username = "admin"
             password = "admin123"
-            hashed_password = generate_password_hash(password)
+            hashed_password = generate_password_hash(password).decode('utf-8')
             cursor.execute(
                 "INSERT INTO users (username, password) VALUES (%s, %s)",
                 (username, hashed_password)

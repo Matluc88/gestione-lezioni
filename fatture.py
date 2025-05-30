@@ -4,6 +4,7 @@ import os
 from datetime import datetime
 from werkzeug.utils import secure_filename
 from db_utils import db_connection, get_db_connection, get_placeholder
+from utils.security import sanitize_input, sanitize_form_data
 
 fatture_bp = Blueprint('fatture', __name__, url_prefix='/fatture')
 
@@ -52,7 +53,7 @@ def get_fatture():
 def index():
     """ Pagina principale delle fatture e delle lezioni fatturate """
     corsi = get_corsi()
-    corso_scelto = request.args.get("corso_scelto", default="", type=str)
+    corso_scelto = sanitize_input(request.args.get("corso_scelto", default="", type=str))
     fatture = get_fatture()
 
     corso_status = ""
@@ -134,7 +135,7 @@ def index():
 @login_required
 def fattura_corso():
     """ Pagina per fatturare un intero corso o singole lezioni """
-    corso_scelto = request.args.get("corso_scelto", default="", type=str)
+    corso_scelto = sanitize_input(request.args.get("corso_scelto", default="", type=str))
 
     if not corso_scelto:
         flash("Seleziona un corso valido.", "danger")
@@ -144,8 +145,8 @@ def fattura_corso():
     cursor = conn.cursor()
 
     if request.method == "POST":
-        # Riceviamo i dati dal form
-        fattura_tutto = request.form.get("fattura_tutto")
+        # Riceviamo i dati dal form e sanitizziamo
+        fattura_tutto = sanitize_input(request.form.get("fattura_tutto"))
         lezioni_selezionate = request.form.getlist("lezioni")
 
         mese_corrente = datetime.now().strftime("%Y-%m")  # Formato YYYY-MM
@@ -237,14 +238,14 @@ def aggiungi_fattura():
             conn_write = get_db_connection()
             cursor_write = conn_write.cursor()
             
-            numero_fattura = request.form.get("numero_fattura")
+            numero_fattura = sanitize_input(request.form.get("numero_fattura"))
             data_fattura = request.form.get("data_fattura")
             importo = float(request.form.get("importo"))
-            tipo_fatturazione = request.form.get("tipo_fatturazione", "totale")
+            tipo_fatturazione = sanitize_input(request.form.get("tipo_fatturazione", "totale"))
             if tipo_fatturazione not in ['parziale', 'totale']:
                 tipo_fatturazione = 'totale'  # Default to 'totale' if invalid value
             print(f"DEBUG: tipo_fatturazione = {tipo_fatturazione}")
-            note = request.form.get("note", "")
+            note = sanitize_input(request.form.get("note", ""))
             lezioni_selezionate = request.form.getlist("lezioni")
             
             placeholder = get_placeholder()
