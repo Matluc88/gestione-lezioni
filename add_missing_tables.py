@@ -1,6 +1,6 @@
 import os
 import sqlite3
-from werkzeug.security import generate_password_hash
+from flask_bcrypt import generate_password_hash
 
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "lezioni.db")
 
@@ -84,7 +84,7 @@ def add_missing_tables():
         
         username = "admin"
         password = "admin123"
-        hashed_password = generate_password_hash(password)
+        hashed_password = generate_password_hash(password).decode('utf-8')
         cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, hashed_password))
         print(f"✅ Utente di test creato: {username} / {password}")
     else:

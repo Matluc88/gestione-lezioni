@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required
 from db_utils import db_connection, get_placeholder
 from datetime import datetime
+from utils.security import sanitize_input, sanitize_form_data
 
 corsi_bp = Blueprint('corsi', __name__)
 
@@ -9,9 +10,9 @@ corsi_bp = Blueprint('corsi', __name__)
 @login_required
 def aggiungi_corso():
     if request.method == "POST":
-        id_corso = request.form["id_corso"].strip().upper()
-        nome = request.form["nome"].strip()
-        cliente = request.form.get("cliente", "").strip()
+        id_corso = sanitize_input(request.form["id_corso"].strip().upper())
+        nome = sanitize_input(request.form["nome"].strip())
+        cliente = sanitize_input(request.form.get("cliente", "").strip())
 
         if not id_corso or not nome:
             flash("⚠️ Devi compilare tutti i campi obbligatori!", "danger")
@@ -175,8 +176,8 @@ def modifica_corso(id_corso):
             return redirect(url_for("corsi.lista_corsi"))
         
         if request.method == "POST":
-            nuovo_nome = request.form["nome"].strip()
-            nuovo_cliente = request.form.get("cliente", "").strip()
+            nuovo_nome = sanitize_input(request.form["nome"].strip())
+            nuovo_cliente = sanitize_input(request.form.get("cliente", "").strip())
             
             if not nuovo_nome:
                 flash("⚠️ Il nome del corso è obbligatorio!", "danger")
