@@ -5,6 +5,7 @@ from datetime import datetime
 from werkzeug.utils import secure_filename
 from db_utils import db_connection, get_db_connection, get_placeholder
 from utils.security import sanitize_input, sanitize_form_data
+from utils.sql_utils import sanitize_sql_identifier
 
 fatture_bp = Blueprint('fatture', __name__, url_prefix='/fatture')
 
@@ -329,7 +330,8 @@ def aggiungi_fattura():
                 
                 result = cursor_write.fetchone()
                 if result and result['totale'] > 0 and result['totale'] == result['fatturate']:
-                    savepoint_name = f"archive_corso_{id_corso}"
+                    safe_id = sanitize_sql_identifier(id_corso)
+                    savepoint_name = f"archive_corso_{safe_id}"
                     cursor_write.execute(f"SAVEPOINT {savepoint_name}")
                     
                     try:
