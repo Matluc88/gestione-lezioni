@@ -1,6 +1,6 @@
 import os
 import sqlite3
-from werkzeug.security import generate_password_hash
+from flask_bcrypt import generate_password_hash
 
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "lezioni.db")
 
@@ -19,9 +19,9 @@ def init_db():
     conn.executescript(schema)
     
     cursor = conn.cursor()
-    username = "admin"
-    password = "admin123"
-    hashed_password = generate_password_hash(password)
+    username = os.environ.get("DEFAULT_ADMIN_USERNAME", "admin")
+    password = os.environ.get("DEFAULT_ADMIN_PASSWORD", "changeme")
+    hashed_password = generate_password_hash(password).decode('utf-8')
     
     cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
     if cursor.fetchone() is None:
