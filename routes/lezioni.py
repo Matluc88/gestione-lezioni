@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from datetime import datetime, timedelta
 from db_utils import db_connection, get_placeholder
 from utils import correggi_orario, calcola_ore
+from utils.security import sanitize_input, sanitize_form_data
 
 lezioni_bp = Blueprint('lezioni', __name__)
 
@@ -91,13 +92,13 @@ def dashboard():
 def aggiungi_lezione():
     if request.method == "POST":
         try:
-            # Otteniamo tutte le liste di input dal form
+            # Otteniamo tutte le liste di input dal form e sanitizziamo
             id_corsi = request.form.getlist("id_corso[]")
-            materie = request.form.getlist("materia[]")
+            materie = [sanitize_input(materia) for materia in request.form.getlist("materia[]")]
             date = request.form.getlist("data[]")
             ora_inizi = request.form.getlist("ora_inizio[]")
             ora_fini = request.form.getlist("ora_fine[]")
-            luoghi = request.form.getlist("luogo[]")
+            luoghi = [sanitize_input(luogo) for luogo in request.form.getlist("luogo[]")]
             compensi = request.form.getlist("compenso_orario[]")
             stati = request.form.getlist("stato[]")
 
@@ -144,13 +145,13 @@ def modifica_lezione(lezione_id):
         cursor = conn.cursor()
 
         if request.method == "POST":
-            nuova_materia = request.form["materia"]
+            nuova_materia = sanitize_input(request.form["materia"])
             nuova_data = request.form["data"]
             nuova_ora_inizio = request.form["ora_inizio"]
             nuova_ora_fine = request.form["ora_fine"]
-            nuovo_luogo = request.form["luogo"]
+            nuovo_luogo = sanitize_input(request.form["luogo"])
             nuovo_compenso_orario = float(request.form["compenso_orario"])
-            nuovo_stato = request.form["stato"]
+            nuovo_stato = sanitize_input(request.form["stato"])
 
             ore = calcola_ore(nuova_ora_inizio, nuova_ora_fine)
             if ore is not None:
@@ -457,7 +458,7 @@ def cerca_lezioni_vocale():
     """Cerca lezioni in base a una query vocale"""
     try:
         data = request.json
-        query = data.get('query', '').lower()
+        query = sanitize_input(data.get('query', '')).lower()
         
         data_cercata = None
         

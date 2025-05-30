@@ -6,6 +6,9 @@ from dotenv import load_dotenv
 from flask import Flask
 from flask_wtf.csrf import CSRFProtect
 from flask_login import LoginManager
+from flask_bcrypt import Bcrypt
+from flask_talisman import Talisman
+
 from fatture import fatture_bp
 from routes.auth import auth_bp
 from routes.lezioni import lezioni_bp
@@ -15,7 +18,6 @@ from routes.calendario import calendario_bp
 from routes.export import export_bp
 from routes.resoconto import resoconto_bp
 
-# Carica variabili ambiente
 load_dotenv()
 
 if os.environ.get("DATABASE_URL") and "postgresql" in os.environ.get("DATABASE_URL"):
@@ -33,13 +35,25 @@ ensure_database()
 # ---------------------------------------------------
 app = Flask(__name__)
 
-# Secret Key per sicurezza
 app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'fallback-secret-key-solo-per-sviluppo-locale-DA-CAMBIARE')
+app.config['DEBUG'] = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
 
-# Protezione CSRF
 csrf = CSRFProtect(app)
+bcrypt = Bcrypt(app)
 
-# Gestione Login
+csp = {
+    'default-src': "'self'",
+    'script-src': ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://code.jquery.com"],
+    'style-src': ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
+    'font-src': ["'self'", "https://cdn.jsdelivr.net"],
+    'img-src': ["'self'", "data:"],
+}
+
+Talisman(app, 
+        force_https=os.environ.get('FLASK_ENV') == 'production',
+        strict_transport_security=True,
+        content_security_policy=csp)
+
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'auth.login'
