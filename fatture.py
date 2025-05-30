@@ -329,7 +329,8 @@ def aggiungi_fattura():
                 
                 result = cursor_write.fetchone()
                 if result and result['totale'] > 0 and result['totale'] == result['fatturate']:
-                    savepoint_name = f"archive_corso_{id_corso}"
+                    safe_id = id_corso.replace(" ", "_").replace("-", "_").replace("'", "").replace('"', "")
+                    savepoint_name = f"archive_corso_{safe_id}"
                     cursor_write.execute(f"SAVEPOINT {savepoint_name}")
                     
                     try:
