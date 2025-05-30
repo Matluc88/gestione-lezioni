@@ -1,10 +1,10 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash
 from flask_login import login_user, logout_user, login_required, current_user
-from flask_bcrypt import check_password_hash
 from forms import LoginForm
 from models.user import User, load_user_from_db
 from db_utils import db_connection, get_placeholder
 from utils.security import sanitize_input
+from utils.password_utils import hybrid_check_password_hash, rehash_password_if_needed
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -24,7 +24,8 @@ def login():
             cursor.execute(f"SELECT * FROM users WHERE username = {placeholder}", (username,))
             user = cursor.fetchone()
 
-        if user and check_password_hash(user["password"], password):
+        if user and hybrid_check_password_hash(user["password"], password):
+            rehash_password_if_needed(user["id"], user["password"], password)
             user_obj = User(id=user["id"])
             login_user(user_obj)
             flash("Login riuscito!", "success")
