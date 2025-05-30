@@ -1,9 +1,10 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash
 from flask_login import login_user, logout_user, login_required, current_user
-from werkzeug.security import check_password_hash
+from flask_bcrypt import check_password_hash
 from forms import LoginForm
 from models.user import User, load_user_from_db
 from db_utils import db_connection, get_placeholder
+from utils.security import sanitize_input
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -14,8 +15,8 @@ def login():
 
     form = LoginForm()
     if form.validate_on_submit():
-        username = form.username.data
-        password = form.password.data
+        username = sanitize_input(form.username.data)
+        password = form.password.data  # Don't sanitize passwords
         placeholder = get_placeholder()
 
         with db_connection() as conn:
