@@ -329,6 +329,9 @@ def aggiungi_fattura():
                 
                 result = cursor_write.fetchone()
                 if result and result['totale'] > 0 and result['totale'] == result['fatturate']:
+                    savepoint_name = f"archive_corso_{id_corso}"
+                    cursor_write.execute(f"SAVEPOINT {savepoint_name}")
+                    
                     try:
                         placeholder = get_placeholder()
                         cursor_write.execute(f"SELECT * FROM lezioni WHERE id_corso = {placeholder}", (id_corso,))
@@ -363,8 +366,10 @@ def aggiungi_fattura():
                         placeholder = get_placeholder()
                         cursor_write.execute(f"DELETE FROM corsi WHERE id_corso = {placeholder}", (id_corso,))
                         
+                        cursor_write.execute(f"RELEASE SAVEPOINT {savepoint_name}")
                         flash(f"✅ Corso '{id_corso}' completamente fatturato e archiviato automaticamente!", "success")
                     except Exception as e:
+                        cursor_write.execute(f"ROLLBACK TO SAVEPOINT {savepoint_name}")
                         print(f"Errore durante l'archiviazione automatica del corso: {e}")
             
             conn_write.commit()
