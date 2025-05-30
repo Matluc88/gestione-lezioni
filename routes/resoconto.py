@@ -3,7 +3,7 @@ from flask_login import login_required
 from db_utils import db_connection, get_placeholder
 import json
 from datetime import datetime
-from utils import calcola_ore
+from utils.time_utils import calcola_ore
 
 resoconto_bp = Blueprint('resoconto', __name__)
 

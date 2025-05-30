@@ -4,7 +4,7 @@ from flask import Blueprint, request, redirect, url_for, flash, Response, render
 from flask_login import login_required, current_user
 from dateutil.parser import parse
 from db_utils import db_connection, get_placeholder
-from utils import correggi_orario
+from utils.time_utils import correggi_orario
 
 export_bp = Blueprint('export', __name__)
 
