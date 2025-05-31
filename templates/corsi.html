@@ -14,6 +14,25 @@
         .checkbox-column { width: 40px; text-align: center; }
         .select-all-container { margin-bottom: 10px; }
         .action-buttons { margin-bottom: 15px; }
+        @media (max-width: 768px) {
+            .btn {
+                min-height: 44px;
+                margin-bottom: 0.5rem;
+            }
+            .btn-sm {
+                min-height: 36px;
+                padding: 8px 12px;
+            }
+            .card-body {
+                padding: 1rem;
+            }
+            .badge {
+                font-size: 0.8rem;
+            }
+            .navbar-brand {
+                font-size: 1.1rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -67,7 +86,8 @@
 
                     <input type="hidden" id="csrf_token" value="{{ csrf_token() }}">
                     
-                    <div class="table-responsive">
+                    <!-- Desktop table view -->
+                    <div class="table-responsive d-none d-md-block">
                         <table class="table table-hover">
                             <thead class="table-primary">
                                 <tr>
@@ -122,6 +142,49 @@
                             </tbody>
                         </table>
                     </div>
+
+                    <!-- Mobile card layout -->
+                    <div class="d-md-none">
+                        {% for corso in corsi %}
+                        <div class="card mb-3 shadow-sm {% if corso.completamente_fatturato %}corso-fatturato{% else %}corso-non-fatturato{% endif %}">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="card-title mb-0 fw-bold">{{ corso.nome }}</h6>
+                                    <input class="form-check-input corso-checkbox" type="checkbox" value="{{ corso.id_corso }}" id="corso-mobile-{{ corso.id_corso }}">
+                                </div>
+                                <p class="card-text mb-2 small">
+                                    <strong>ID Corso:</strong> {{ corso.id_corso }}<br>
+                                    <strong>Cliente:</strong> {{ corso.cliente or '-' }}
+                                </p>
+                                <div class="mb-3">
+                                    {% if corso.completamente_fatturato %}
+                                        <span class="badge bg-success">✅ Completamente Fatturato</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">⚠️ Non Completamente Fatturato</span>
+                                    {% endif %}
+                                </div>
+                                <div class="d-grid gap-2">
+                                    <div class="d-flex gap-2">
+                                        <a href="{{ url_for('corsi.dettagli_corso', corso=corso.id_corso) }}" class="btn btn-info btn-sm flex-fill">📊 Dettagli</a>
+                                        <a href="{{ url_for('corsi.modifica_corso', id_corso=corso.id_corso) }}" class="btn btn-primary btn-sm flex-fill">✏️ Modifica</a>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        {% if corso.completamente_fatturato %}
+                                            <form action="{{ url_for('corsi.archivia_corso', id_corso=corso.id_corso) }}" method="POST" class="flex-fill" onsubmit="return confirm('📁 Archiviare il corso {{ corso.id_corso }}? Tutte le lezioni verranno spostate nell\'archivio.');">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                <button type="submit" class="btn btn-warning btn-sm w-100">📁 Archivia</button>
+                                            </form>
+                                        {% endif %}
+                                        <form action="{{ url_for('corsi.elimina_corso', id_corso=corso.id_corso) }}" method="POST" class="flex-fill" onsubmit="return confirm('❌ Eliminare definitivamente il corso {{ corso.id_corso }} e tutte le sue lezioni? Questa operazione non può essere annullata!');">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="btn btn-danger btn-sm w-100">🗑️ Elimina</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
                 {% else %}
                     <div class="alert alert-info">
                         Nessun corso trovato. <a href="{{ url_for('corsi.aggiungi_corso') }}" class="alert-link">Aggiungi un nuovo corso</a>.
@@ -151,6 +214,15 @@
                 
                 selectAllCorsiTable.addEventListener('change', function() {
                     selectAllCorsi.checked = this.checked;
+                    corsoCheckboxes.forEach(checkbox => {
+                        checkbox.checked = this.checked;
+                    });
+                });
+            }
+            
+            // Gestione checkbox per mobile
+            if (selectAllCorsi) {
+                selectAllCorsi.addEventListener('change', function() {
                     corsoCheckboxes.forEach(checkbox => {
                         checkbox.checked = this.checked;
                     });
