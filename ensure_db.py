@@ -94,7 +94,7 @@ def ensure_database():
                     (strftime('%s', '2000-01-01 ' || substr('0' || ora_fine, -5)) - 
                     strftime('%s', '2000-01-01 ' || substr('0' || ora_inizio, -5))
                 ) / 3600.0
-                WHERE fatturato = 1
+                ) WHERE fatturato = 1
             """)
             print("✅ Colonna 'ore_fatturate' aggiunta con successo alla tabella 'archiviate'")
         else:

@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success && data.lezioni.length > 0) {
                 let resultsHtml = '<div class="list-group">';
                 data.lezioni.forEach(lezione => {
-                    const dataFormattata = new Date(lezione.data).toLocaleDateString('it-IT', {
+                    const dataFormattata = new Date(lezione.data + 'T12:00:00').toLocaleDateString('it-IT', {
                         weekday: 'long',
                         year: 'numeric',
                         month: 'long',

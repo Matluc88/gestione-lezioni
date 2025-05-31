@@ -181,7 +181,7 @@
             
             // Crea un elemento per ogni data
             dateSelezionate.forEach((data, index) => {
-                const dataObj = new Date(data);
+                const dataObj = new Date(data + 'T12:00:00');
                 const dataFormattata = dataObj.toLocaleDateString('it-IT', { 
                     weekday: 'short', 
                     year: 'numeric', 
