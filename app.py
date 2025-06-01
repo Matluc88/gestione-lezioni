@@ -8,6 +8,7 @@ from flask_wtf.csrf import CSRFProtect
 from flask_login import LoginManager
 from flask_bcrypt import Bcrypt
 from flask_talisman import Talisman
+import pytz
 
 from fatture import fatture_bp
 from routes.auth import auth_bp
@@ -34,6 +35,13 @@ ensure_database()
 # CREAZIONE APP FLASK
 # ---------------------------------------------------
 app = Flask(__name__)
+
+os.environ['TZ'] = 'Europe/Rome'
+try:
+    import time
+    time.tzset()
+except:
+    pass
 
 app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'fallback-secret-key-solo-per-sviluppo-locale-DA-CAMBIARE')
 app.config['DEBUG'] = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
