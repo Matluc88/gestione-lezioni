@@ -301,6 +301,8 @@
                         borderWidth: 2,
                         borderRadius: 8,
                         borderSkipped: false,
+                        barThickness: 20,
+                        minBarLength: 3,
                         hoverBackgroundColor: function(context) {
                             const chart = context.chart;
                             const {ctx, chartArea} = chart;
@@ -328,6 +330,7 @@
                     scales: {
                         y: {
                             beginAtZero: true,
+                            suggestedMax: 5,
                             ticks: {
                                 precision: 0,
                                 color: '#666',
