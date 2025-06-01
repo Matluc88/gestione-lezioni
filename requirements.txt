@@ -24,4 +24,5 @@ python-dateutil
 bleach==6.1.0
 Flask-Bcrypt==1.0.1
 Flask-Talisman==1.1.0
+pytz==2023.3
 
