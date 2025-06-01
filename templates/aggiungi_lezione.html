@@ -145,7 +145,7 @@
                     // Quando l'utente chiude il calendario, salva le date selezionate
                     if (selectedDates.length > 0) {
                         for (let date of selectedDates) {
-                            const formattedDate = date.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+                            const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; // Formato YYYY-MM-DD locale
                             if (!dateSelezionate.includes(formattedDate)) {
                                 dateSelezionate.push(formattedDate);
                             }
