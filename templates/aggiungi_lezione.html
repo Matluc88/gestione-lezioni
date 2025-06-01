@@ -185,7 +185,8 @@
             
             // Crea un elemento per ogni data
             dateSelezionate.forEach((data, index) => {
-                const dataObj = new Date(data);
+                const dateParts = data.split('-');
+                const dataObj = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
                 const dataFormattata = dataObj.toLocaleDateString('it-IT', { 
                     weekday: 'short', 
                     year: 'numeric', 
@@ -339,7 +340,8 @@
         
         // Verifica se la data è nel passato
         function verificaDataPassata(inputElement) {
-            const dataSelezionata = new Date(inputElement.value);
+            const dateParts = inputElement.value.split('-');
+            const dataSelezionata = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
             const oggi = new Date();
             oggi.setHours(0, 0, 0, 0); // Resetta l'ora a mezzanotte per confrontare solo le date
             
@@ -360,7 +362,8 @@
             
             inputsData.forEach(input => {
                 if (input.value) {
-                    const dataSelezionata = new Date(input.value);
+                    const dateParts = input.value.split('-');
+                    const dataSelezionata = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
                     const oggi = new Date();
                     oggi.setHours(0, 0, 0, 0);
                     
