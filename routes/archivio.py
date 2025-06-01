@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, request, flash,
 from flask_login import login_required
 from db_utils import db_connection, get_placeholder
 from datetime import datetime
+from utils.time_utils import format_datetime_for_db
 
 archivio_bp = Blueprint('archivio', __name__)
 
@@ -46,7 +47,7 @@ def archivia_corso():
             corso = cursor.fetchone()
             
             if corso:
-                data_archiviazione = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                data_archiviazione = format_datetime_for_db()
                 cursor.execute("""
                     INSERT INTO corsi_archiviati (id_corso, nome, data_archiviazione)
                     VALUES (%s, %s, %s)
