@@ -293,13 +293,14 @@
                                 return null;
                             }
                             const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
-                            gradient.addColorStop(0, 'rgba(102, 126, 234, 0.8)');
-                            gradient.addColorStop(1, 'rgba(118, 75, 162, 0.8)');
+                            gradient.addColorStop(0, 'rgba(56, 178, 172, 0.9)');
+                            gradient.addColorStop(0.5, 'rgba(129, 236, 236, 0.8)');
+                            gradient.addColorStop(1, 'rgba(255, 183, 77, 0.9)');
                             return gradient;
                         },
-                        borderColor: '#667eea',
-                        borderWidth: 2,
-                        borderRadius: 8,
+                        borderColor: 'rgba(56, 178, 172, 1)',
+                        borderWidth: 3,
+                        borderRadius: 12,
                         borderSkipped: false,
                         hoverBackgroundColor: function(context) {
                             const chart = context.chart;
@@ -308,18 +309,21 @@
                                 return null;
                             }
                             const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
-                            gradient.addColorStop(0, 'rgba(102, 126, 234, 1)');
-                            gradient.addColorStop(1, 'rgba(118, 75, 162, 1)');
+                            gradient.addColorStop(0, 'rgba(56, 178, 172, 1)');
+                            gradient.addColorStop(0.5, 'rgba(129, 236, 236, 1)');
+                            gradient.addColorStop(1, 'rgba(255, 183, 77, 1)');
                             return gradient;
                         },
-                        hoverBorderColor: '#5a67d8'
+                        hoverBorderColor: 'rgba(45, 156, 150, 1)',
+                        hoverBorderWidth: 4
                     }]
                 },
                 options: {
                     responsive: true,
                     animation: {
-                        duration: 1500,
-                        easing: 'easeInOutQuart'
+                        duration: 2000,
+                        easing: 'easeInOutQuart',
+                        delay: (context) => context.dataIndex * 100
                     },
                     interaction: {
                         intersect: false,
@@ -330,26 +334,37 @@
                             beginAtZero: true,
                             ticks: {
                                 precision: 0,
-                                color: '#666',
+                                color: '#4a5568',
                                 font: {
                                     family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-                                    size: 12
-                                }
+                                    size: 13,
+                                    weight: '500'
+                                },
+                                padding: 10
                             },
                             grid: {
-                                color: 'rgba(0,0,0,0.1)',
-                                drawBorder: false
+                                color: 'rgba(56, 178, 172, 0.15)',
+                                drawBorder: false,
+                                lineWidth: 1
+                            },
+                            border: {
+                                display: false
                             }
                         },
                         x: {
                             ticks: {
-                                color: '#666',
+                                color: '#4a5568',
                                 font: {
                                     family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-                                    size: 12
-                                }
+                                    size: 13,
+                                    weight: '500'
+                                },
+                                padding: 10
                             },
                             grid: {
+                                display: false
+                            },
+                            border: {
                                 display: false
                             }
                         }
@@ -357,35 +372,46 @@
                     plugins: {
                         title: {
                             display: true,
-                            text: 'Distribuzione Lezioni per Mese',
+                            text: '📊 Distribuzione Lezioni per Mese',
                             font: {
-                                size: 18,
+                                size: 20,
                                 weight: 'bold',
                                 family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
                             },
-                            color: '#333',
-                            padding: 20
-                        },
-                        legend: {
-                            position: 'top',
-                            labels: {
-                                font: {
-                                    family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-                                    size: 14
-                                },
-                                color: '#666',
-                                usePointStyle: true,
-                                padding: 20
+                            color: '#2d3748',
+                            padding: {
+                                top: 20,
+                                bottom: 30
                             }
                         },
+                        legend: {
+                            display: false
+                        },
                         tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            backgroundColor: 'rgba(45, 55, 72, 0.95)',
                             titleColor: '#fff',
                             bodyColor: '#fff',
-                            borderColor: '#667eea',
-                            borderWidth: 1,
-                            cornerRadius: 8,
-                            displayColors: false
+                            borderColor: 'rgba(56, 178, 172, 0.8)',
+                            borderWidth: 2,
+                            cornerRadius: 12,
+                            displayColors: false,
+                            titleFont: {
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            bodyFont: {
+                                size: 13
+                            },
+                            padding: 12,
+                            caretPadding: 8,
+                            callbacks: {
+                                title: function(context) {
+                                    return 'Mese: ' + context[0].label;
+                                },
+                                label: function(context) {
+                                    return 'Lezioni: ' + context.raw;
+                                }
+                            }
                         }
                     }
                 }
