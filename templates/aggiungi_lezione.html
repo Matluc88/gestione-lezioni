@@ -116,6 +116,11 @@
         // Array per memorizzare le date selezionate
         let dateSelezionate = [];
         
+        // Helper function per parsing sicuro delle date (evita problemi di timezone)
+        function parseLocalDate(dateString) {
+            return new Date(dateString + 'T12:00:00');
+        }
+        
         // Funzione che apre il calendario per selezionare date multiple
         function selezionaDateCalendario() {
             // Crea un elemento input temporaneo per il calendario
@@ -181,7 +186,7 @@
             
             // Crea un elemento per ogni data
             dateSelezionate.forEach((data, index) => {
-                const dataObj = new Date(data + 'T12:00:00');
+                const dataObj = parseLocalDate(data);
                 const dataFormattata = dataObj.toLocaleDateString('it-IT', { 
                     weekday: 'short', 
                     year: 'numeric', 
@@ -335,7 +340,7 @@
         
         // Verifica se la data è nel passato
         function verificaDataPassata(inputElement) {
-            const dataSelezionata = new Date(inputElement.value);
+            const dataSelezionata = parseLocalDate(inputElement.value);
             const oggi = new Date();
             oggi.setHours(0, 0, 0, 0); // Resetta l'ora a mezzanotte per confrontare solo le date
             
@@ -356,7 +361,7 @@
             
             inputsData.forEach(input => {
                 if (input.value) {
-                    const dataSelezionata = new Date(input.value);
+                    const dataSelezionata = parseLocalDate(input.value);
                     const oggi = new Date();
                     oggi.setHours(0, 0, 0, 0);
                     
