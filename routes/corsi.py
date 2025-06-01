@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required
 from db_utils import db_connection, get_placeholder
 from datetime import datetime
+from utils.time_utils import format_datetime_for_db
 from utils.security import sanitize_input, sanitize_form_data
 
 corsi_bp = Blueprint('corsi', __name__)
@@ -225,7 +226,7 @@ def archivia_corso(id_corso):
             corso = cursor.fetchone()
             
             if corso:
-                data_archiviazione = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                data_archiviazione = format_datetime_for_db()
                 placeholder = get_placeholder()
                 cursor.execute(f"""
                     INSERT INTO corsi_archiviati (id_corso, nome, cliente, data_archiviazione)
@@ -319,7 +320,7 @@ def archivia_corsi_multipli():
                     corso = cursor.fetchone()
                     
                     if corso:
-                        data_archiviazione = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        data_archiviazione = format_datetime_for_db()
                         placeholder = get_placeholder()
                         cursor.execute(f"""
                             INSERT INTO corsi_archiviati (id_corso, nome, cliente, data_archiviazione)

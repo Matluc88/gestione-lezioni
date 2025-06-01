@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required
 import os
 from datetime import datetime
+from utils.time_utils import get_local_now, format_date_for_template, format_datetime_for_db
 from werkzeug.utils import secure_filename
 from db_utils import db_connection, get_db_connection, get_placeholder
 from utils.security import sanitize_input, sanitize_form_data
@@ -229,7 +230,7 @@ def aggiungi_fattura():
         
     except Exception as e:
         flash(f"❌ Errore durante il caricamento dei dati: {str(e)}", "danger")
-        return render_template("aggiungi_fattura.html", corsi=[], lezioni=[], clienti=[], now=datetime.now())
+        return render_template("aggiungi_fattura.html", corsi=[], lezioni=[], clienti=[], now=get_local_now())
     finally:
         if conn_read:
             conn_read.close()
@@ -253,14 +254,14 @@ def aggiungi_fattura():
             cursor_write.execute(f"SELECT COUNT(*) FROM fatture WHERE numero_fattura = {placeholder}", (numero_fattura,))
             if cursor_write.fetchone()[0] > 0:
                 flash(f"❌ Esiste già una fattura con il numero '{numero_fattura}'. Scegli un numero diverso.", "danger")
-                return render_template("aggiungi_fattura.html", corsi=corsi, lezioni=lezioni_non_fatturate, clienti=clienti, now=datetime.now())
+                return render_template("aggiungi_fattura.html", corsi=corsi, lezioni=lezioni_non_fatturate, clienti=clienti, now=get_local_now())
             
             file_pdf = ""  # Valore predefinito vuoto invece di None
             if 'file_pdf' in request.files:
                 file = request.files['file_pdf']
                 if file and file.filename and allowed_file(file.filename):
                     filename = secure_filename(file.filename)
-                    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+                    timestamp = format_datetime_for_db().replace('-', '').replace(' ', '').replace(':', '')
                     filename = f"{timestamp}_{filename}"
                     file_path = os.path.join(UPLOAD_FOLDER, filename)
                     file.save(file_path)
@@ -355,7 +356,7 @@ def aggiungi_fattura():
                         corso = cursor_write.fetchone()
                         
                         if corso:
-                            data_archiviazione = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                            data_archiviazione = format_datetime_for_db()
                             placeholder = get_placeholder()
                             cursor_write.execute(f"""
                                 INSERT INTO corsi_archiviati (id_corso, nome, cliente, data_archiviazione)
@@ -386,7 +387,7 @@ def aggiungi_fattura():
             if conn_write:
                 conn_write.close()
     
-    return render_template("aggiungi_fattura.html", corsi=corsi, lezioni=lezioni_non_fatturate, clienti=clienti, now=datetime.now())
+    return render_template("aggiungi_fattura.html", corsi=corsi, lezioni=lezioni_non_fatturate, clienti=clienti, now=get_local_now())
 
 @fatture_bp.route("/download_file/<filename>")
 @login_required

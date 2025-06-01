@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from datetime import datetime, timedelta
+from utils.time_utils import get_local_now, format_date_for_template
 from db_utils import db_connection, get_placeholder
 from utils.time_utils import correggi_orario, calcola_ore
 from utils.security import sanitize_input, sanitize_form_data
@@ -285,7 +286,7 @@ def compenso():
             params.append(corso_filtro)
             
         if periodo_filtro != "tutti":
-            oggi = datetime.now().strftime("%Y-%m-%d")
+            oggi = format_date_for_template()
             
             if periodo_filtro == "giorno" and data_inizio:
                 query += f" AND l.data = {placeholder}"
@@ -462,14 +463,14 @@ def cerca_lezioni_vocale():
         
         data_cercata = None
         
-        oggi = datetime.now().strftime("%Y-%m-%d")
+        oggi = format_date_for_template()
         
         if "oggi" in query:
             data_cercata = oggi
         elif "domani" in query:
-            data_cercata = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
+            data_cercata = (get_local_now() + timedelta(days=1)).strftime("%Y-%m-%d")
         elif "ieri" in query:
-            data_cercata = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+            data_cercata = (get_local_now() - timedelta(days=1)).strftime("%Y-%m-%d")
         else:
             mesi = {
                 "gennaio": "01", "febbraio": "02", "marzo": "03", "aprile": "04",
@@ -481,7 +482,7 @@ def cerca_lezioni_vocale():
                 if mese in query:
                     for i in range(1, 32):
                         if f" {i} {mese}" in query or f" {i}{mese}" in query:
-                            anno = datetime.now().year
+                            anno = get_local_now().year
                             for anno_possibile in range(anno-1, anno+2):
                                 if str(anno_possibile) in query:
                                     anno = anno_possibile

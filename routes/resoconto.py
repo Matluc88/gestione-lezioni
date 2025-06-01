@@ -3,6 +3,7 @@ from flask_login import login_required
 from db_utils import db_connection, get_placeholder
 import json
 from datetime import datetime
+from utils.time_utils import get_local_now
 from utils.time_utils import calcola_ore
 
 resoconto_bp = Blueprint('resoconto', __name__)
@@ -10,7 +11,7 @@ resoconto_bp = Blueprint('resoconto', __name__)
 @resoconto_bp.route("/resoconto_annuale")
 @login_required
 def resoconto_annuale():
-    anno_selezionato = request.args.get('anno', datetime.now().strftime('%Y'))
+    anno_selezionato = request.args.get('anno', get_local_now().strftime('%Y'))
     
     with db_connection() as conn:
         cursor = conn.cursor()
@@ -26,7 +27,7 @@ def resoconto_annuale():
         anni_disponibili = [row['anno'] for row in cursor.fetchall()]
         
         if not anni_disponibili or anno_selezionato not in anni_disponibili:
-            anno_selezionato = datetime.now().strftime('%Y')
+            anno_selezionato = get_local_now().strftime('%Y')
             if not anni_disponibili:
                 anni_disponibili = [anno_selezionato]
         
