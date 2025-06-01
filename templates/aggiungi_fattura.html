@@ -243,7 +243,8 @@
           let meseMatch = true;
           if (mese) {
             const meseDaFiltro = mese.split('-')[0] + '-' + mese.split('-')[1];
-            const dataLezione = new Date(dataCella);
+            const dateParts = dataCella.split('-');
+            const dataLezione = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
             const meseDellaRiga = dataLezione.getFullYear() + '-' + String(dataLezione.getMonth() + 1).padStart(2, '0');
             meseMatch = meseDaFiltro === meseDellaRiga;
           }
