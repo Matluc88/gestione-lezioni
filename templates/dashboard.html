@@ -154,6 +154,20 @@
                 font-size: 1rem;
             }
         }
+        
+        @media (max-width: 393px) {
+            .dashboard-buttons .btn {
+                min-height: 56px;
+                padding: 24px 16px;
+                font-size: 1rem;
+            }
+            #lezioniPerMeseChart {
+                max-height: 250px;
+            }
+            .card-body {
+                padding: 0.75rem;
+            }
+        }
     </style>
 </head>
 <body class="container mt-4">
@@ -302,7 +316,7 @@
                         borderWidth: 3,
                         borderRadius: 12,
                         borderSkipped: false,
-                        barThickness: 20,
+                        barThickness: window.innerWidth <= 393 ? 15 : 20,
                         minBarLength: 3,
                         hoverBackgroundColor: function(context) {
                             const chart = context.chart;
@@ -322,6 +336,16 @@
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
+                    aspectRatio: window.innerWidth <= 393 ? 1.2 : 2,
+                    devicePixelRatio: window.devicePixelRatio || 1,
+                    onResize: function(chart, size) {
+                        if (size.width <= 393) {
+                            chart.options.aspectRatio = 1.2;
+                        } else {
+                            chart.options.aspectRatio = 2;
+                        }
+                    },
                     animation: {
                         duration: 2000,
                         easing: 'easeInOutQuart',
@@ -340,10 +364,10 @@
                                 color: '#4a5568',
                                 font: {
                                     family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-                                    size: 13,
+                                    size: window.innerWidth <= 393 ? 11 : 13,
                                     weight: '500'
                                 },
-                                padding: 10
+                                padding: window.innerWidth <= 393 ? 6 : 10
                             },
                             grid: {
                                 color: 'rgba(56, 178, 172, 0.15)',
@@ -359,10 +383,11 @@
                                 color: '#4a5568',
                                 font: {
                                     family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-                                    size: 13,
+                                    size: window.innerWidth <= 393 ? 10 : 13,
                                     weight: '500'
                                 },
-                                padding: 10
+                                padding: window.innerWidth <= 393 ? 4 : 10,
+                                maxRotation: window.innerWidth <= 393 ? 45 : 0
                             },
                             grid: {
                                 display: false
@@ -377,14 +402,14 @@
                             display: true,
                             text: '📊 Distribuzione Lezioni per Mese',
                             font: {
-                                size: 20,
+                                size: window.innerWidth <= 393 ? 16 : 20,
                                 weight: 'bold',
                                 family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
                             },
                             color: '#2d3748',
                             padding: {
-                                top: 20,
-                                bottom: 30
+                                top: window.innerWidth <= 393 ? 10 : 20,
+                                bottom: window.innerWidth <= 393 ? 15 : 30
                             }
                         },
                         legend: {
