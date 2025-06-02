@@ -260,6 +260,10 @@ def aggiungi_fattura():
             note = sanitize_input(request.form.get("note", ""))
             lezioni_selezionate = request.form.getlist("lezioni")
             
+            if not lezioni_selezionate:
+                flash("❌ Devi selezionare almeno una lezione per creare una fattura.", "danger")
+                return render_template("aggiungi_fattura.html", corsi=corsi, lezioni=lezioni_non_fatturate, clienti=clienti, now=get_local_now(), cliente_filtro=cliente_filtro)
+            
             placeholder = get_placeholder()
             cursor_write.execute(f"SELECT COUNT(*) FROM fatture WHERE numero_fattura = {placeholder}", (numero_fattura,))
             if cursor_write.fetchone()[0] > 0:
@@ -321,14 +325,16 @@ def aggiungi_fattura():
                 """, (id_fattura, id_lezione))
             
             # Determine corsi_selezionati from lezioni_selezionate
-            placeholder = get_placeholder()
-            placeholders = ','.join([placeholder] * len(lezioni_selezionate))
-            cursor_write.execute(f"""
-                SELECT DISTINCT id_corso FROM lezioni 
-                WHERE id IN ({placeholders})
-            """, lezioni_selezionate)
-            
-            corsi_selezionati = [row['id_corso'] for row in cursor_write.fetchall()]
+            if lezioni_selezionate:  # Additional safety check
+                placeholder = get_placeholder()
+                placeholders = ','.join([placeholder] * len(lezioni_selezionate))
+                cursor_write.execute(f"""
+                    SELECT DISTINCT id_corso FROM lezioni 
+                    WHERE id IN ({placeholders})
+                """, lezioni_selezionate)
+                corsi_selezionati = [row['id_corso'] for row in cursor_write.fetchall()]
+            else:
+                corsi_selezionati = []
             
             for id_corso in corsi_selezionati:
                 placeholder = get_placeholder()
