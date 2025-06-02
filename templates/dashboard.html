@@ -293,7 +293,8 @@
 
         .filter-label {
             font-size: 0.875rem;
-            color: rgba(0,0,0,0.6);
+            color: rgba(0,0,0,0.87);
+            font-weight: 600;
             margin-bottom: 4px;
         }
 
@@ -422,6 +423,11 @@
             .action-buttons {
                 margin: 8px 4px;
             }
+            
+            .filter-label {
+                font-weight: 600;
+                font-size: 0.9rem;
+            }
         }
 
         @media (prefers-color-scheme: dark) {
@@ -432,6 +438,10 @@
                 --primary-color: #bb86fc;
                 --primary-dark: #985eff;
                 --secondary-color: #03dac6;
+            }
+            
+            .filter-label {
+                color: rgba(255,255,255,0.87) !important;
             }
         }
     </style>

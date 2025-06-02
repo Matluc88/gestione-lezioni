@@ -98,6 +98,7 @@
             }
             .form-label {
                 font-weight: 600;
+                color: rgba(0,0,0,0.87);
                 margin-bottom: 0.5rem;
             }
             .form-check {
@@ -114,6 +115,19 @@
             }
             .container {
                 padding: 10px;
+            }
+        }
+        
+        @media (max-width: 393px) {
+            .form-label {
+                font-weight: 600;
+                font-size: 0.9rem;
+            }
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            .form-label {
+                color: rgba(255,255,255,0.87) !important;
             }
         }
     </style>
