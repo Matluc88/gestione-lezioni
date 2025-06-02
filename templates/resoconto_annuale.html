@@ -125,6 +125,30 @@
                 max-height: 250px !important;
             }
         }
+        
+        @media (max-width: 393px) {
+            .btn {
+                min-height: 48px;
+                font-size: 0.8rem;
+                padding: 14px 16px;
+            }
+            h1, h2, h3, h5 {
+                font-size: 1.2rem;
+            }
+            .container {
+                padding: 8px;
+            }
+            .table-responsive {
+                font-size: 0.8rem;
+            }
+            canvas {
+                max-height: 220px !important;
+            }
+            .form-control, .form-select {
+                min-height: 48px;
+                font-size: 16px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -299,11 +323,26 @@
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
+                aspectRatio: window.innerWidth <= 393 ? 1.0 : 1.5,
+                devicePixelRatio: window.devicePixelRatio || 1,
                 plugins: {
                     legend: {
-                        position: 'right',
+                        position: window.innerWidth <= 393 ? 'bottom' : 'right',
+                        labels: {
+                            font: {
+                                size: window.innerWidth <= 393 ? 10 : 12
+                            },
+                            padding: window.innerWidth <= 393 ? 8 : 10
+                        }
                     },
                     tooltip: {
+                        titleFont: {
+                            size: window.innerWidth <= 393 ? 11 : 13
+                        },
+                        bodyFont: {
+                            size: window.innerWidth <= 393 ? 10 : 12
+                        },
                         callbacks: {
                             label: function(context) {
                                 let label = context.label || '';
@@ -360,14 +399,26 @@
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
+                aspectRatio: window.innerWidth <= 393 ? 1.2 : 2,
+                devicePixelRatio: window.devicePixelRatio || 1,
                 scales: {
                     x: {
                         stacked: false,
+                        ticks: {
+                            font: {
+                                size: window.innerWidth <= 393 ? 9 : 11
+                            },
+                            maxRotation: window.innerWidth <= 393 ? 45 : 0
+                        }
                     },
                     y: {
                         stacked: false,
                         beginAtZero: true,
                         ticks: {
+                            font: {
+                                size: window.innerWidth <= 393 ? 10 : 12
+                            },
                             callback: function(value) {
                                 return '€' + value;
                             }
@@ -375,7 +426,20 @@
                     }
                 },
                 plugins: {
+                    legend: {
+                        labels: {
+                            font: {
+                                size: window.innerWidth <= 393 ? 10 : 12
+                            }
+                        }
+                    },
                     tooltip: {
+                        titleFont: {
+                            size: window.innerWidth <= 393 ? 11 : 13
+                        },
+                        bodyFont: {
+                            size: window.innerWidth <= 393 ? 10 : 12
+                        },
                         callbacks: {
                             label: function(context) {
                                 let label = context.dataset.label || '';
@@ -432,14 +496,26 @@
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
+                aspectRatio: window.innerWidth <= 393 ? 1.2 : 2,
+                devicePixelRatio: window.devicePixelRatio || 1,
                 scales: {
                     x: {
                         stacked: false,
+                        ticks: {
+                            font: {
+                                size: window.innerWidth <= 393 ? 9 : 11
+                            },
+                            maxRotation: window.innerWidth <= 393 ? 45 : 0
+                        }
                     },
                     y: {
                         stacked: false,
                         beginAtZero: true,
                         ticks: {
+                            font: {
+                                size: window.innerWidth <= 393 ? 10 : 12
+                            },
                             callback: function(value) {
                                 return '€' + value;
                             }
@@ -447,7 +523,20 @@
                     }
                 },
                 plugins: {
+                    legend: {
+                        labels: {
+                            font: {
+                                size: window.innerWidth <= 393 ? 10 : 12
+                            }
+                        }
+                    },
                     tooltip: {
+                        titleFont: {
+                            size: window.innerWidth <= 393 ? 11 : 13
+                        },
+                        bodyFont: {
+                            size: window.innerWidth <= 393 ? 10 : 12
+                        },
                         callbacks: {
                             label: function(context) {
                                 let label = context.dataset.label || '';
