@@ -487,6 +487,9 @@
                     },
                     options: {
                         responsive: true,
+                        maintainAspectRatio: false,
+                        aspectRatio: window.innerWidth <= 393 ? 1.2 : 2,
+                        devicePixelRatio: window.devicePixelRatio || 1,
                         animation: {
                             duration: 1500,
                             easing: 'easeInOutQuart'
@@ -502,8 +505,9 @@
                                     color: '#666',
                                     font: {
                                         family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-                                        size: 12
-                                    }
+                                        size: window.innerWidth <= 393 ? 9 : 12
+                                    },
+                                    maxRotation: window.innerWidth <= 393 ? 45 : 0
                                 },
                                 grid: {
                                     display: false
@@ -516,7 +520,7 @@
                                     color: '#666',
                                     font: {
                                         family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-                                        size: 12
+                                        size: window.innerWidth <= 393 ? 10 : 12
                                     },
                                     callback: function(value) {
                                         return '€' + value;
@@ -533,23 +537,23 @@
                                 display: true,
                                 text: 'Compenso per Cliente',
                                 font: {
-                                    size: 18,
+                                    size: window.innerWidth <= 393 ? 14 : 18,
                                     weight: 'bold',
                                     family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
                                 },
                                 color: '#333',
-                                padding: 20
+                                padding: window.innerWidth <= 393 ? 10 : 20
                             },
                             legend: {
-                                position: 'top',
+                                position: window.innerWidth <= 393 ? 'bottom' : 'top',
                                 labels: {
                                     font: {
                                         family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-                                        size: 14
+                                        size: window.innerWidth <= 393 ? 10 : 14
                                     },
                                     color: '#666',
                                     usePointStyle: true,
-                                    padding: 15
+                                    padding: window.innerWidth <= 393 ? 8 : 15
                                 }
                             },
                             tooltip: {
@@ -559,6 +563,12 @@
                                 borderColor: '#667eea',
                                 borderWidth: 1,
                                 cornerRadius: 8,
+                                titleFont: {
+                                    size: window.innerWidth <= 393 ? 11 : 13
+                                },
+                                bodyFont: {
+                                    size: window.innerWidth <= 393 ? 10 : 12
+                                },
                                 callbacks: {
                                     label: function(context) {
                                         let label = context.dataset.label || '';
