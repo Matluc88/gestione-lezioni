@@ -426,12 +426,42 @@
 
         @media (prefers-color-scheme: dark) {
             :root {
-                --surface-color: #121212;
-                --background-color: #000000;
-                --on-surface: #ffffff;
+                --surface-color: #1e1e1e;
+                --background-color: #121212;
+                --on-surface: #e8e8e8;
                 --primary-color: #bb86fc;
                 --primary-dark: #985eff;
                 --secondary-color: #03dac6;
+            }
+            
+            /* Improve text contrast in dark mode */
+            body {
+                color: #e8e8e8 !important;
+            }
+            
+            .filter-label {
+                color: #b3b3b3 !important;
+            }
+            
+            .breadcrumb-mini {
+                color: #b3b3b3 !important;
+            }
+            
+            .page-title {
+                color: #e8e8e8 !important;
+            }
+            
+            .nav-item {
+                color: #e8e8e8 !important;
+            }
+            
+            .nav-item:hover {
+                color: #ffffff !important;
+            }
+            
+            /* Chart text colors for dark mode */
+            .chart-container {
+                color: #e8e8e8;
             }
         }
     </style>
