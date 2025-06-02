@@ -120,6 +120,50 @@
             font-size: 0.8rem;
         }
     }
+    
+    /* Dark mode improvements for mobile readability */
+    @media (prefers-color-scheme: dark) {
+        .card {
+            background-color: #1e1e1e !important;
+            border: 1px solid #333 !important;
+        }
+        
+        .card-title {
+            color: #e8e8e8 !important;
+            font-weight: 600 !important;
+        }
+        
+        .card-text {
+            color: #d0d0d0 !important;
+        }
+        
+        .card-text strong {
+            color: #e8e8e8 !important;
+        }
+        
+        .form-check-label {
+            color: #e8e8e8 !important;
+        }
+        
+        .table-dark {
+            --bs-table-bg: #1e1e1e !important;
+            --bs-table-color: #e8e8e8 !important;
+        }
+        
+        .table-striped > tbody > tr:nth-of-type(odd) > td {
+            background-color: #2a2a2a !important;
+            color: #e8e8e8 !important;
+        }
+        
+        .table > tbody > tr > td {
+            color: #e8e8e8 !important;
+            border-color: #333 !important;
+        }
+        
+        .text-muted {
+            color: #b3b3b3 !important;
+        }
+    }
 </style>
 
 <script>
