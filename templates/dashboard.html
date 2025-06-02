@@ -12,280 +12,580 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        :root {
+            --primary-color: #1976d2;
+            --primary-dark: #1565c0;
+            --secondary-color: #03dac6;
+            --surface-color: #ffffff;
+            --background-color: #f5f5f5;
+            --on-surface: #000000;
+            --on-primary: #ffffff;
+            --shadow-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+            --shadow-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+            --shadow-3: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+            --border-radius: 8px;
+            --top-bar-height: 56px;
         }
-        
-        .dashboard-buttons .btn {
-            border-radius: 12px;
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
+            color: var(--on-surface);
+            line-height: 1.5;
+        }
+
+        .top-bar {
+            height: var(--top-bar-height);
+            background-color: var(--primary-color);
+            color: var(--on-primary);
+            box-shadow: var(--shadow-2);
+            z-index: 1000;
+        }
+
+        .app-title {
+            font-size: 1.25rem;
             font-weight: 500;
-            text-transform: none;
-            letter-spacing: 0.5px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            color: var(--on-primary);
+        }
+
+        .hamburger-menu {
+            color: var(--on-primary);
             border: none;
-            background: linear-gradient(135deg, var(--btn-gradient-start), var(--btn-gradient-end));
-            color: white;
-            position: relative;
+            background: none;
+            font-size: 1.5rem;
+            padding: 8px;
+            border-radius: 50%;
+            transition: background-color 0.2s;
+            min-height: 48px;
+            min-width: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hamburger-menu:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .main-content {
+            padding-top: var(--top-bar-height);
+            min-height: 100vh;
+        }
+
+        .page-header {
+            padding: 16px 0 8px 0;
+            background-color: var(--surface-color);
+            border-bottom: 1px solid rgba(0,0,0,0.12);
+        }
+
+        .breadcrumb-mini {
+            font-size: 0.875rem;
+            color: rgba(0,0,0,0.6);
+            margin-bottom: 4px;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 400;
+            margin: 0;
+            color: var(--on-surface);
+        }
+
+        .card {
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-1);
+            border: none;
+            margin: 16px;
             overflow: hidden;
         }
-        
-        .dashboard-buttons .btn::before {
-            content: '';
-            position: absolute;
+
+        .card-header {
+            background-color: var(--primary-color);
+            color: var(--on-primary);
+            padding: 16px;
+            border-bottom: none;
+        }
+
+        .card-body {
+            padding: 16px;
+        }
+
+        .hamburger-nav {
+            position: fixed;
             top: 0;
-            left: -100%;
+            left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.5s;
+            z-index: 1100;
+            visibility: hidden;
+            opacity: 0;
+            transition: all 0.3s ease;
         }
-        
-        .dashboard-buttons .btn:hover::before {
-            left: 100%;
+
+        .hamburger-nav.active {
+            visibility: visible;
+            opacity: 1;
         }
-        
-        .dashboard-buttons .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+
+        .nav-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
         }
-        
-        .dashboard-buttons .btn-primary {
-            --btn-gradient-start: #667eea;
-            --btn-gradient-end: #764ba2;
+
+        .nav-drawer {
+            position: absolute;
+            top: 0;
+            left: -280px;
+            width: 280px;
+            height: 100%;
+            background-color: var(--surface-color);
+            box-shadow: var(--shadow-3);
+            transition: left 0.3s ease;
+            overflow-y: auto;
         }
-        
-        .dashboard-buttons .btn-success {
-            --btn-gradient-start: #56ab2f;
-            --btn-gradient-end: #a8e6cf;
+
+        .hamburger-nav.active .nav-drawer {
+            left: 0;
         }
-        
-        .dashboard-buttons .btn-info {
-            --btn-gradient-start: #3a7bd5;
-            --btn-gradient-end: #3a6073;
+
+        .nav-header {
+            padding: 16px;
+            background-color: var(--primary-color);
+            color: var(--on-primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: var(--top-bar-height);
         }
-        
-        .dashboard-buttons .btn-secondary {
-            --btn-gradient-start: #bdc3c7;
-            --btn-gradient-end: #2c3e50;
-        }
-        
-        .dashboard-buttons .btn-warning {
-            --btn-gradient-start: #f093fb;
-            --btn-gradient-end: #f5576c;
-        }
-        
-        .dashboard-buttons .btn-danger {
-            --btn-gradient-start: #ff416c;
-            --btn-gradient-end: #ff4b2b;
-        }
-        
-        .dashboard-buttons .btn-dark {
-            --btn-gradient-start: #2c3e50;
-            --btn-gradient-end: #34495e;
-        }
-        
-        .card {
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+
+        .nav-close {
+            background: none;
             border: none;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
+            color: var(--on-primary);
+            font-size: 1.5rem;
+            padding: 8px;
+            border-radius: 50%;
+            min-height: 48px;
+            min-width: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        
+
+        .nav-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .nav-item {
+            display: block;
+            padding: 16px 24px;
+            color: var(--on-surface);
+            text-decoration: none;
+            border-bottom: 1px solid rgba(0,0,0,0.12);
+            transition: background-color 0.2s;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-item:hover {
+            background-color: rgba(0,0,0,0.04);
+            color: var(--on-surface);
+            text-decoration: none;
+        }
+
+        .fab {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            background-color: var(--secondary-color);
+            color: var(--on-surface);
+            border-radius: 50%;
+            box-shadow: var(--shadow-2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+            z-index: 900;
+        }
+
+        .fab:hover {
+            box-shadow: var(--shadow-3);
+            transform: scale(1.1);
+            color: var(--on-surface);
+            text-decoration: none;
+        }
+
+        .filters-section {
+            margin: 16px;
+        }
+
+        .filter-toggle {
+            width: 100%;
+            background-color: var(--surface-color);
+            border: 1px solid rgba(0,0,0,0.12);
+            border-radius: var(--border-radius);
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 1rem;
+            color: var(--on-surface);
+            cursor: pointer;
+            transition: all 0.2s;
+            min-height: 48px;
+        }
+
+        .filter-toggle:hover {
+            background-color: rgba(0,0,0,0.04);
+        }
+
+        .filter-toggle.active .filter-arrow {
+            transform: rotate(180deg);
+        }
+
+        .filter-accordion {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .filter-accordion.active {
+            max-height: 500px;
+        }
+
+        .filter-content {
+            background-color: var(--surface-color);
+            border: 1px solid rgba(0,0,0,0.12);
+            border-top: none;
+            border-radius: 0 0 var(--border-radius) var(--border-radius);
+            padding: 16px;
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .filter-field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-label {
+            font-size: 0.875rem;
+            color: rgba(0,0,0,0.6);
+            margin-bottom: 4px;
+        }
+
+        .filter-input,
+        .filter-select {
+            padding: 12px 16px;
+            border: 1px solid rgba(0,0,0,0.12);
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            background-color: var(--surface-color);
+            min-height: 48px;
+        }
+
+        .filter-input:focus,
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
+        }
+
+        .filter-apply-btn {
+            width: 100%;
+            background-color: var(--primary-color);
+            color: var(--on-primary);
+            border: none;
+            border-radius: var(--border-radius);
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            min-height: 48px;
+        }
+
+        .filter-apply-btn:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .action-buttons {
+            margin: 16px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            flex: 1;
+            background-color: var(--surface-color);
+            border: 1px solid rgba(0,0,0,0.12);
+            border-radius: var(--border-radius);
+            padding: 12px 16px;
+            font-size: 0.875rem;
+            color: var(--on-surface);
+            cursor: pointer;
+            transition: all 0.2s;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .action-btn:hover {
+            background-color: rgba(0,0,0,0.04);
+        }
+
+        .action-btn.archive {
+            color: var(--primary-color);
+        }
+
+        .action-btn.delete {
+            color: #d32f2f;
+        }
+
         @media (max-width: 768px) {
-            .btn {
-                font-size: 1.1rem;
-                min-height: 48px;
-                margin-bottom: 0.5rem;
-                padding: 14px 18px;
-                border-radius: 12px;
+            .filter-grid {
+                grid-template-columns: 1fr;
             }
-            .container {
-                padding: 0 15px;
-            }
-            h2 {
-                font-size: 1.5rem;
-                margin-bottom: 1.5rem;
-            }
+            
             .card {
-                margin-bottom: 1rem;
+                margin: 8px;
             }
-            .row.g-3 {
-                gap: 0.75rem;
+            
+            .page-header {
+                padding: 12px 0 8px 0;
             }
-            .dashboard-buttons .btn {
-                padding: 16px 12px;
-                font-size: 1rem;
-                line-height: 1.2;
-                min-height: 48px;
+
+            .action-buttons {
+                margin: 8px;
+                flex-direction: column;
             }
         }
-        
-        @media (max-width: 480px) {
-            .btn {
-                font-size: 0.95rem;
-                padding: 16px 12px;
-                min-height: 50px;
+
+        @media (max-width: 393px) {
+            .app-title {
+                font-size: 1.1rem;
             }
-            .dashboard-buttons .btn {
-                padding: 18px 10px;
-                font-size: 0.9rem;
-                min-height: 50px;
-            }
-            h2 {
+            
+            .page-title {
                 font-size: 1.3rem;
             }
-        }
-        
-        @media (max-width: 414px) {
-            .dashboard-buttons .btn {
-                min-height: 52px;
-                padding: 20px 12px;
-                font-size: 0.95rem;
+            
+            .card {
+                margin: 8px 4px;
             }
-        }
-        
-        @media (max-width: 390px) {
-            .dashboard-buttons .btn {
-                min-height: 54px;
-                padding: 22px 14px;
-                font-size: 1rem;
-            }
-        }
-        
-        @media (max-width: 393px) {
-            .dashboard-buttons .btn {
-                min-height: 56px;
-                padding: 24px 16px;
-                font-size: 1rem;
-            }
-            #lezioniPerMeseChart {
-                max-height: 250px;
-            }
+            
             .card-body {
-                padding: 0.75rem;
+                padding: 12px;
+            }
+            
+            .fab {
+                bottom: 16px;
+                right: 16px;
+            }
+            
+            .filter-grid {
+                gap: 12px;
+            }
+            
+            .filter-content {
+                padding: 12px;
+            }
+
+            .filters-section {
+                margin: 8px 4px;
+            }
+
+            .action-buttons {
+                margin: 8px 4px;
+            }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --surface-color: #121212;
+                --background-color: #000000;
+                --on-surface: #ffffff;
+                --primary-color: #bb86fc;
+                --primary-dark: #985eff;
+                --secondary-color: #03dac6;
             }
         }
     </style>
 </head>
-<body class="container mt-4">
-    <h2 class="mb-4 text-center">📚 Lezioni Attive</h2>
-
-    <!-- Grafico lezioni per mese -->
-    <div class="card mb-4 shadow-sm">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">📊 Distribuzione Lezioni per Mese</h5>
+<body>
+    <header class="top-bar fixed-top">
+        <div class="container-fluid d-flex justify-content-between align-items-center h-100">
+            <h1 class="app-title mb-0">📚 Gestione Lezioni</h1>
+            <button class="hamburger-menu btn btn-link p-0" id="hamburgerMenu">
+                <span class="hamburger-icon">☰</span>
+            </button>
         </div>
-        <div class="card-body">
-            <canvas id="lezioniPerMeseChart" height="100"></canvas>
-        </div>
-    </div>
+    </header>
 
-    <div class="container text-center">
-        <div class="row g-3 dashboard-buttons">
-            <div class="col-6 col-md-3"><a href="{{ url_for('calendario.calendario') }}" class="btn btn-primary w-100">📅 Calendario</a></div>
-            <div class="col-6 col-md-3"><a href="{{ url_for('corsi.lista_corsi') }}" class="btn btn-success w-100">📚 Corsi</a></div>
-            <div class="col-6 col-md-3"><a href="{{ url_for('export.importa_csv') }}" class="btn btn-info w-100">📂 Importa CSV</a></div>
-            <div class="col-6 col-md-3"><a href="{{ url_for('export.esporta_csv') }}" class="btn btn-secondary w-100">📥 Esporta CSV</a></div>
-            <div class="col-6 col-md-3"><a href="{{ url_for('lezioni.aggiungi_lezione') }}" class="btn btn-warning w-100">➕ Aggiungi Lezione</a></div>
-            <div class="col-6 col-md-3"><a href="{{ url_for('archivio.lezioni_archiviate') }}" class="btn btn-danger w-100">📂 Lezioni Archiviate</a></div>
-            <div class="col-6 col-md-3"><a href="{{ url_for('fatture.index') }}" class="btn btn-dark w-100">📄 Fatture</a></div>
-            <div class="col-6 col-md-3"><a href="{{ url_for('lezioni.compenso') }}" class="btn btn-primary w-100">💰 Compenso</a></div>
-            <div class="col-12 col-md-6 mx-auto"><a href="{{ url_for('resoconto.resoconto_annuale') }}" class="btn btn-info w-100">📊 Resoconto Annuale</a></div>
-        </div>
+    <main class="main-content">
+        <section class="page-header">
+            <div class="container-fluid">
+                <nav class="breadcrumb-mini">Dashboard</nav>
+                <h2 class="page-title">📚 Lezioni Attive</h2>
+            </div>
+        </section>
 
-        <div class="d-flex flex-column flex-md-row justify-content-center gap-2 mt-3">
-            <button type="button" class="btn btn-outline-primary w-100" id="archivia-button">📁 Archivia</button>
-            <button type="button" class="btn btn-outline-danger w-100" id="elimina-button">🗑️ Elimina</button>
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">📊 Distribuzione Lezioni per Mese</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="lezioniPerMeseChart" height="100"></canvas>
+            </div>
         </div>
 
-        <div class="text-center mt-4">
-            <button class="btn btn-outline-secondary" id="toggleFilter">🔍 Filtra</button>
-            <button class="btn btn-outline-primary ms-2" id="voiceSearchButton">🎤 Ricerca Vocale</button>
-        </div>
-
-        <div id="filterSection" class="card p-3 mt-3 mb-4" style="display: none;">
-            <form method="GET" action="{{ url_for('lezioni.dashboard') }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <div class="row g-3">
-                    <div class="col-md-3">
-                        <label class="form-label">Materia</label>
-                        <input type="text" name="materia" class="form-control" value="{{ request.args.get('materia', '') }}">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Data</label>
-                        <input type="date" name="data" class="form-control" value="{{ request.args.get('data', '') }}">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Stato</label>
-                        <select name="stato" class="form-select">
-                            <option value="">Tutti</option>
-                            <option value="Pianificato">Pianificato</option>
-                            <option value="Completato">Completato</option>
-                            <option value="Cancellato">Cancellato</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Luogo</label>
-                        <input type="text" name="luogo" class="form-control" value="{{ request.args.get('luogo', '') }}">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Corso</label>
-                        <select name="corso" class="form-select">
-                            <option value="">Tutti</option>
-                            {% for corso in corsi %}
-                                <option value="{{ corso.id_corso }}">{{ corso.nome }} ({{ corso.id_corso }})</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-primary mt-3 w-100">🔍 Applica Filtro</button>
-            </form>
-        </div>
-    </div>
-
-    {% include 'components/lezioni_table.html' %}
-    {% include 'components/lezioni_scripts.html' %}
-    
-    <!-- Modal per la ricerca vocale -->
-    <div class="modal fade" id="voiceSearchModal" tabindex="-1" aria-labelledby="voiceSearchModalLabel" aria-hidden="true" style="display: none;">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="voiceSearchModalLabel">🎤 Ricerca Vocale Lezioni</h5>
-                    <button type="button" class="btn-close" id="closeVoiceModal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="alert alert-info">
-                        <p>Pronuncia una data per cercare le lezioni (es. "15 maggio 2023", "domani", "oggi").</p>
-                    </div>
-                    <div class="text-center mb-4">
-                        <button class="btn btn-primary" id="startVoiceSearch">
-                            <i class="bi bi-mic-fill"></i> Inizia Ascolto
-                        </button>
-                    </div>
-                    <div class="alert alert-secondary" id="voiceSearchStatus">
-                        Pronto per ascoltare...
-                    </div>
-                    <div id="voiceSearchResults" class="mt-3">
-                        <!-- I risultati della ricerca verranno mostrati qui -->
+        <section class="filters-section">
+            <div class="container-fluid">
+                <button class="filter-toggle" id="filterToggle">
+                    <span class="filter-icon">🔍</span>
+                    <span class="filter-text">Filtra Lezioni</span>
+                    <span class="filter-arrow">▼</span>
+                </button>
+                
+                <div class="filter-accordion" id="filterAccordion">
+                    <div class="filter-content">
+                        <form method="GET" action="{{ url_for('lezioni.dashboard') }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <div class="filter-grid">
+                                <div class="filter-field">
+                                    <label class="filter-label">Materia</label>
+                                    <input type="text" name="materia" class="filter-input" value="{{ request.args.get('materia', '') }}">
+                                </div>
+                                <div class="filter-field">
+                                    <label class="filter-label">Data</label>
+                                    <input type="date" name="data" class="filter-input" value="{{ request.args.get('data', '') }}">
+                                </div>
+                                <div class="filter-field">
+                                    <label class="filter-label">Stato</label>
+                                    <select name="stato" class="filter-select">
+                                        <option value="">Tutti</option>
+                                        <option value="Pianificato">Pianificato</option>
+                                        <option value="Completato">Completato</option>
+                                        <option value="Cancellato">Cancellato</option>
+                                    </select>
+                                </div>
+                                <div class="filter-field">
+                                    <label class="filter-label">Luogo</label>
+                                    <input type="text" name="luogo" class="filter-input" value="{{ request.args.get('luogo', '') }}">
+                                </div>
+                                <div class="filter-field">
+                                    <label class="filter-label">Corso</label>
+                                    <select name="corso" class="filter-select">
+                                        <option value="">Tutti</option>
+                                        {% for corso in corsi %}
+                                            <option value="{{ corso.id_corso }}">{{ corso.nome }} ({{ corso.id_corso }})</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="submit" class="filter-apply-btn">🔍 Applica Filtro</button>
+                        </form>
                     </div>
                 </div>
             </div>
+        </section>
+
+        <div class="action-buttons">
+            <button type="button" class="action-btn archive" id="archivia-button">📁 Archivia</button>
+            <button type="button" class="action-btn delete" id="elimina-button">🗑️ Elimina</button>
         </div>
-    </div>
-    
-    <script src="{{ url_for('static', filename='js/voice-search.js') }}"></script>
+
+        <nav class="hamburger-nav" id="hamburgerNav">
+            <div class="nav-overlay" id="navOverlay"></div>
+            <div class="nav-drawer">
+                <div class="nav-header">
+                    <h3>Menu</h3>
+                    <button class="nav-close" id="navClose">✕</button>
+                </div>
+                <ul class="nav-menu">
+                    <li><a href="{{ url_for('calendario.calendario') }}" class="nav-item">📅 Calendario</a></li>
+                    <li><a href="{{ url_for('corsi.lista_corsi') }}" class="nav-item">📚 Corsi</a></li>
+                    <li><a href="{{ url_for('export.importa_csv') }}" class="nav-item">📂 Importa CSV</a></li>
+                    <li><a href="{{ url_for('export.esporta_csv') }}" class="nav-item">📥 Esporta CSV</a></li>
+                    <li><a href="{{ url_for('archivio.lezioni_archiviate') }}" class="nav-item">📂 Archiviate</a></li>
+                    <li><a href="{{ url_for('fatture.index') }}" class="nav-item">📄 Fatture</a></li>
+                    <li><a href="{{ url_for('lezioni.compenso') }}" class="nav-item">💰 Compenso</a></li>
+                    <li><a href="{{ url_for('resoconto.resoconto_annuale') }}" class="nav-item">📊 Resoconto</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <a href="{{ url_for('lezioni.aggiungi_lezione') }}" class="fab" title="Aggiungi Lezione">
+            <span class="fab-icon">➕</span>
+        </a>
+
+        {% include 'components/lezioni_table.html' %}
+        {% include 'components/lezioni_scripts.html' %}
+    </main>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Grafico lezioni per mese
+            const hamburgerMenu = document.getElementById('hamburgerMenu');
+            const hamburgerNav = document.getElementById('hamburgerNav');
+            const navOverlay = document.getElementById('navOverlay');
+            const navClose = document.getElementById('navClose');
+
+            function openNav() {
+                hamburgerNav.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeNav() {
+                hamburgerNav.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+
+            hamburgerMenu.addEventListener('click', openNav);
+            navClose.addEventListener('click', closeNav);
+            navOverlay.addEventListener('click', closeNav);
+
+            const filterToggle = document.getElementById('filterToggle');
+            const filterAccordion = document.getElementById('filterAccordion');
+
+            filterToggle.addEventListener('click', function() {
+                filterToggle.classList.toggle('active');
+                filterAccordion.classList.toggle('active');
+            });
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeNav();
+                }
+            });
+
             var ctx = document.getElementById('lezioniPerMeseChart').getContext('2d');
             var mesi = {{ mesi|tojson }};
             var conteggi = {{ conteggi|tojson }};
             
-            // Formatta i mesi per una visualizzazione più leggibile (es. "2023-01" -> "Gen 2023")
             var mesiFormattati = mesi.map(function(mese) {
                 var anno = mese.split('-')[0];
                 var numeroMese = parseInt(mese.split('-')[1]);
@@ -307,14 +607,14 @@
                                 return null;
                             }
                             const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
-                            gradient.addColorStop(0, 'rgba(56, 178, 172, 0.9)');
-                            gradient.addColorStop(0.5, 'rgba(129, 236, 236, 0.8)');
-                            gradient.addColorStop(1, 'rgba(255, 183, 77, 0.9)');
+                            gradient.addColorStop(0, 'rgba(25, 118, 210, 0.8)');
+                            gradient.addColorStop(0.5, 'rgba(3, 218, 198, 0.6)');
+                            gradient.addColorStop(1, 'rgba(25, 118, 210, 0.9)');
                             return gradient;
                         },
-                        borderColor: 'rgba(56, 178, 172, 1)',
-                        borderWidth: 3,
-                        borderRadius: 12,
+                        borderColor: 'rgba(25, 118, 210, 1)',
+                        borderWidth: 2,
+                        borderRadius: 8,
                         borderSkipped: false,
                         barThickness: window.innerWidth <= 393 ? 15 : 20,
                         minBarLength: 3,
@@ -325,13 +625,13 @@
                                 return null;
                             }
                             const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
-                            gradient.addColorStop(0, 'rgba(56, 178, 172, 1)');
-                            gradient.addColorStop(0.5, 'rgba(129, 236, 236, 1)');
-                            gradient.addColorStop(1, 'rgba(255, 183, 77, 1)');
+                            gradient.addColorStop(0, 'rgba(25, 118, 210, 1)');
+                            gradient.addColorStop(0.5, 'rgba(3, 218, 198, 0.8)');
+                            gradient.addColorStop(1, 'rgba(25, 118, 210, 1)');
                             return gradient;
                         },
-                        hoverBorderColor: 'rgba(45, 156, 150, 1)',
-                        hoverBorderWidth: 4
+                        hoverBorderColor: 'rgba(21, 101, 192, 1)',
+                        hoverBorderWidth: 3
                     }]
                 },
                 options: {
@@ -347,9 +647,9 @@
                         }
                     },
                     animation: {
-                        duration: 2000,
+                        duration: 1500,
                         easing: 'easeInOutQuart',
-                        delay: (context) => context.dataIndex * 100
+                        delay: (context) => context.dataIndex * 80
                     },
                     interaction: {
                         intersect: false,
@@ -361,16 +661,16 @@
                             suggestedMax: 5,
                             ticks: {
                                 precision: 0,
-                                color: '#4a5568',
+                                color: 'rgba(0,0,0,0.6)',
                                 font: {
-                                    family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+                                    family: "'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
                                     size: window.innerWidth <= 393 ? 11 : 13,
-                                    weight: '500'
+                                    weight: '400'
                                 },
                                 padding: window.innerWidth <= 393 ? 6 : 10
                             },
                             grid: {
-                                color: 'rgba(56, 178, 172, 0.15)',
+                                color: 'rgba(0,0,0,0.1)',
                                 drawBorder: false,
                                 lineWidth: 1
                             },
@@ -380,11 +680,11 @@
                         },
                         x: {
                             ticks: {
-                                color: '#4a5568',
+                                color: 'rgba(0,0,0,0.6)',
                                 font: {
-                                    family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+                                    family: "'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
                                     size: window.innerWidth <= 393 ? 10 : 13,
-                                    weight: '500'
+                                    weight: '400'
                                 },
                                 padding: window.innerWidth <= 393 ? 4 : 10,
                                 maxRotation: window.innerWidth <= 393 ? 45 : 0
@@ -399,39 +699,28 @@
                     },
                     plugins: {
                         title: {
-                            display: true,
-                            text: '📊 Distribuzione Lezioni per Mese',
-                            font: {
-                                size: window.innerWidth <= 393 ? 16 : 20,
-                                weight: 'bold',
-                                family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
-                            },
-                            color: '#2d3748',
-                            padding: {
-                                top: window.innerWidth <= 393 ? 10 : 20,
-                                bottom: window.innerWidth <= 393 ? 15 : 30
-                            }
+                            display: false
                         },
                         legend: {
                             display: false
                         },
                         tooltip: {
-                            backgroundColor: 'rgba(45, 55, 72, 0.95)',
+                            backgroundColor: 'rgba(33, 33, 33, 0.95)',
                             titleColor: '#fff',
                             bodyColor: '#fff',
-                            borderColor: 'rgba(56, 178, 172, 0.8)',
-                            borderWidth: 2,
-                            cornerRadius: 12,
+                            borderColor: 'rgba(25, 118, 210, 0.8)',
+                            borderWidth: 1,
+                            cornerRadius: 8,
                             displayColors: false,
                             titleFont: {
-                                size: 14,
-                                weight: 'bold'
+                                size: 13,
+                                weight: '500'
                             },
                             bodyFont: {
-                                size: 13
+                                size: 12
                             },
-                            padding: 12,
-                            caretPadding: 8,
+                            padding: 10,
+                            caretPadding: 6,
                             callbacks: {
                                 title: function(context) {
                                     return 'Mese: ' + context[0].label;
