@@ -195,6 +195,7 @@
                 </td>
                 <td>
                   <form action="{{ url_for('fatture.elimina_fattura', id_fattura=fattura[0]) }}" method="POST" onsubmit="return confirm('Sei sicuro di voler eliminare questa fattura? Le lezioni associate torneranno allo stato non fatturato.');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-danger btn-sm">🗑️ Elimina</button>
                   </form>
                 </td>
