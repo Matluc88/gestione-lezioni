@@ -143,33 +143,10 @@
               </div>
               <div class="collapse" id="filtriAvanzati">
                 <div class="card-body">
-                  <!-- Server-side client filter form -->
-                  <form method="GET" action="{{ url_for('fatture.aggiungi_fattura') }}" class="mb-3">
-                    <div class="row g-3">
-                      <div class="col-md-6">
-                        <label class="form-label">Filtra per Cliente (Server)</label>
-                        <select class="form-select" name="cliente" onchange="this.form.submit()">
-                          <option value="">Tutti i clienti</option>
-                          {% for cliente in clienti %}
-                            <option value="{{ cliente }}" {% if cliente == request.args.get('cliente', '') %}selected{% endif %}>{{ cliente }}</option>
-                          {% endfor %}
-                        </select>
-                      </div>
-                      <div class="col-md-6">
-                        <div class="d-flex align-items-end">
-                          <button type="submit" class="btn btn-primary">Applica Filtro Cliente</button>
-                          {% if request.args.get('cliente', '') %}
-                            <a href="{{ url_for('fatture.aggiungi_fattura') }}" class="btn btn-outline-secondary ms-2">Reset</a>
-                          {% endif %}
-                        </div>
-                      </div>
-                    </div>
-                  </form>
-                  
-                  <!-- Client-side filters for additional filtering -->
+                  <!-- Client-side filters -->
                   <div class="row g-3">
                     <div class="col-md-3">
-                      <label class="form-label">Cliente (Filtro Aggiuntivo)</label>
+                      <label class="form-label">Cliente</label>
                       <select class="form-select" id="filtro-cliente">
                         <option value="">Tutti i clienti</option>
                         {% for cliente in clienti %}
