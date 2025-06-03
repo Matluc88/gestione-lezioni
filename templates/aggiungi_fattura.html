@@ -187,7 +187,7 @@
               <table class="table table-striped table-hover">
                 <thead class="table-primary">
                   <tr>
-                    <th>Seleziona</th>
+                    <th><input type="checkbox" id="select-all-lezioni" title="Seleziona/Deseleziona tutte le lezioni"></th>
                     <th>Corso</th>
                     <th>Cliente</th>
                     <th>Materia</th>
@@ -236,6 +236,21 @@
       const filtroDataFine = document.getElementById('filtro-data-fine');
       const applicaFiltriBtn = document.getElementById('applica-filtri');
       const resetFiltriBtn = document.getElementById('reset-filtri');
+      
+      // Seleziona tutte le checkbox
+      const selectAllCheckbox = document.getElementById("select-all-lezioni");
+      if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener("change", function () {
+          checkboxes.forEach(checkbox => {
+            // Solo seleziona le checkbox visibili (non nascoste dai filtri)
+            const row = checkbox.closest('tr');
+            if (row.style.display !== 'none') {
+              checkbox.checked = this.checked;
+            }
+          });
+          calcolaImportoTotale();
+        });
+      }
       
       // Calcola l'importo totale in base alle lezioni selezionate
       checkboxes.forEach(checkbox => {
