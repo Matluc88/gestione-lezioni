@@ -203,7 +203,7 @@ def aggiungi_fattura():
     conn_read = None
     conn_write = None
     
-    cliente_filtro = request.args.get("cliente", "")
+
     
     try:
         conn_read = get_db_connection()
@@ -226,21 +226,14 @@ def aggiungi_fattura():
             FROM lezioni l
             LEFT JOIN corsi c ON l.id_corso = c.id_corso
             WHERE l.fatturato = 0
+            ORDER BY l.id_corso, l.data
         """
-        params = []
-        
-        if cliente_filtro:
-            placeholder = get_placeholder()
-            query += f" AND c.cliente = {placeholder}"
-            params.append(cliente_filtro)
-        
-        query += " ORDER BY l.id_corso, l.data"
-        cursor_read.execute(query, params)
+        cursor_read.execute(query)
         lezioni_non_fatturate = cursor_read.fetchall()
         
     except Exception as e:
         flash(f"❌ Errore durante il caricamento dei dati: {str(e)}", "danger")
-        return render_template("aggiungi_fattura.html", corsi=[], lezioni=[], clienti=[], now=get_local_now(), cliente_filtro="")
+        return render_template("aggiungi_fattura.html", corsi=[], lezioni=[], clienti=[], now=get_local_now())
     finally:
         if conn_read:
             conn_read.close()
@@ -262,13 +255,13 @@ def aggiungi_fattura():
             
             if not lezioni_selezionate:
                 flash("❌ Devi selezionare almeno una lezione per creare una fattura.", "danger")
-                return render_template("aggiungi_fattura.html", corsi=corsi, lezioni=lezioni_non_fatturate, clienti=clienti, now=get_local_now(), cliente_filtro=cliente_filtro)
+                return render_template("aggiungi_fattura.html", corsi=corsi, lezioni=lezioni_non_fatturate, clienti=clienti, now=get_local_now())
             
             placeholder = get_placeholder()
             cursor_write.execute(f"SELECT COUNT(*) FROM fatture WHERE numero_fattura = {placeholder}", (numero_fattura,))
             if cursor_write.fetchone()[0] > 0:
                 flash(f"❌ Esiste già una fattura con il numero '{numero_fattura}'. Scegli un numero diverso.", "danger")
-                return render_template("aggiungi_fattura.html", corsi=corsi, lezioni=lezioni_non_fatturate, clienti=clienti, now=get_local_now(), cliente_filtro=cliente_filtro)
+                return render_template("aggiungi_fattura.html", corsi=corsi, lezioni=lezioni_non_fatturate, clienti=clienti, now=get_local_now())
             
             file_pdf = ""  # Valore predefinito vuoto invece di None
             if 'file_pdf' in request.files:
@@ -403,7 +396,7 @@ def aggiungi_fattura():
             if conn_write:
                 conn_write.close()
     
-    return render_template("aggiungi_fattura.html", corsi=corsi, lezioni=lezioni_non_fatturate, clienti=clienti, now=get_local_now(), cliente_filtro=cliente_filtro)
+    return render_template("aggiungi_fattura.html", corsi=corsi, lezioni=lezioni_non_fatturate, clienti=clienti, now=get_local_now())
 
 @fatture_bp.route("/download_file/<filename>")
 @login_required
