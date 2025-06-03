@@ -91,6 +91,42 @@
           {% endif %}
         {% endwith %}
 
+        <!-- CLIENT FILTER FORM - MOVED OUTSIDE MAIN FORM -->
+        <div class="card mb-4">
+          <div class="card-header bg-light">
+            <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#filtriAvanzati">
+              🔍 Filtri Avanzati
+            </button>
+          </div>
+          <div class="collapse" id="filtriAvanzati">
+            <div class="card-body">
+              <!-- Server-side client filter form -->
+              <form method="GET" action="{{ url_for('fatture.aggiungi_fattura') }}" class="mb-3">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label">Filtra per Cliente (Server)</label>
+                    <select class="form-select" name="cliente" onchange="this.form.submit()">
+                      <option value="">Tutti i clienti</option>
+                      {% for cliente in clienti %}
+                        <option value="{{ cliente }}" {% if cliente == request.args.get('cliente', '') %}selected{% endif %}>{{ cliente }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="d-flex align-items-end">
+                      <button type="submit" class="btn btn-primary">Applica Filtro Cliente</button>
+                      {% if request.args.get('cliente', '') %}
+                        <a href="{{ url_for('fatture.aggiungi_fattura') }}" class="btn btn-outline-secondary ms-2">Reset</a>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- MAIN INVOICE CREATION FORM -->
         <form method="POST" enctype="multipart/form-data" class="row g-3">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           
@@ -134,76 +170,41 @@
             <h5 class="section-header">Seleziona le lezioni da fatturare</h5>
             <div class="form-text mb-2">Seleziona le lezioni che vuoi includere in questa fattura</div>
             
-            <!-- Filtri avanzati -->
-            <div class="card mb-3">
-              <div class="card-header bg-light">
-                <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#filtriAvanzati">
-                  🔍 Filtri Avanzati
-                </button>
+            <!-- Client-side filters for additional filtering -->
+            <div class="row g-3 mb-3">
+              <div class="col-md-3">
+                <label class="form-label">Cliente (Filtro Aggiuntivo)</label>
+                <select class="form-select" id="filtro-cliente">
+                  <option value="">Tutti i clienti</option>
+                  {% for cliente in clienti %}
+                    <option value="{{ cliente }}">{{ cliente }}</option>
+                  {% endfor %}
+                </select>
               </div>
-              <div class="collapse" id="filtriAvanzati">
-                <div class="card-body">
-                  <!-- Server-side client filter form -->
-                  <form method="GET" action="{{ url_for('fatture.aggiungi_fattura') }}" class="mb-3">
-                    <div class="row g-3">
-                      <div class="col-md-6">
-                        <label class="form-label">Filtra per Cliente (Server)</label>
-                        <select class="form-select" name="cliente" onchange="this.form.submit()">
-                          <option value="">Tutti i clienti</option>
-                          {% for cliente in clienti %}
-                            <option value="{{ cliente }}" {% if cliente == request.args.get('cliente', '') %}selected{% endif %}>{{ cliente }}</option>
-                          {% endfor %}
-                        </select>
-                      </div>
-                      <div class="col-md-6">
-                        <div class="d-flex align-items-end">
-                          <button type="submit" class="btn btn-primary">Applica Filtro Cliente</button>
-                          {% if request.args.get('cliente', '') %}
-                            <a href="{{ url_for('fatture.aggiungi_fattura') }}" class="btn btn-outline-secondary ms-2">Reset</a>
-                          {% endif %}
-                        </div>
-                      </div>
-                    </div>
-                  </form>
-                  
-                  <!-- Client-side filters for additional filtering -->
-                  <div class="row g-3">
-                    <div class="col-md-3">
-                      <label class="form-label">Cliente (Filtro Aggiuntivo)</label>
-                      <select class="form-select" id="filtro-cliente">
-                        <option value="">Tutti i clienti</option>
-                        {% for cliente in clienti %}
-                          <option value="{{ cliente }}">{{ cliente }}</option>
-                        {% endfor %}
-                      </select>
-                    </div>
-                    <div class="col-md-3">
-                      <label class="form-label">Corso</label>
-                      <select class="form-select" id="filtro-corso">
-                        <option value="">Tutti i corsi</option>
-                        {% for corso in corsi %}
-                          <option value="{{ corso }}">{{ corso }}</option>
-                        {% endfor %}
-                      </select>
-                    </div>
-                    <div class="col-md-3">
-                      <label class="form-label">Mese</label>
-                      <input type="month" class="form-control" id="filtro-mese">
-                    </div>
-                    <div class="col-md-3">
-                      <label class="form-label">Intervallo Date</label>
-                      <div class="d-flex gap-2">
-                        <input type="date" class="form-control" id="filtro-data-inizio" placeholder="Da">
-                        <input type="date" class="form-control" id="filtro-data-fine" placeholder="A">
-                      </div>
-                    </div>
-                  </div>
-                  <div class="mt-3 text-end">
-                    <button type="button" class="btn btn-primary" id="applica-filtri">Applica Filtri</button>
-                    <button type="button" class="btn btn-outline-secondary" id="reset-filtri">Reset</button>
-                  </div>
+              <div class="col-md-3">
+                <label class="form-label">Corso</label>
+                <select class="form-select" id="filtro-corso">
+                  <option value="">Tutti i corsi</option>
+                  {% for corso in corsi %}
+                    <option value="{{ corso }}">{{ corso }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Mese</label>
+                <input type="month" class="form-control" id="filtro-mese">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Intervallo Date</label>
+                <div class="d-flex gap-2">
+                  <input type="date" class="form-control" id="filtro-data-inizio" placeholder="Da">
+                  <input type="date" class="form-control" id="filtro-data-fine" placeholder="A">
                 </div>
               </div>
+            </div>
+            <div class="mb-3 text-end">
+              <button type="button" class="btn btn-primary" id="applica-filtri">Applica Filtri</button>
+              <button type="button" class="btn btn-outline-secondary" id="reset-filtri">Reset</button>
             </div>
             
             <div class="lezioni-container">
