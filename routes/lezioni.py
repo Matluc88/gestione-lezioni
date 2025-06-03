@@ -132,10 +132,29 @@ def aggiungi_lezione():
     # GET request: mostra la pagina
     with db_connection() as conn:
         cursor = conn.cursor()
+        placeholder = get_placeholder()
+        
         cursor.execute("SELECT * FROM corsi ORDER BY nome")
-        corsi = cursor.fetchall()
+        corsi_rows = cursor.fetchall()
+        
+        corsi_disponibili = []
+        for corso_row in corsi_rows:
+            corso = dict(corso_row)
+            
+            cursor.execute(f"""
+                SELECT 
+                    COUNT(*) as totale,
+                    SUM(CASE WHEN fatturato = 1 THEN 1 ELSE 0 END) as completamente_fatturate
+                FROM lezioni 
+                WHERE id_corso = {placeholder}
+            """, (corso['id_corso'],))
+            
+            result = cursor.fetchone()
+            
+            if not result or result['totale'] == 0 or result['totale'] != result['completamente_fatturate']:
+                corsi_disponibili.append(corso)
 
-    return render_template("aggiungi_lezione.html", corsi=corsi)
+    return render_template("aggiungi_lezione.html", corsi=corsi_disponibili)
 
 
 @lezioni_bp.route("/modifica_lezione/<int:lezione_id>", methods=["GET", "POST"])
