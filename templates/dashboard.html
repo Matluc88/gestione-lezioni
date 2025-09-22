@@ -624,7 +624,7 @@
             });
             
             new Chart(ctx, {
-                type: 'bar',
+                type: 'line',
                 data: {
                     labels: mesiFormattati,
                     datasets: [{
@@ -644,10 +644,13 @@
                         },
                         borderColor: 'rgba(25, 118, 210, 1)',
                         borderWidth: 2,
-                        borderRadius: 8,
-                        borderSkipped: false,
-                        barThickness: window.innerWidth <= 393 ? 15 : 20,
-                        minBarLength: 3,
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: 'rgba(25, 118, 210, 1)',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
                         hoverBackgroundColor: function(context) {
                             const chart = context.chart;
                             const {ctx, chartArea} = chart;
