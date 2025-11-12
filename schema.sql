@@ -10,7 +10,8 @@ CREATE TABLE lezioni (
     stato TEXT NOT NULL,
     fatturato INTEGER DEFAULT 0, 
     mese_fatturato TEXT DEFAULT NULL,
-    ore_fatturate REAL DEFAULT 0
+    ore_fatturate REAL DEFAULT 0,
+    google_calendar_event_id TEXT DEFAULT NULL
 );
 CREATE TABLE archiviate (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -24,7 +25,8 @@ CREATE TABLE archiviate (
     stato TEXT NOT NULL,
     fatturato INTEGER DEFAULT 0, 
     mese_fatturato TEXT DEFAULT NULL,
-    ore_fatturate REAL DEFAULT 0
+    ore_fatturate REAL DEFAULT 0,
+    google_calendar_event_id TEXT DEFAULT NULL
 );
 CREATE TABLE fatture (
     id_fattura INTEGER PRIMARY KEY AUTOINCREMENT,
