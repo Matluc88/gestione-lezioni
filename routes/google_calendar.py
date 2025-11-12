@@ -18,8 +18,21 @@ except ImportError:
 google_calendar_bp = Blueprint('google_calendar', __name__, url_prefix='/google_calendar')
 
 SCOPES = ['https://www.googleapis.com/auth/calendar']
-CREDENTIALS_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'credentials.json')
-TOKEN_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'token.json')
+
+def get_credentials_path():
+    if os.getenv('GOOGLE_CREDENTIALS_FILE'):
+        return os.getenv('GOOGLE_CREDENTIALS_FILE')
+    
+    render_path = '/etc/secrets/credentials.json'
+    if os.path.exists(render_path):
+        return render_path
+    
+    app_root_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'credentials.json')
+    return app_root_path
+
+CREDENTIALS_FILE = get_credentials_path()
+TOKEN_FILE = os.getenv('GOOGLE_TOKEN_FILE', '/tmp/token.json')
+CALENDAR_ID = os.getenv('GOOGLE_CALENDAR_ID', '00f533cf6188a0078221e27c7a1a64867021292f2deab3b214c1dd41e315616d@group.calendar.google.com')
 
 def get_google_calendar_service():
     """Get authenticated Google Calendar service"""
@@ -233,7 +246,7 @@ def esegui_sincronizzazione():
                     if lezione['google_calendar_event_id']:
                         try:
                             updated_event = service.events().update(
-                                calendarId='primary',
+                                calendarId=CALENDAR_ID,
                                 eventId=lezione['google_calendar_event_id'],
                                 body=event_body
                             ).execute()
@@ -241,7 +254,7 @@ def esegui_sincronizzazione():
                         except Exception as e:
                             print(f"Error updating event {lezione['google_calendar_event_id']}: {e}")
                             created_event = service.events().insert(
-                                calendarId='primary',
+                                calendarId=CALENDAR_ID,
                                 body=event_body
                             ).execute()
                             
@@ -253,7 +266,7 @@ def esegui_sincronizzazione():
                             lezioni_create += 1
                     else:
                         created_event = service.events().insert(
-                            calendarId='primary',
+                            calendarId=CALENDAR_ID,
                             body=event_body
                         ).execute()
                         
