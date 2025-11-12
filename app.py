@@ -18,6 +18,7 @@ from routes.archivio import archivio_bp
 from routes.calendario import calendario_bp
 from routes.export import export_bp
 from routes.resoconto import resoconto_bp
+from routes.google_calendar import google_calendar_bp
 
 load_dotenv()
 
@@ -82,6 +83,7 @@ app.register_blueprint(archivio_bp)
 app.register_blueprint(calendario_bp)
 app.register_blueprint(export_bp)
 app.register_blueprint(resoconto_bp)
+app.register_blueprint(google_calendar_bp)
 
 # ---------------------------------------------------
 # AVVIO SERVER
