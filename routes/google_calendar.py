@@ -21,6 +21,8 @@ SCOPES = ['https://www.googleapis.com/auth/calendar']
 CREDENTIALS_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'credentials.json')
 TOKEN_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'token.json')
 
+CALENDAR_ID = os.getenv('GOOGLE_CALENDAR_ID', '00f533cf6188a0078221e27c7a1a64867021292f2deab3b214c1dd41e315616d@group.calendar.google.com')
+
 def get_google_calendar_service():
     """Get authenticated Google Calendar service"""
     creds = None
@@ -233,7 +235,7 @@ def esegui_sincronizzazione():
                     if lezione['google_calendar_event_id']:
                         try:
                             updated_event = service.events().update(
-                                calendarId='primary',
+                                calendarId=CALENDAR_ID,
                                 eventId=lezione['google_calendar_event_id'],
                                 body=event_body
                             ).execute()
@@ -241,7 +243,7 @@ def esegui_sincronizzazione():
                         except Exception as e:
                             print(f"Error updating event {lezione['google_calendar_event_id']}: {e}")
                             created_event = service.events().insert(
-                                calendarId='primary',
+                                calendarId=CALENDAR_ID,
                                 body=event_body
                             ).execute()
                             
@@ -253,7 +255,7 @@ def esegui_sincronizzazione():
                             lezioni_create += 1
                     else:
                         created_event = service.events().insert(
-                            calendarId='primary',
+                            calendarId=CALENDAR_ID,
                             body=event_body
                         ).execute()
                         
