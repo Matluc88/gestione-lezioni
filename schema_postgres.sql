@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS lezioni (
     stato TEXT NOT NULL,
     fatturato INTEGER DEFAULT 0,
     mese_fatturato TEXT DEFAULT NULL,
-    ore_fatturate REAL DEFAULT 0
+    ore_fatturate REAL DEFAULT 0,
+    google_calendar_event_id TEXT DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS archiviate (
@@ -26,7 +27,8 @@ CREATE TABLE IF NOT EXISTS archiviate (
     stato TEXT NOT NULL,
     fatturato INTEGER DEFAULT 0,
     mese_fatturato TEXT DEFAULT NULL,
-    ore_fatturate REAL DEFAULT 0
+    ore_fatturate REAL DEFAULT 0,
+    google_calendar_event_id TEXT DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS fatture (
