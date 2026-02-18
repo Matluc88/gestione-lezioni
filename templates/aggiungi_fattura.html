@@ -342,11 +342,42 @@
         calcolaImportoTotale();
       }
       
-      // Pre-selezione automatica se c'è un corso nell'URL
+      // Pre-selezione automatica se c'è un corso o più corsi nell'URL
+      const urlParams = new URLSearchParams(window.location.search);
       const corsoPreselezionato = "{{ corso_preselezionato }}";
-      console.log("Corso preselezionato dall'URL:", corsoPreselezionato);
+      const corsiPreselezionati = urlParams.get('corsi');
       
-      if (corsoPreselezionato) {
+      console.log("Corso preselezionato dall'URL:", corsoPreselezionato);
+      console.log("Corsi multipli preselezionati:", corsiPreselezionati);
+      
+      if (corsiPreselezionati) {
+        // Gestione multi-corso (da stato_crediti)
+        const corsiArray = corsiPreselezionati.split(',');
+        console.log("Array corsi da fatturare:", corsiArray);
+        
+        // Filtra e seleziona tutte le lezioni dei corsi selezionati
+        setTimeout(function() {
+          checkboxes.forEach(checkbox => {
+            const row = checkbox.closest('tr');
+            const corsoCella = row.querySelector('td:nth-child(2)').textContent.trim();
+            
+            // Controlla se questo corso è nella lista dei corsi preselezionati
+            if (corsiArray.includes(corsoCella)) {
+              row.style.display = '';
+              checkbox.checked = true;
+            } else {
+              row.style.display = 'none';
+              checkbox.checked = false;
+            }
+          });
+          calcolaImportoTotale();
+          
+          // Espandi automaticamente i filtri per far vedere cosa è stato applicato
+          document.getElementById('filtriAvanzati').classList.add('show');
+        }, 100);
+        
+      } else if (corsoPreselezionato) {
+        // Gestione singolo corso (legacy)
         // Imposta il filtro corso
         filtroCorso.value = corsoPreselezionato;
         console.log("Valore impostato nel filtro:", filtroCorso.value);
