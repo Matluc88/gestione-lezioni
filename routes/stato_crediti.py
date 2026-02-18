@@ -59,13 +59,15 @@ def stato_crediti():
         cursor.execute(query)
         risultati = cursor.fetchall()
         
-        # Raggruppamento per cliente
+        # Raggruppamento per cliente con classificazione per stato
         corsi_per_cliente = {}
         for row in risultati:
             cliente = row['cliente']
             if cliente not in corsi_per_cliente:
                 corsi_per_cliente[cliente] = {
-                    'corsi': [],
+                    'da_fatturare': [],
+                    'in_corso': [],
+                    'fatturato': [],
                     'totale_completato': 0,
                     'totale_fatturato': 0,
                     'totale_maturato': 0
@@ -93,7 +95,17 @@ def stato_crediti():
                 'pronto_fatturazione': percentuale == 100 and credito_maturato > 0
             }
             
-            corsi_per_cliente[cliente]['corsi'].append(corso_info)
+            # Classifica il corso nella categoria appropriata
+            if percentuale == 100 and credito_maturato > 0:
+                # Corso completato al 100% con credito da incassare
+                corsi_per_cliente[cliente]['da_fatturare'].append(corso_info)
+            elif percentuale == 100 and credito_maturato == 0:
+                # Corso completato al 100% e tutto fatturato
+                corsi_per_cliente[cliente]['fatturato'].append(corso_info)
+            else:
+                # Corso in corso (< 100%)
+                corsi_per_cliente[cliente]['in_corso'].append(corso_info)
+            
             corsi_per_cliente[cliente]['totale_completato'] += credito_completato
             corsi_per_cliente[cliente]['totale_fatturato'] += credito_fatturato
             corsi_per_cliente[cliente]['totale_maturato'] += credito_maturato
@@ -103,9 +115,7 @@ def stato_crediti():
         totale_generale_fatturato = sum(c['totale_fatturato'] for c in corsi_per_cliente.values())
         totale_generale_maturato = sum(c['totale_maturato'] for c in corsi_per_cliente.values())
         
-        corsi_pronti = sum(1 for cliente in corsi_per_cliente.values() 
-                          for corso in cliente['corsi'] 
-                          if corso['pronto_fatturazione'])
+        corsi_pronti = sum(len(cliente['da_fatturare']) for cliente in corsi_per_cliente.values())
     
     return render_template(
         'stato_crediti.html',

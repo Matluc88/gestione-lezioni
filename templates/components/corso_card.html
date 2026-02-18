@@ -1,0 +1,72 @@
+<div class="corso-item {% if corso.pronto_fatturazione %}pronto{% endif %}">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">
+            <strong>{{ corso.id_corso }}</strong> <span class="text-muted">|</span> {{ corso.nome }}
+        </h5>
+        <span class="badge badge-custom 
+            {% if corso.percentuale == 100 %}bg-primary{% elif corso.percentuale >= 67 %}bg-success{% elif corso.percentuale >= 34 %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+            {{ corso.lezioni_completate }}/{{ corso.totale_lezioni }} lezioni
+        </span>
+    </div>
+    
+    <!-- Barra di Progresso -->
+    <div class="progress mb-3">
+        <div class="progress-bar 
+            {% if corso.percentuale == 100 %}bg-primary{% elif corso.percentuale >= 67 %}bg-success{% elif corso.percentuale >= 34 %}bg-warning{% else %}bg-danger{% endif %}"
+            role="progressbar" 
+            style="width: {{ corso.percentuale }}%;" 
+            aria-valuenow="{{ corso.percentuale }}" 
+            aria-valuemin="0" 
+            aria-valuemax="100">
+            {{ corso.percentuale }}%
+        </div>
+    </div>
+    
+    <!-- Dettagli Credito -->
+    <div class="row mb-3">
+        <div class="col-md-3 col-6 mb-2">
+            <small class="text-muted">💰 Completato:</small><br>
+            <strong>€{{ "%.2f"|format(corso.credito_completato) }}</strong>
+        </div>
+        <div class="col-md-3 col-6 mb-2">
+            <small class="text-muted">💵 Fatturato:</small><br>
+            <strong>€{{ "%.2f"|format(corso.credito_fatturato) }}</strong>
+        </div>
+        <div class="col-md-3 col-6 mb-2">
+            <small class="text-muted">🟢 Da Incassare:</small><br>
+            <strong class="text-success">€{{ "%.2f"|format(corso.credito_maturato) }}</strong>
+        </div>
+        <div class="col-md-3 col-6 mb-2">
+            <small class="text-muted">⏳ Futuro:</small><br>
+            <strong class="text-secondary">€{{ "%.2f"|format(corso.credito_futuro) }}</strong>
+        </div>
+    </div>
+    
+    <!-- Status Badge -->
+    {% if corso.pronto_fatturazione %}
+    <div class="alert alert-danger mb-0" role="alert">
+        <div class="d-flex justify-content-between align-items-center flex-wrap">
+            <div class="mb-2 mb-md-0">
+                🔴 <strong>CORSO COMPLETATO - DA FATTURARE: €{{ "%.2f"|format(corso.credito_maturato) }}</strong>
+            </div>
+            <a href="{{ url_for('fatture.aggiungi_fattura') }}?corso={{ corso.id_corso }}" 
+               class="btn btn-danger btn-sm">
+                Fattura Ora ➤
+            </a>
+        </div>
+    </div>
+    {% elif corso.percentuale == 100 %}
+    <div class="alert alert-success mb-0" role="alert">
+        ✅ <strong>Corso completato e completamente fatturato</strong>
+    </div>
+    {% elif corso.credito_maturato > 0 %}
+    <div class="alert alert-warning mb-0" role="alert">
+        🟡 <strong>Credito maturato: €{{ "%.2f"|format(corso.credito_maturato) }}</strong> 
+        <span class="text-muted">(corso in corso, {{ corso.lezioni_completate }}/{{ corso.totale_lezioni }} lezioni completate)</span>
+    </div>
+    {% else %}
+    <div class="alert alert-info mb-0" role="alert">
+        ℹ️ <strong>Corso in corso</strong> - {{ corso.percentuale }}% completato
+    </div>
+    {% endif %}
+</div>
