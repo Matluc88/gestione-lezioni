@@ -19,6 +19,7 @@ from routes.calendario import calendario_bp
 from routes.export import export_bp
 from routes.resoconto import resoconto_bp
 from routes.google_calendar import google_calendar_bp
+from routes.stato_crediti import stato_crediti_bp
 
 load_dotenv()
 
@@ -54,8 +55,9 @@ csp = {
     'default-src': "'self'",
     'script-src': ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://code.jquery.com"],
     'style-src': ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
-    'font-src': ["'self'", "https://cdn.jsdelivr.net"],
+    'font-src': ["'self'", "https://cdn.jsdelivr.net", "data:"],
     'img-src': ["'self'", "data:"],
+    'connect-src': ["'self'"],
 }
 
 Talisman(app, 
@@ -84,6 +86,7 @@ app.register_blueprint(calendario_bp)
 app.register_blueprint(export_bp)
 app.register_blueprint(resoconto_bp)
 app.register_blueprint(google_calendar_bp)
+app.register_blueprint(stato_crediti_bp)
 
 # ---------------------------------------------------
 # AVVIO SERVER
