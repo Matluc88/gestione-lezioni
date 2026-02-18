@@ -296,8 +296,25 @@
         checkbox.addEventListener('change', calcolaImportoTotale);
       });
       
-      // Non ricalcolare l'importo all'avvio per mantenere quello originale
-      // calcolaImportoTotale();
+      // Pre-filtra le lezioni per mostrare solo il corso della fattura
+      if (checkboxes.length > 0) {
+        // Trova il corso della prima lezione selezionata
+        let corsoFattura = '';
+        checkboxes.forEach(checkbox => {
+          if (checkbox.checked && !corsoFattura) {
+            const row = checkbox.closest('tr');
+            corsoFattura = row.querySelector('td:nth-child(2)').textContent.trim();
+          }
+        });
+        
+        // Se abbiamo trovato un corso, applica il filtro
+        if (corsoFattura) {
+          filtroCorso.value = corsoFattura;
+          applicaFiltri();
+          // Espandi i filtri per mostrare cosa è applicato
+          document.getElementById('filtriAvanzati').classList.add('show');
+        }
+      }
     });
   </script>
 </body>
