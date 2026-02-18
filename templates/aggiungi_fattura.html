@@ -273,11 +273,19 @@
         const dataInizio = filtroDataInizio.value;
         const dataFine = filtroDataFine.value;
         
+        console.log("Applicando filtri - Corso da filtrare:", corso);
+        let visibili = 0;
+        
         checkboxes.forEach(checkbox => {
           const row = checkbox.closest('tr');
           const corsoCella = row.querySelector('td:nth-child(2)').textContent.trim();
           const clienteCella = row.querySelector('td:nth-child(3)').textContent.trim();
           const dataCella = row.dataset.data;
+          
+          // Debug: stampa il primo corso trovato
+          if (visibili === 0) {
+            console.log("Primo corso nella tabella:", corsoCella, "- Confronto con:", corso, "- Match:", corsoCella === corso);
+          }
           
           // Verifica se la riga corrisponde al corso selezionato (se c'è)
           const corsoMatch = !corso || corsoCella === corso;
@@ -307,12 +315,14 @@
           // Mostra o nascondi la riga in base ai filtri
           if (corsoMatch && clienteMatch && meseMatch && dataMatch) {
             row.style.display = '';
+            visibili++;
           } else {
             row.style.display = 'none';
             checkbox.checked = false;
           }
         });
         
+        console.log("Lezioni visibili dopo filtro:", visibili);
         calcolaImportoTotale();
       }
       
@@ -334,9 +344,12 @@
       
       // Pre-selezione automatica se c'è un corso nell'URL
       const corsoPreselezionato = "{{ corso_preselezionato }}";
+      console.log("Corso preselezionato dall'URL:", corsoPreselezionato);
+      
       if (corsoPreselezionato) {
         // Imposta il filtro corso
         filtroCorso.value = corsoPreselezionato;
+        console.log("Valore impostato nel filtro:", filtroCorso.value);
         
         // Applica il filtro automaticamente
         applicaFiltri();
