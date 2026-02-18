@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS archiviate (
 
 CREATE TABLE IF NOT EXISTS fatture (
     id_fattura SERIAL PRIMARY KEY,
-    numero_fattura TEXT NOT NULL UNIQUE,
+    numero_fattura TEXT NOT NULL,
     id_corso TEXT,
     data_fattura TEXT NOT NULL,
     importo REAL NOT NULL,
