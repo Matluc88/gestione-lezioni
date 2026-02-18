@@ -203,7 +203,8 @@ def aggiungi_fattura():
     conn_read = None
     conn_write = None
     
-
+    # Leggi il parametro corso dall'URL per pre-selezione
+    corso_preselezionato = sanitize_input(request.args.get("corso", default="", type=str))
     
     try:
         conn_read = get_db_connection()
@@ -233,7 +234,7 @@ def aggiungi_fattura():
         
     except Exception as e:
         flash(f"❌ Errore durante il caricamento dei dati: {str(e)}", "danger")
-        return render_template("aggiungi_fattura.html", corsi=[], lezioni=[], clienti=[], now=get_local_now())
+        return render_template("aggiungi_fattura.html", corsi=[], lezioni=[], clienti=[], now=get_local_now(), corso_preselezionato="")
     finally:
         if conn_read:
             conn_read.close()
@@ -255,7 +256,7 @@ def aggiungi_fattura():
             
             if not lezioni_selezionate:
                 flash("❌ Devi selezionare almeno una lezione per creare una fattura.", "danger")
-                return render_template("aggiungi_fattura.html", corsi=corsi, lezioni=lezioni_non_fatturate, clienti=clienti, now=get_local_now())
+                return render_template("aggiungi_fattura.html", corsi=corsi, lezioni=lezioni_non_fatturate, clienti=clienti, now=get_local_now(), corso_preselezionato=corso_preselezionato)
             
             placeholder = get_placeholder()
             cursor_write.execute(f"SELECT COUNT(*) FROM fatture WHERE numero_fattura = {placeholder}", (numero_fattura,))
