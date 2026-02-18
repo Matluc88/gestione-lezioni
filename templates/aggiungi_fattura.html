@@ -237,50 +237,7 @@
       const applicaFiltriBtn = document.getElementById('applica-filtri');
       const resetFiltriBtn = document.getElementById('reset-filtri');
       
-      // Pre-selezione automatica se c'è un corso nell'URL
-      const corsoPreselezionato = "{{ corso_preselezionato }}";
-      if (corsoPreselezionato) {
-        // Imposta il filtro corso
-        filtroCorso.value = corsoPreselezionato;
-        
-        // Applica il filtro automaticamente
-        applicaFiltri();
-        
-        // Seleziona tutte le checkbox del corso filtrato
-        setTimeout(function() {
-          checkboxes.forEach(checkbox => {
-            const row = checkbox.closest('tr');
-            if (row.style.display !== 'none') {
-              checkbox.checked = true;
-            }
-          });
-          calcolaImportoTotale();
-          
-          // Espandi automaticamente i filtri per far vedere cosa è stato applicato
-          document.getElementById('filtriAvanzati').classList.add('show');
-        }, 100);
-      }
-      
-      // Seleziona tutte le checkbox
-      const selectAllCheckbox = document.getElementById("select-all-lezioni");
-      if (selectAllCheckbox) {
-        selectAllCheckbox.addEventListener("change", function () {
-          checkboxes.forEach(checkbox => {
-            // Solo seleziona le checkbox visibili (non nascoste dai filtri)
-            const row = checkbox.closest('tr');
-            if (row.style.display !== 'none') {
-              checkbox.checked = this.checked;
-            }
-          });
-          calcolaImportoTotale();
-        });
-      }
-      
-      // Calcola l'importo totale in base alle lezioni selezionate
-      checkboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', calcolaImportoTotale);
-      });
-      
+      // DEFINIZIONE FUNZIONI (prima di tutto)
       function calcolaImportoTotale() {
         let importoTotale = 0;
         checkboxes.forEach(checkbox => {
@@ -374,6 +331,50 @@
         
         calcolaImportoTotale();
       }
+      
+      // Pre-selezione automatica se c'è un corso nell'URL
+      const corsoPreselezionato = "{{ corso_preselezionato }}";
+      if (corsoPreselezionato) {
+        // Imposta il filtro corso
+        filtroCorso.value = corsoPreselezionato;
+        
+        // Applica il filtro automaticamente
+        applicaFiltri();
+        
+        // Seleziona tutte le checkbox del corso filtrato
+        setTimeout(function() {
+          checkboxes.forEach(checkbox => {
+            const row = checkbox.closest('tr');
+            if (row.style.display !== 'none') {
+              checkbox.checked = true;
+            }
+          });
+          calcolaImportoTotale();
+          
+          // Espandi automaticamente i filtri per far vedere cosa è stato applicato
+          document.getElementById('filtriAvanzati').classList.add('show');
+        }, 100);
+      }
+      
+      // Seleziona tutte le checkbox
+      const selectAllCheckbox = document.getElementById("select-all-lezioni");
+      if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener("change", function () {
+          checkboxes.forEach(checkbox => {
+            // Solo seleziona le checkbox visibili (non nascoste dai filtri)
+            const row = checkbox.closest('tr');
+            if (row.style.display !== 'none') {
+              checkbox.checked = this.checked;
+            }
+          });
+          calcolaImportoTotale();
+        });
+      }
+      
+      // Calcola l'importo totale in base alle lezioni selezionate
+      checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', calcolaImportoTotale);
+      });
       
       // Inizializza applicando i filtri
       applicaFiltri();
