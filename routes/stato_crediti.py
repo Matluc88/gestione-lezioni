@@ -24,7 +24,8 @@ def stato_crediti():
                 SUM(CASE WHEN l.stato = 'Completato' THEN calcola_ore(l.ora_inizio, l.ora_fine) * l.compenso_orario ELSE 0 END) as credito_completato,
                 SUM(CASE WHEN l.stato = 'Completato' AND l.fatturato = 1 THEN calcola_ore(l.ora_inizio, l.ora_fine) * l.compenso_orario ELSE 0 END) as credito_fatturato,
                 SUM(CASE WHEN l.stato = 'Completato' AND l.fatturato = 0 THEN calcola_ore(l.ora_inizio, l.ora_fine) * l.compenso_orario ELSE 0 END) as credito_maturato,
-                SUM(CASE WHEN l.stato != 'Completato' THEN calcola_ore(l.ora_inizio, l.ora_fine) * l.compenso_orario ELSE 0 END) as credito_futuro
+                SUM(CASE WHEN l.stato != 'Completato' THEN calcola_ore(l.ora_inizio, l.ora_fine) * l.compenso_orario ELSE 0 END) as credito_futuro,
+                MAX(l.data) as ultima_data_lezione
             FROM lezioni l
             LEFT JOIN corsi c ON l.id_corso = c.id_corso
             GROUP BY COALESCE(c.cliente, 'Senza Cliente'), l.id_corso, c.nome
@@ -49,7 +50,8 @@ def stato_crediti():
                 ELSE 0 END) as credito_maturato,
                 SUM(CASE WHEN l.stato != 'Completato' THEN 
                     ((julianday(l.ora_fine) - julianday(l.ora_inizio)) * 24) * l.compenso_orario 
-                ELSE 0 END) as credito_futuro
+                ELSE 0 END) as credito_futuro,
+                MAX(l.data) as ultima_data_lezione
             FROM lezioni l
             LEFT JOIN corsi c ON l.id_corso = c.id_corso
             GROUP BY COALESCE(c.cliente, 'Senza Cliente'), l.id_corso, c.nome
@@ -82,6 +84,19 @@ def stato_crediti():
             credito_maturato = float(row['credito_maturato'] or 0)
             credito_futuro = float(row['credito_futuro'] or 0)
             
+            # Formatta la data dell'ultima lezione
+            ultima_data = row['ultima_data_lezione']
+            if ultima_data:
+                # Converti la data in formato leggibile (da YYYY-MM-DD a DD/MM/YYYY)
+                from datetime import datetime
+                try:
+                    data_obj = datetime.strptime(ultima_data, '%Y-%m-%d')
+                    ultima_data_formattata = data_obj.strftime('%d/%m/%Y')
+                except:
+                    ultima_data_formattata = ultima_data
+            else:
+                ultima_data_formattata = 'N/D'
+            
             corso_info = {
                 'id_corso': row['id_corso'],
                 'nome': row['nome_corso'],
@@ -92,7 +107,8 @@ def stato_crediti():
                 'credito_fatturato': credito_fatturato,
                 'credito_maturato': credito_maturato,
                 'credito_futuro': credito_futuro,
-                'pronto_fatturazione': percentuale == 100 and credito_maturato > 0
+                'pronto_fatturazione': percentuale == 100 and credito_maturato > 0,
+                'ultima_data_lezione': ultima_data_formattata
             }
             
             # Classifica il corso nella categoria appropriata

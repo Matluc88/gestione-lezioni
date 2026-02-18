@@ -1,8 +1,11 @@
 <div class="corso-item {% if corso.pronto_fatturazione %}pronto{% endif %}">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="mb-0">
-            <strong>{{ corso.id_corso }}</strong> <span class="text-muted">|</span> {{ corso.nome }}
-        </h5>
+        <div>
+            <h5 class="mb-0">
+                <strong>{{ corso.id_corso }}</strong> <span class="text-muted">|</span> {{ corso.nome }}
+            </h5>
+            <small class="text-muted">📅 Ultimo giorno: <strong>{{ corso.ultima_data_lezione }}</strong></small>
+        </div>
         <span class="badge badge-custom 
             {% if corso.percentuale == 100 %}bg-primary{% elif corso.percentuale >= 67 %}bg-success{% elif corso.percentuale >= 34 %}bg-warning text-dark{% else %}bg-danger{% endif %}">
             {{ corso.lezioni_completate }}/{{ corso.totale_lezioni }} lezioni
