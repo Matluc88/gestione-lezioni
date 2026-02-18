@@ -262,7 +262,7 @@ def aggiungi_fattura():
             cursor_write.execute(f"SELECT COUNT(*) FROM fatture WHERE numero_fattura = {placeholder}", (numero_fattura,))
             if cursor_write.fetchone()[0] > 0:
                 flash(f"❌ Esiste già una fattura con il numero '{numero_fattura}'. Scegli un numero diverso.", "danger")
-                return render_template("aggiungi_fattura.html", corsi=corsi, lezioni=lezioni_non_fatturate, clienti=clienti, now=get_local_now())
+                return render_template("aggiungi_fattura.html", corsi=corsi, lezioni=lezioni_non_fatturate, clienti=clienti, now=get_local_now(), corso_preselezionato=corso_preselezionato)
             
             file_pdf = ""  # Valore predefinito vuoto invece di None
             if 'file_pdf' in request.files:
@@ -397,7 +397,7 @@ def aggiungi_fattura():
             if conn_write:
                 conn_write.close()
     
-    return render_template("aggiungi_fattura.html", corsi=corsi, lezioni=lezioni_non_fatturate, clienti=clienti, now=get_local_now())
+    return render_template("aggiungi_fattura.html", corsi=corsi, lezioni=lezioni_non_fatturate, clienti=clienti, now=get_local_now(), corso_preselezionato=corso_preselezionato)
 
 @fatture_bp.route("/download_file/<filename>")
 @login_required
