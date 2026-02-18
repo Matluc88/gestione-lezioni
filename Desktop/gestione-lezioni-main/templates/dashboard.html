@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Lezioni</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/it.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: #1976d2;
+            --primary-dark: #1565c0;
+            --secondary-color: #03dac6;
+            --surface-color: #ffffff;
+            --background-color: #f5f5f5;
+            --on-surface: #000000;
+            --on-primary: #ffffff;
+            --shadow-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+            --shadow-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+            --shadow-3: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+            --border-radius: 8px;
+            --top-bar-height: 56px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
+            color: var(--on-surface);
+            line-height: 1.5;
+        }
+
+        .top-bar {
+            height: var(--top-bar-height);
+            background-color: var(--primary-color);
+            color: var(--on-primary);
+            box-shadow: var(--shadow-2);
+            z-index: 1000;
+        }
+
+        .app-title {
+            font-size: 1.25rem;
+            font-weight: 500;
+            color: var(--on-primary);
+        }
+
+        .hamburger-menu {
+            color: var(--on-primary);
+            border: none;
+            background: none;
+            font-size: 1.5rem;
+            padding: 8px;
+            border-radius: 50%;
+            transition: background-color 0.2s;
+            min-height: 48px;
+            min-width: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hamburger-menu:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .main-content {
+            padding-top: var(--top-bar-height);
+            min-height: 100vh;
+        }
+
+        .page-header {
+            padding: 16px 0 8px 0;
+            background-color: var(--surface-color);
+            border-bottom: 1px solid rgba(0,0,0,0.12);
+        }
+
+        .breadcrumb-mini {
+            font-size: 0.875rem;
+            color: rgba(0,0,0,0.6);
+            margin-bottom: 4px;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 400;
+            margin: 0;
+            color: var(--on-surface);
+        }
+
+        .card {
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-1);
+            border: none;
+            margin: 16px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            background-color: var(--primary-color);
+            color: var(--on-primary);
+            padding: 16px;
+            border-bottom: none;
+        }
+
+        .card-body {
+            padding: 16px;
+        }
+
+        .hamburger-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1100;
+            visibility: hidden;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .hamburger-nav.active {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .nav-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .nav-drawer {
+            position: absolute;
+            top: 0;
+            left: -280px;
+            width: 280px;
+            height: 100%;
+            background-color: var(--surface-color);
+            box-shadow: var(--shadow-3);
+            transition: left 0.3s ease;
+            overflow-y: auto;
+        }
+
+        .hamburger-nav.active .nav-drawer {
+            left: 0;
+        }
+
+        .nav-header {
+            padding: 16px;
+            background-color: var(--primary-color);
+            color: var(--on-primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: var(--top-bar-height);
+        }
+
+        .nav-close {
+            background: none;
+            border: none;
+            color: var(--on-primary);
+            font-size: 1.5rem;
+            padding: 8px;
+            border-radius: 50%;
+            min-height: 48px;
+            min-width: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .nav-item {
+            display: block;
+            padding: 16px 24px;
+            color: var(--on-surface);
+            text-decoration: none;
+            border-bottom: 1px solid rgba(0,0,0,0.12);
+            transition: background-color 0.2s;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-item:hover {
+            background-color: rgba(0,0,0,0.04);
+            color: var(--on-surface);
+            text-decoration: none;
+        }
+
+        .fab {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            background-color: var(--secondary-color);
+            color: var(--on-surface);
+            border-radius: 50%;
+            box-shadow: var(--shadow-2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+            z-index: 900;
+        }
+
+        .fab:hover {
+            box-shadow: var(--shadow-3);
+            transform: scale(1.1);
+            color: var(--on-surface);
+            text-decoration: none;
+        }
+
+        .filters-section {
+            margin: 16px;
+        }
+
+        .filter-toggle {
+            width: 100%;
+            background-color: var(--surface-color);
+            border: 1px solid rgba(0,0,0,0.12);
+            border-radius: var(--border-radius);
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 1rem;
+            color: var(--on-surface);
+            cursor: pointer;
+            transition: all 0.2s;
+            min-height: 48px;
+        }
+
+        .filter-toggle:hover {
+            background-color: rgba(0,0,0,0.04);
+        }
+
+        .filter-toggle.active .filter-arrow {
+            transform: rotate(180deg);
+        }
+
+        .filter-accordion {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .filter-accordion.active {
+            max-height: 500px;
+        }
+
+        .filter-content {
+            background-color: var(--surface-color);
+            border: 1px solid rgba(0,0,0,0.12);
+            border-top: none;
+            border-radius: 0 0 var(--border-radius) var(--border-radius);
+            padding: 16px;
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .filter-field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-label {
+            font-size: 0.875rem;
+            color: rgba(0,0,0,0.6);
+            margin-bottom: 4px;
+        }
+
+        .filter-input,
+        .filter-select {
+            padding: 12px 16px;
+            border: 1px solid rgba(0,0,0,0.12);
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            background-color: var(--surface-color);
+            min-height: 48px;
+        }
+
+        .filter-input:focus,
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
+        }
+
+        .filter-apply-btn {
+            width: 100%;
+            background-color: var(--primary-color);
+            color: var(--on-primary);
+            border: none;
+            border-radius: var(--border-radius);
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            min-height: 48px;
+        }
+
+        .filter-apply-btn:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .action-buttons {
+            margin: 16px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            flex: 1;
+            background-color: var(--surface-color);
+            border: 1px solid rgba(0,0,0,0.12);
+            border-radius: var(--border-radius);
+            padding: 12px 16px;
+            font-size: 0.875rem;
+            color: var(--on-surface);
+            cursor: pointer;
+            transition: all 0.2s;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .action-btn:hover {
+            background-color: rgba(0,0,0,0.04);
+        }
+
+        .action-btn.archive {
+            color: var(--primary-color);
+        }
+
+        .action-btn.delete {
+            color: #d32f2f;
+        }
+
+        @media (max-width: 768px) {
+            .filter-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .card {
+                margin: 8px;
+            }
+            
+            .page-header {
+                padding: 12px 0 8px 0;
+            }
+
+            .action-buttons {
+                margin: 8px;
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 393px) {
+            .app-title {
+                font-size: 1.1rem;
+            }
+            
+            .page-title {
+                font-size: 1.3rem;
+            }
+            
+            .card {
+                margin: 8px 4px;
+            }
+            
+            .card-body {
+                padding: 12px;
+            }
+            
+            .fab {
+                bottom: 16px;
+                right: 16px;
+            }
+            
+            .filter-grid {
+                gap: 12px;
+            }
+            
+            .filter-content {
+                padding: 12px;
+            }
+
+            .filters-section {
+                margin: 8px 4px;
+            }
+
+            .action-buttons {
+                margin: 8px 4px;
+            }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --surface-color: #1e1e1e;
+                --background-color: #121212;
+                --on-surface: #e8e8e8;
+                --primary-color: #bb86fc;
+                --primary-dark: #985eff;
+                --secondary-color: #03dac6;
+            }
+            
+            /* Improve text contrast in dark mode */
+            body {
+                color: #e8e8e8 !important;
+            }
+            
+            .filter-label {
+                color: #b3b3b3 !important;
+            }
+            
+            .breadcrumb-mini {
+                color: #b3b3b3 !important;
+            }
+            
+            .page-title {
+                color: #e8e8e8 !important;
+            }
+            
+            .nav-item {
+                color: #e8e8e8 !important;
+            }
+            
+            .nav-item:hover {
+                color: #ffffff !important;
+            }
+            
+            /* Chart text colors for dark mode */
+            .chart-container {
+                color: #e8e8e8;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="top-bar fixed-top">
+        <div class="container-fluid d-flex justify-content-between align-items-center h-100">
+            <h1 class="app-title mb-0">📚 Gestione Lezioni</h1>
+            <button class="hamburger-menu btn btn-link p-0" id="hamburgerMenu">
+                <span class="hamburger-icon">☰</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <section class="page-header">
+            <div class="container-fluid">
+                <nav class="breadcrumb-mini">Dashboard</nav>
+                <h2 class="page-title">📚 Lezioni Attive</h2>
+            </div>
+        </section>
+
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">📊 Distribuzione Lezioni per Mese</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="lezioniPerMeseChart" height="100"></canvas>
+            </div>
+        </div>
+
+        <section class="filters-section">
+            <div class="container-fluid">
+                <button class="filter-toggle" id="filterToggle">
+                    <span class="filter-icon">🔍</span>
+                    <span class="filter-text">Filtra Lezioni</span>
+                    <span class="filter-arrow">▼</span>
+                </button>
+                
+                <div class="filter-accordion" id="filterAccordion">
+                    <div class="filter-content">
+                        <form method="GET" action="{{ url_for('lezioni.dashboard') }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <div class="filter-grid">
+                                <div class="filter-field">
+                                    <label class="filter-label">Materia</label>
+                                    <input type="text" name="materia" class="filter-input" value="{{ request.args.get('materia', '') }}">
+                                </div>
+                                <div class="filter-field">
+                                    <label class="filter-label">Data</label>
+                                    <input type="date" name="data" class="filter-input" value="{{ request.args.get('data', '') }}">
+                                </div>
+                                <div class="filter-field">
+                                    <label class="filter-label">Stato</label>
+                                    <select name="stato" class="filter-select">
+                                        <option value="">Tutti</option>
+                                        <option value="Pianificato">Pianificato</option>
+                                        <option value="Completato">Completato</option>
+                                        <option value="Cancellato">Cancellato</option>
+                                    </select>
+                                </div>
+                                <div class="filter-field">
+                                    <label class="filter-label">Luogo</label>
+                                    <input type="text" name="luogo" class="filter-input" value="{{ request.args.get('luogo', '') }}">
+                                </div>
+                                <div class="filter-field">
+                                    <label class="filter-label">Corso</label>
+                                    <select name="corso" class="filter-select">
+                                        <option value="">Tutti</option>
+                                        {% for corso in corsi %}
+                                            <option value="{{ corso.id_corso }}">{{ corso.nome }} ({{ corso.id_corso }})</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="submit" class="filter-apply-btn">🔍 Applica Filtro</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="action-buttons">
+            <button type="button" class="action-btn archive" id="archivia-button">📁 Archivia</button>
+            <button type="button" class="action-btn delete" id="elimina-button">🗑️ Elimina</button>
+        </div>
+
+        <nav class="hamburger-nav" id="hamburgerNav">
+            <div class="nav-overlay" id="navOverlay"></div>
+            <div class="nav-drawer">
+                <div class="nav-header">
+                    <h3>Menu</h3>
+                    <button class="nav-close" id="navClose">✕</button>
+                </div>
+                <ul class="nav-menu">
+                    <li><a href="{{ url_for('calendario.calendario') }}" class="nav-item">📅 Calendario</a></li>
+                    <li><a href="{{ url_for('corsi.lista_corsi') }}" class="nav-item">📚 Corsi</a></li>
+                    <li><a href="{{ url_for('export.importa_csv') }}" class="nav-item">📂 Importa CSV</a></li>
+                    <li><a href="{{ url_for('export.esporta_csv') }}" class="nav-item">📥 Esporta CSV</a></li>
+                    <li><a href="{{ url_for('archivio.lezioni_archiviate') }}" class="nav-item">📂 Archiviate</a></li>
+                    <li><a href="{{ url_for('fatture.index') }}" class="nav-item">📄 Fatture</a></li>
+                    <li><a href="{{ url_for('stato_crediti.stato_crediti') }}" class="nav-item">📊 Stato Crediti</a></li>
+                    <li><a href="{{ url_for('lezioni.compenso') }}" class="nav-item">💰 Compenso</a></li>
+                    <li><a href="{{ url_for('resoconto.resoconto_annuale') }}" class="nav-item">📊 Resoconto</a></li>
+                    <li><a href="{{ url_for('google_calendar.sincronizza') }}" class="nav-item">🔄 Sincronizza con Google Calendar</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <a href="{{ url_for('lezioni.aggiungi_lezione') }}" class="fab" title="Aggiungi Lezione">
+            <span class="fab-icon">➕</span>
+        </a>
+
+        {% include 'components/lezioni_table.html' %}
+        {% include 'components/lezioni_scripts.html' %}
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const hamburgerMenu = document.getElementById('hamburgerMenu');
+            const hamburgerNav = document.getElementById('hamburgerNav');
+            const navOverlay = document.getElementById('navOverlay');
+            const navClose = document.getElementById('navClose');
+
+            function openNav() {
+                hamburgerNav.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeNav() {
+                hamburgerNav.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+
+            hamburgerMenu.addEventListener('click', openNav);
+            navClose.addEventListener('click', closeNav);
+            navOverlay.addEventListener('click', closeNav);
+
+            const filterToggle = document.getElementById('filterToggle');
+            const filterAccordion = document.getElementById('filterAccordion');
+
+            filterToggle.addEventListener('click', function() {
+                filterToggle.classList.toggle('active');
+                filterAccordion.classList.toggle('active');
+            });
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeNav();
+                }
+            });
+
+            var ctx = document.getElementById('lezioniPerMeseChart').getContext('2d');
+            var mesi = {{ mesi|tojson }};
+            var conteggi = {{ conteggi|tojson }};
+            
+            var mesiFormattati = mesi.map(function(mese) {
+                var anno = mese.split('-')[0];
+                var numeroMese = parseInt(mese.split('-')[1]);
+                var nomiMesi = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
+                return nomiMesi[numeroMese - 1] + ' ' + anno;
+            });
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: mesiFormattati,
+                    datasets: [{
+                        label: 'Numero di Lezioni',
+                        data: conteggi,
+                        backgroundColor: function(context) {
+                            const chart = context.chart;
+                            const {ctx, chartArea} = chart;
+                            if (!chartArea) {
+                                return null;
+                            }
+                            const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+                            gradient.addColorStop(0, 'rgba(25, 118, 210, 0.8)');
+                            gradient.addColorStop(0.5, 'rgba(3, 218, 198, 0.6)');
+                            gradient.addColorStop(1, 'rgba(25, 118, 210, 0.9)');
+                            return gradient;
+                        },
+                        borderColor: 'rgba(25, 118, 210, 1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: 'rgba(25, 118, 210, 1)',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        hoverBackgroundColor: function(context) {
+                            const chart = context.chart;
+                            const {ctx, chartArea} = chart;
+                            if (!chartArea) {
+                                return null;
+                            }
+                            const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+                            gradient.addColorStop(0, 'rgba(25, 118, 210, 1)');
+                            gradient.addColorStop(0.5, 'rgba(3, 218, 198, 0.8)');
+                            gradient.addColorStop(1, 'rgba(25, 118, 210, 1)');
+                            return gradient;
+                        },
+                        hoverBorderColor: 'rgba(21, 101, 192, 1)',
+                        hoverBorderWidth: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    aspectRatio: window.innerWidth <= 393 ? 1.2 : 2,
+                    devicePixelRatio: window.devicePixelRatio || 1,
+                    onResize: function(chart, size) {
+                        if (size.width <= 393) {
+                            chart.options.aspectRatio = 1.2;
+                        } else {
+                            chart.options.aspectRatio = 2;
+                        }
+                    },
+                    animation: {
+                        duration: 1500,
+                        easing: 'easeInOutQuart',
+                        delay: (context) => context.dataIndex * 80
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            suggestedMax: 5,
+                            ticks: {
+                                precision: 0,
+                                color: 'rgba(0,0,0,0.6)',
+                                font: {
+                                    family: "'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+                                    size: window.innerWidth <= 393 ? 11 : 13,
+                                    weight: '400'
+                                },
+                                padding: window.innerWidth <= 393 ? 6 : 10
+                            },
+                            grid: {
+                                color: 'rgba(0,0,0,0.1)',
+                                drawBorder: false,
+                                lineWidth: 1
+                            },
+                            border: {
+                                display: false
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: 'rgba(0,0,0,0.6)',
+                                font: {
+                                    family: "'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+                                    size: window.innerWidth <= 393 ? 10 : 13,
+                                    weight: '400'
+                                },
+                                padding: window.innerWidth <= 393 ? 4 : 10,
+                                maxRotation: window.innerWidth <= 393 ? 45 : 0
+                            },
+                            grid: {
+                                display: false
+                            },
+                            border: {
+                                display: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: false
+                        },
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(33, 33, 33, 0.95)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: 'rgba(25, 118, 210, 0.8)',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            displayColors: false,
+                            titleFont: {
+                                size: 13,
+                                weight: '500'
+                            },
+                            bodyFont: {
+                                size: 12
+                            },
+                            padding: 10,
+                            caretPadding: 6,
+                            callbacks: {
+                                title: function(context) {
+                                    return 'Mese: ' + context[0].label;
+                                },
+                                label: function(context) {
+                                    return 'Lezioni: ' + context.raw;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
