@@ -258,11 +258,17 @@ def aggiungi_fattura():
                 flash("❌ Devi selezionare almeno una lezione per creare una fattura.", "danger")
                 return render_template("aggiungi_fattura.html", corsi=corsi, lezioni=lezioni_non_fatturate, clienti=clienti, now=get_local_now(), corso_preselezionato=corso_preselezionato)
             
+            # Verifica se esiste già una fattura con lo stesso numero nello stesso anno
+            anno_fattura = datetime.strptime(data_fattura, "%Y-%m-%d").year
             placeholder = get_placeholder()
-            cursor_write.execute(f"SELECT COUNT(*) FROM fatture WHERE numero_fattura = {placeholder}", (numero_fattura,))
-            if cursor_write.fetchone()[0] > 0:
-                flash(f"❌ Esiste già una fattura con il numero '{numero_fattura}'. Scegli un numero diverso.", "danger")
-                return render_template("aggiungi_fattura.html", corsi=corsi, lezioni=lezioni_non_fatturate, clienti=clienti, now=get_local_now(), corso_preselezionato=corso_preselezionato)
+            cursor_write.execute(f"SELECT numero_fattura, data_fattura FROM fatture WHERE numero_fattura = {placeholder}", (numero_fattura,))
+            fatture_esistenti = cursor_write.fetchall()
+            
+            for fattura_esistente in fatture_esistenti:
+                anno_esistente = datetime.strptime(fattura_esistente['data_fattura'], "%Y-%m-%d").year
+                if anno_esistente == anno_fattura:
+                    flash(f"❌ Esiste già una fattura con il numero '{numero_fattura}' per l'anno {anno_fattura}. Scegli un numero diverso.", "danger")
+                    return render_template("aggiungi_fattura.html", corsi=corsi, lezioni=lezioni_non_fatturate, clienti=clienti, now=get_local_now(), corso_preselezionato=corso_preselezionato)
             
             file_pdf = ""  # Valore predefinito vuoto invece di None
             if 'file_pdf' in request.files:
@@ -398,6 +404,186 @@ def aggiungi_fattura():
                 conn_write.close()
     
     return render_template("aggiungi_fattura.html", corsi=corsi, lezioni=lezioni_non_fatturate, clienti=clienti, now=get_local_now(), corso_preselezionato=corso_preselezionato)
+
+@fatture_bp.route("/modifica_fattura/<int:id_fattura>", methods=["GET", "POST"])
+@login_required
+def modifica_fattura(id_fattura):
+    """ Pagina per modificare una fattura esistente """
+    conn_read = None
+    conn_write = None
+    
+    try:
+        conn_read = get_db_connection()
+        cursor_read = conn_read.cursor()
+        
+        # Recupera i dati della fattura
+        placeholder = get_placeholder()
+        cursor_read.execute(f"""
+            SELECT * FROM fatture WHERE id_fattura = {placeholder}
+        """, (id_fattura,))
+        fattura = cursor_read.fetchone()
+        
+        if not fattura:
+            flash("❌ Fattura non trovata.", "danger")
+            return redirect(url_for("fatture.index"))
+        
+        # Recupera le lezioni associate alla fattura
+        cursor_read.execute(f"""
+            SELECT id_lezione FROM fatture_lezioni WHERE id_fattura = {placeholder}
+        """, (id_fattura,))
+        lezioni_associate = [row['id_lezione'] for row in cursor_read.fetchall()]
+        
+        # Recupera tutte le lezioni non fatturate + quelle già associate
+        if lezioni_associate:
+            placeholders = ','.join([get_placeholder()] * len(lezioni_associate))
+            cursor_read.execute(f"""
+                SELECT l.id, l.id_corso, l.materia, l.data, l.ora_inizio, l.ora_fine, l.compenso_orario, 
+                       COALESCE(c.cliente, 'Sconosciuto') as cliente
+                FROM lezioni l
+                LEFT JOIN corsi c ON l.id_corso = c.id_corso
+                WHERE l.fatturato = 0 OR l.id IN ({placeholders})
+                ORDER BY l.id_corso, l.data
+            """, lezioni_associate)
+        else:
+            cursor_read.execute("""
+                SELECT l.id, l.id_corso, l.materia, l.data, l.ora_inizio, l.ora_fine, l.compenso_orario, 
+                       COALESCE(c.cliente, 'Sconosciuto') as cliente
+                FROM lezioni l
+                LEFT JOIN corsi c ON l.id_corso = c.id_corso
+                WHERE l.fatturato = 0
+                ORDER BY l.id_corso, l.data
+            """)
+        lezioni_disponibili = cursor_read.fetchall()
+        
+        # Recupera corsi e clienti
+        cursor_read.execute("SELECT DISTINCT id_corso FROM lezioni ORDER BY id_corso")
+        corsi = [row[0] for row in cursor_read.fetchall()]
+        
+        cursor_read.execute("""
+            SELECT DISTINCT c.cliente 
+            FROM corsi c 
+            WHERE c.cliente IS NOT NULL AND c.cliente != ''
+            ORDER BY c.cliente
+        """)
+        clienti = [row[0] for row in cursor_read.fetchall()]
+        
+    except Exception as e:
+        flash(f"❌ Errore durante il caricamento dei dati: {str(e)}", "danger")
+        return redirect(url_for("fatture.index"))
+    finally:
+        if conn_read:
+            conn_read.close()
+    
+    if request.method == "POST":
+        try:
+            conn_write = get_db_connection()
+            cursor_write = conn_write.cursor()
+            
+            numero_fattura = sanitize_input(request.form.get("numero_fattura"))
+            data_fattura = request.form.get("data_fattura")
+            importo = float(request.form.get("importo"))
+            tipo_fatturazione = sanitize_input(request.form.get("tipo_fatturazione", "totale"))
+            if tipo_fatturazione not in ['parziale', 'totale']:
+                tipo_fatturazione = 'totale'
+            note = sanitize_input(request.form.get("note", ""))
+            lezioni_selezionate = request.form.getlist("lezioni")
+            
+            if not lezioni_selezionate:
+                flash("❌ Devi selezionare almeno una lezione per la fattura.", "danger")
+                return render_template("modifica_fattura.html", fattura=fattura, corsi=corsi, lezioni=lezioni_disponibili, clienti=clienti, lezioni_associate=lezioni_associate, now=get_local_now())
+            
+            # Verifica numero fattura duplicato (escludendo la fattura corrente)
+            anno_fattura = datetime.strptime(data_fattura, "%Y-%m-%d").year
+            placeholder = get_placeholder()
+            cursor_write.execute(f"""
+                SELECT numero_fattura, data_fattura, id_fattura 
+                FROM fatture 
+                WHERE numero_fattura = {placeholder} AND id_fattura != {placeholder}
+            """, (numero_fattura, id_fattura))
+            fatture_esistenti = cursor_write.fetchall()
+            
+            for fattura_esistente in fatture_esistenti:
+                anno_esistente = datetime.strptime(fattura_esistente['data_fattura'], "%Y-%m-%d").year
+                if anno_esistente == anno_fattura:
+                    flash(f"❌ Esiste già un'altra fattura con il numero '{numero_fattura}' per l'anno {anno_fattura}.", "danger")
+                    return render_template("modifica_fattura.html", fattura=fattura, corsi=corsi, lezioni=lezioni_disponibili, clienti=clienti, lezioni_associate=lezioni_associate, now=get_local_now())
+            
+            # Gestione upload PDF (se presente)
+            file_pdf = fattura['file_pdf']  # Mantieni quello esistente
+            if 'file_pdf' in request.files:
+                file = request.files['file_pdf']
+                if file and file.filename and allowed_file(file.filename):
+                    # Elimina il vecchio file se esiste
+                    if fattura['file_pdf']:
+                        old_file_path = os.path.join(UPLOAD_FOLDER, fattura['file_pdf'])
+                        if os.path.exists(old_file_path):
+                            os.remove(old_file_path)
+                    
+                    # Salva il nuovo file
+                    filename = secure_filename(file.filename)
+                    timestamp = format_datetime_for_db().replace('-', '').replace(' ', '').replace(':', '')
+                    filename = f"{timestamp}_{filename}"
+                    file_path = os.path.join(UPLOAD_FOLDER, filename)
+                    file.save(file_path)
+                    file_pdf = filename
+            
+            # Aggiorna la fattura
+            placeholder = get_placeholder()
+            cursor_write.execute(f"""
+                UPDATE fatture 
+                SET numero_fattura = {placeholder}, data_fattura = {placeholder}, importo = {placeholder}, 
+                    tipo_fatturazione = {placeholder}, note = {placeholder}, file_pdf = {placeholder}
+                WHERE id_fattura = {placeholder}
+            """, (str(numero_fattura), data_fattura, importo, str(tipo_fatturazione), note, file_pdf, id_fattura))
+            
+            # Gestione lezioni: ripristina le vecchie e imposta le nuove
+            lezioni_selezionate_int = [int(l) for l in lezioni_selezionate]
+            lezioni_da_rimuovere = set(lezioni_associate) - set(lezioni_selezionate_int)
+            lezioni_da_aggiungere = set(lezioni_selezionate_int) - set(lezioni_associate)
+            
+            # Ripristina lezioni rimosse
+            mese_fatturato = datetime.strptime(data_fattura, "%Y-%m-%d").strftime("%Y-%m")
+            for id_lezione in lezioni_da_rimuovere:
+                placeholder = get_placeholder()
+                cursor_write.execute(f"""
+                    UPDATE lezioni 
+                    SET fatturato = 0, mese_fatturato = NULL
+                    WHERE id = {placeholder}
+                """, (id_lezione,))
+            
+            # Imposta nuove lezioni come fatturate
+            for id_lezione in lezioni_da_aggiungere:
+                placeholder = get_placeholder()
+                cursor_write.execute(f"""
+                    UPDATE lezioni 
+                    SET fatturato = 1, mese_fatturato = {placeholder}
+                    WHERE id = {placeholder}
+                """, (mese_fatturato, id_lezione))
+            
+            # Aggiorna tabella fatture_lezioni
+            placeholder = get_placeholder()
+            cursor_write.execute(f"DELETE FROM fatture_lezioni WHERE id_fattura = {placeholder}", (id_fattura,))
+            
+            for id_lezione in lezioni_selezionate_int:
+                placeholder = get_placeholder()
+                cursor_write.execute(f"""
+                    INSERT INTO fatture_lezioni (id_fattura, id_lezione)
+                    VALUES ({placeholder}, {placeholder})
+                """, (id_fattura, id_lezione))
+            
+            conn_write.commit()
+            flash("✅ Fattura modificata con successo!", "success")
+            return redirect(url_for("fatture.index"))
+            
+        except Exception as e:
+            if conn_write:
+                conn_write.rollback()
+            flash(f"❌ Errore durante la modifica della fattura: {str(e)}", "danger")
+        finally:
+            if conn_write:
+                conn_write.close()
+    
+    return render_template("modifica_fattura.html", fattura=fattura, corsi=corsi, lezioni=lezioni_disponibili, clienti=clienti, lezioni_associate=lezioni_associate, now=get_local_now())
 
 @fatture_bp.route("/download_file/<filename>")
 @login_required

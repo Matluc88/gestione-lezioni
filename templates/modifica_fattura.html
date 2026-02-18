@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Modifica Fattura - Gestione Lezioni</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background-color: #f4f6f9; }
+    .navbar { background: linear-gradient(45deg, #007bff, #6610f2); }
+    .card { border-radius: 15px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); }
+    .form-label { font-weight: 500; }
+    .btn-custom { background: linear-gradient(45deg, #ff416c, #ff4b2b); color: white; border: none; }
+    .btn-custom:hover { opacity: 0.9; color: white; }
+    .section-header { margin-top: 1rem; margin-bottom: 1rem; color: #0d6efd; font-weight: bold; }
+    .lezioni-container { max-height: 400px; overflow-y: auto; }
+    
+    @media (max-width: 768px) {
+      .btn { min-height: 44px; margin-bottom: 0.5rem; padding: 12px 16px; font-size: 0.9rem; }
+      .container { padding: 0 15px; }
+      h4, h5 { font-size: 1.3rem; margin-bottom: 1rem; }
+      .form-control, .form-select { min-height: 44px; font-size: 1rem; }
+      .table-responsive { font-size: 0.85rem; }
+      .lezioni-container { max-height: 300px; }
+    }
+    @media (max-width: 393px) {
+      .btn { min-height: 48px; font-size: 0.85rem; padding: 14px 16px; }
+      h4, h5 { font-size: 1.2rem; }
+      .container { padding: 0 8px; }
+      .form-control, .form-select { min-height: 48px; font-size: 16px; }
+      .table-responsive { font-size: 0.8rem; }
+      .lezioni-container { max-height: 250px; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark shadow">
+    <div class="container">
+      <a class="navbar-brand" href="#">✏️ Modifica Fattura</a>
+    </div>
+  </nav>
+
+  <div class="container my-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4>Modifica i dettagli della fattura</h4>
+          <a href="{{ url_for('fatture.index') }}" class="btn btn-secondary">↩ Torna alle Fatture</a>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, msg in messages %}
+              <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ msg }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form method="POST" enctype="multipart/form-data" class="row g-3">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          
+          <div class="col-md-6">
+            <label for="numero_fattura" class="form-label">Numero Fattura</label>
+            <input type="text" class="form-control" id="numero_fattura" name="numero_fattura" value="{{ fattura.numero_fattura }}" required>
+          </div>
+          
+          <div class="col-md-6">
+            <label for="data_fattura" class="form-label">Data Fattura</label>
+            <input type="date" class="form-control" id="data_fattura" name="data_fattura" value="{{ fattura.data_fattura }}" required>
+          </div>
+          
+          <div class="col-md-6">
+            <label for="importo" class="form-label">Importo (€)</label>
+            <input type="number" step="0.01" class="form-control" id="importo" name="importo" value="{{ fattura.importo }}" required>
+          </div>
+          
+          <div class="col-md-6">
+            <label for="tipo_fatturazione" class="form-label">Tipo Fatturazione</label>
+            <select class="form-select" id="tipo_fatturazione" name="tipo_fatturazione" required>
+              <option value="totale" {% if fattura.tipo_fatturazione == 'totale' %}selected{% endif %}>Prestazione Occasionale</option>
+              <option value="parziale" {% if fattura.tipo_fatturazione == 'parziale' %}selected{% endif %}>Partita IVA</option>
+            </select>
+          </div>
+          
+          <div class="col-md-6">
+            <label for="file_pdf" class="form-label">File PDF Fattura</label>
+            <input type="file" class="form-control" id="file_pdf" name="file_pdf" accept=".pdf">
+            {% if fattura.file_pdf %}
+              <div class="form-text">File corrente: <a href="{{ url_for('fatture.download_file', filename=fattura.file_pdf) }}" target="_blank">{{ fattura.file_pdf }}</a></div>
+            {% else %}
+              <div class="form-text">Nessun file caricato</div>
+            {% endif %}
+            <div class="form-text">Carica un nuovo file per sostituire quello esistente</div>
+          </div>
+          
+          <div class="col-12">
+            <label for="note" class="form-label">Note</label>
+            <textarea class="form-control" id="note" name="note" rows="3">{{ fattura.note or '' }}</textarea>
+          </div>
+          
+          <div class="col-12">
+            <h5 class="section-header">Seleziona le lezioni da fatturare</h5>
+            <div class="form-text mb-2">Modifica le lezioni incluse in questa fattura</div>
+            
+            <!-- Filtri avanzati -->
+            <div class="card mb-3">
+              <div class="card-header bg-light">
+                <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#filtriAvanzati">
+                  🔍 Filtri Avanzati
+                </button>
+              </div>
+              <div class="collapse" id="filtriAvanzati">
+                <div class="card-body">
+                  <div class="row g-3">
+                    <div class="col-md-3">
+                      <label class="form-label">Cliente</label>
+                      <select class="form-select" id="filtro-cliente">
+                        <option value="">Tutti i clienti</option>
+                        {% for cliente in clienti %}
+                          <option value="{{ cliente }}">{{ cliente }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Corso</label>
+                      <select class="form-select" id="filtro-corso">
+                        <option value="">Tutti i corsi</option>
+                        {% for corso in corsi %}
+                          <option value="{{ corso }}">{{ corso }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Mese</label>
+                      <input type="month" class="form-control" id="filtro-mese">
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Intervallo Date</label>
+                      <div class="d-flex gap-2">
+                        <input type="date" class="form-control" id="filtro-data-inizio" placeholder="Da">
+                        <input type="date" class="form-control" id="filtro-data-fine" placeholder="A">
+                      </div>
+                    </div>
+                  </div>
+                  <div class="mt-3 text-end">
+                    <button type="button" class="btn btn-primary" id="applica-filtri">Applica Filtri</button>
+                    <button type="button" class="btn btn-outline-secondary" id="reset-filtri">Reset</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="lezioni-container">
+              <table class="table table-striped table-hover">
+                <thead class="table-primary">
+                  <tr>
+                    <th><input type="checkbox" id="select-all-lezioni" title="Seleziona/Deseleziona tutte le lezioni"></th>
+                    <th>Corso</th>
+                    <th>Cliente</th>
+                    <th>Materia</th>
+                    <th>Data</th>
+                    <th>Orario</th>
+                    <th>Compenso</th>
+                  </tr>
+                </thead>
+                <tbody id="lezioni-tbody">
+                  {% for lezione in lezioni %}
+                    <tr data-cliente="{{ lezione.cliente|default('Sconosciuto') }}" data-data="{{ lezione.data }}">
+                      <td>
+                        <input type="checkbox" class="form-check-input" name="lezioni" value="{{ lezione.id }}" 
+                               {% if lezione.id in lezioni_associate %}checked{% endif %}>
+                      </td>
+                      <td>{{ lezione.id_corso }}</td>
+                      <td>{{ lezione.cliente|default('Sconosciuto') }}</td>
+                      <td>{{ lezione.materia }}</td>
+                      <td>{{ lezione.data }}</td>
+                      <td>{{ lezione.ora_inizio }} - {{ lezione.ora_fine }}</td>
+                      <td>€{{ lezione.compenso_orario }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
+          <div class="col-12 text-end">
+            <button type="submit" class="btn btn-warning btn-lg">✏️ Salva Modifiche</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const checkboxes = document.querySelectorAll('input[name="lezioni"]');
+      const importoInput = document.getElementById('importo');
+      const filtroCliente = document.getElementById('filtro-cliente');
+      const filtroCorso = document.getElementById('filtro-corso');
+      const filtroMese = document.getElementById('filtro-mese');
+      const filtroDataInizio = document.getElementById('filtro-data-inizio');
+      const filtroDataFine = document.getElementById('filtro-data-fine');
+      const applicaFiltriBtn = document.getElementById('applica-filtri');
+      const resetFiltriBtn = document.getElementById('reset-filtri');
+      
+      function calcolaImportoTotale() {
+        let importoTotale = 0;
+        checkboxes.forEach(checkbox => {
+          if (checkbox.checked) {
+            const row = checkbox.closest('tr');
+            const compensoText = row.querySelector('td:last-child').textContent;
+            const compenso = parseFloat(compensoText.replace('€', '').trim());
+            const orarioText = row.querySelector('td:nth-child(6)').textContent;
+            const [inizio, fine] = orarioText.split(' - ');
+            const oraInizio = new Date(`2000-01-01T${inizio}`);
+            const oraFine = new Date(`2000-01-01T${fine}`);
+            const oreLezione = (oraFine - oraInizio) / (1000 * 60 * 60);
+            importoTotale += compenso * oreLezione;
+          }
+        });
+        importoInput.value = importoTotale.toFixed(2);
+      }
+      
+      applicaFiltriBtn.addEventListener('click', applicaFiltri);
+      resetFiltriBtn.addEventListener('click', resetFiltri);
+      
+      function applicaFiltri() {
+        const cliente = filtroCliente.value;
+        const corso = filtroCorso.value;
+        const mese = filtroMese.value;
+        const dataInizio = filtroDataInizio.value;
+        const dataFine = filtroDataFine.value;
+        
+        checkboxes.forEach(checkbox => {
+          const row = checkbox.closest('tr');
+          const corsoCella = row.querySelector('td:nth-child(2)').textContent.trim();
+          const clienteCella = row.querySelector('td:nth-child(3)').textContent.trim();
+          const dataCella = row.dataset.data;
+          
+          const corsoMatch = !corso || corsoCella === corso;
+          const clienteMatch = !cliente || clienteCella === cliente;
+          
+          let meseMatch = true;
+          if (mese) {
+            const meseDaFiltro = mese.split('-')[0] + '-' + mese.split('-')[1];
+            const dateParts = dataCella.split('-');
+            const dataLezione = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
+            const meseDellaRiga = dataLezione.getFullYear() + '-' + String(dataLezione.getMonth() + 1).padStart(2, '0');
+            meseMatch = meseDaFiltro === meseDellaRiga;
+          }
+          
+          let dataMatch = true;
+          if (dataInizio) dataMatch = dataMatch && dataCella >= dataInizio;
+          if (dataFine) dataMatch = dataMatch && dataCella <= dataFine;
+          
+          if (corsoMatch && clienteMatch && meseMatch && dataMatch) {
+            row.style.display = '';
+          } else {
+            row.style.display = 'none';
+          }
+        });
+        
+        calcolaImportoTotale();
+      }
+      
+      function resetFiltri() {
+        filtroCliente.value = '';
+        filtroCorso.value = '';
+        filtroMese.value = '';
+        filtroDataInizio.value = '';
+        filtroDataFine.value = '';
+        checkboxes.forEach(checkbox => {
+          checkbox.closest('tr').style.display = '';
+        });
+        calcolaImportoTotale();
+      }
+      
+      const selectAllCheckbox = document.getElementById("select-all-lezioni");
+      if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener("change", function () {
+          checkboxes.forEach(checkbox => {
+            const row = checkbox.closest('tr');
+            if (row.style.display !== 'none') {
+              checkbox.checked = this.checked;
+            }
+          });
+          calcolaImportoTotale();
+        });
+      }
+      
+      checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', calcolaImportoTotale);
+      });
+      
+      // Non ricalcolare l'importo all'avvio per mantenere quello originale
+      // calcolaImportoTotale();
+    });
+  </script>
+</body>
+</html>

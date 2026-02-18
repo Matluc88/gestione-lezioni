@@ -194,7 +194,8 @@
                   {% endif %}
                 </td>
                 <td>
-                  <form action="{{ url_for('fatture.elimina_fattura', id_fattura=fattura[0]) }}" method="POST" onsubmit="return confirm('Sei sicuro di voler eliminare questa fattura? Le lezioni associate torneranno allo stato non fatturato.');">
+                  <a href="{{ url_for('fatture.modifica_fattura', id_fattura=fattura[0]) }}" class="btn btn-warning btn-sm mb-1">✏️ Modifica</a>
+                  <form action="{{ url_for('fatture.elimina_fattura', id_fattura=fattura[0]) }}" method="POST" onsubmit="return confirm('Sei sicuro di voler eliminare questa fattura? Le lezioni associate torneranno allo stato non fatturato.');" class="d-inline">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-danger btn-sm">🗑️ Elimina</button>
                   </form>
