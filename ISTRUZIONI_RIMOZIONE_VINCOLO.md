@@ -2,19 +2,39 @@
 
 Il database PostgreSQL ha ancora un vincolo UNIQUE su `numero_fattura` che impedisce di avere lo stesso numero per anni diversi.
 
-## Opzione 1: Tramite Dashboard Render.com (CONSIGLIATO)
+## 📋 Guida Passo-Passo su Render.com
 
+### Step 1: Accedi a Render.com
 1. Vai su [https://dashboard.render.com/](https://dashboard.render.com/)
-2. Accedi al tuo account
-3. Clicca sul database **gestione_lezioni_db**
-4. Vai nella sezione **"Shell"** o **"SQL Editor"**
-5. Esegui questo comando SQL:
+2. Effettua il login con le tue credenziali
+
+### Step 2: Trova il Database
+1. Nella dashboard, cerca **"gestione_lezioni_db"** nella lista dei tuoi servizi
+2. Dovrebbe avere l'icona di un database (cilindro) 
+3. **Clicca sul nome del database**
+
+### Step 3: Apri la Console SQL
+1. Una volta dentro il database, guarda il menu in alto
+2. Cerca e clicca su una di queste voci:
+   - **"Shell"** oppure
+   - **"Connect"** → poi **"External Connection"** → poi copia la stringa e usa un client SQL
+   - **Se non vedi "Shell"**, cerca **"PSQL"** o **"Query"**
+   
+### Step 4: Esegui il Comando SQL
+
+**⚠️ IMPORTANTE: Il vincolo si chiama `numero_fattura_unique`**
+
+Copia e incolla ESATTAMENTE questo comando:
 
 ```sql
-ALTER TABLE fatture DROP CONSTRAINT IF EXISTS fatture_numero_fattura_key;
+ALTER TABLE fatture DROP CONSTRAINT IF EXISTS numero_fattura_unique;
 ```
 
-6. Verifica che sia stato rimosso:
+Premi **INVIO** o clicca **"Execute"** / **"Run"**
+
+### Step 5: Verifica (Opzionale)
+
+Per verificare che sia stato rimosso, esegui:
 
 ```sql
 SELECT conname, contype 
@@ -23,7 +43,7 @@ WHERE conrelid = 'fatture'::regclass
   AND contype = 'u';
 ```
 
-Se non vedi output, il vincolo è stato rimosso con successo! ✅
+**Se non vedi nessun risultato** (o solo username_unique), il vincolo è stato rimosso! ✅
 
 ## Opzione 2: Tramite psql Locale (se hai psql installato)
 
