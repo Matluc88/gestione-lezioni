@@ -1,0 +1,431 @@
+/* ============================================
+   iOS ANIMATIONS - Smooth Transitions & Effects
+   ============================================ */
+
+/* ===== PAGE TRANSITIONS ===== */
+@keyframes ios-slide-in-right {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes ios-slide-out-left {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(-30%);
+        opacity: 0;
+    }
+}
+
+@keyframes ios-fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes ios-fade-out {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes ios-scale-in {
+    from {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes ios-scale-out {
+    from {
+        transform: scale(1);
+        opacity: 1;
+    }
+    to {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+}
+
+/* ===== MODAL ANIMATIONS ===== */
+@keyframes ios-modal-slide-up {
+    from {
+        transform: translateY(100%);
+    }
+    to {
+        transform: translateY(0);
+    }
+}
+
+@keyframes ios-modal-slide-down {
+    from {
+        transform: translateY(0);
+    }
+    to {
+        transform: translateY(100%);
+    }
+}
+
+/* ===== SWIPE ANIMATIONS ===== */
+@keyframes ios-swipe-action-reveal {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(-80px);
+    }
+}
+
+@keyframes ios-swipe-delete {
+    from {
+        transform: translateX(-80px);
+        opacity: 1;
+        max-height: 100px;
+    }
+    to {
+        transform: translateX(-100%);
+        opacity: 0;
+        max-height: 0;
+        padding: 0;
+        margin: 0;
+    }
+}
+
+/* ===== LOADING ANIMATIONS ===== */
+@keyframes ios-skeleton-pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.4;
+    }
+}
+
+@keyframes ios-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Skeleton Loading */
+.ios-skeleton {
+    background: linear-gradient(
+        90deg,
+        var(--ios-gray6) 25%,
+        var(--ios-gray5) 50%,
+        var(--ios-gray6) 75%
+    );
+    background-size: 200% 100%;
+    animation: ios-skeleton-loading 1.5s ease-in-out infinite;
+    border-radius: var(--radius-sm);
+}
+
+@keyframes ios-skeleton-loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    .ios-skeleton {
+        background: linear-gradient(
+            90deg,
+            var(--ios-tertiary-background) 25%,
+            var(--ios-secondary-background) 50%,
+            var(--ios-tertiary-background) 75%
+        );
+        background-size: 200% 100%;
+    }
+}
+
+/* ===== BOUNCE EFFECT ===== */
+@keyframes ios-bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.ios-bounce {
+    animation: ios-bounce 0.6s ease-in-out;
+}
+
+/* ===== SHAKE EFFECT ===== */
+@keyframes ios-shake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    10%, 30%, 50%, 70%, 90% {
+        transform: translateX(-5px);
+    }
+    20%, 40%, 60%, 80% {
+        transform: translateX(5px);
+    }
+}
+
+.ios-shake {
+    animation: ios-shake 0.5s ease-in-out;
+}
+
+/* ===== PULSE EFFECT ===== */
+@keyframes ios-pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.ios-pulse {
+    animation: ios-pulse 1.5s ease-in-out infinite;
+}
+
+/* ===== RIPPLE EFFECT ===== */
+@keyframes ios-ripple {
+    0% {
+        transform: scale(0);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+.ios-ripple {
+    position: relative;
+    overflow: hidden;
+}
+
+.ios-ripple::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    pointer-events: none;
+}
+
+.ios-ripple:active::after {
+    animation: ios-ripple 0.6s ease-out;
+}
+
+/* ===== SLIDE & FADE UTILITIES ===== */
+.ios-slide-in-right {
+    animation: ios-slide-in-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ios-slide-out-left {
+    animation: ios-slide-out-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ios-fade-in {
+    animation: ios-fade-in 0.3s ease-in-out;
+}
+
+.ios-fade-out {
+    animation: ios-fade-out 0.3s ease-in-out;
+}
+
+.ios-scale-in {
+    animation: ios-scale-in 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ios-scale-out {
+    animation: ios-scale-out 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== SMOOTH SCROLL ===== */
+.ios-smooth-scroll {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* ===== PARALLAX EFFECT ===== */
+.ios-parallax {
+    will-change: transform;
+    transition: transform 0.1s ease-out;
+}
+
+/* ===== HOVER EFFECTS (for mouse devices) ===== */
+@media (hover: hover) {
+    .ios-hover-lift {
+        transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    }
+    
+    .ios-hover-lift:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .ios-hover-scale {
+        transition: transform var(--transition-fast);
+    }
+    
+    .ios-hover-scale:hover {
+        transform: scale(1.02);
+    }
+}
+
+/* ===== STAGGER ANIMATIONS ===== */
+.ios-stagger-item {
+    opacity: 0;
+    animation: ios-fade-in 0.4s ease-out forwards;
+}
+
+.ios-stagger-item:nth-child(1) { animation-delay: 0.05s; }
+.ios-stagger-item:nth-child(2) { animation-delay: 0.1s; }
+.ios-stagger-item:nth-child(3) { animation-delay: 0.15s; }
+.ios-stagger-item:nth-child(4) { animation-delay: 0.2s; }
+.ios-stagger-item:nth-child(5) { animation-delay: 0.25s; }
+.ios-stagger-item:nth-child(6) { animation-delay: 0.3s; }
+.ios-stagger-item:nth-child(7) { animation-delay: 0.35s; }
+.ios-stagger-item:nth-child(8) { animation-delay: 0.4s; }
+.ios-stagger-item:nth-child(9) { animation-delay: 0.45s; }
+.ios-stagger-item:nth-child(10) { animation-delay: 0.5s; }
+
+/* ===== ENTER/EXIT ANIMATIONS FOR LISTS ===== */
+.ios-list-enter {
+    animation: ios-slide-in-right 0.3s ease-out;
+}
+
+.ios-list-exit {
+    animation: ios-slide-out-left 0.3s ease-out;
+}
+
+/* ===== NOTIFICATION ANIMATIONS ===== */
+@keyframes ios-notification-slide-down {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes ios-notification-slide-up {
+    from {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+}
+
+.ios-notification-enter {
+    animation: ios-notification-slide-down 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ios-notification-exit {
+    animation: ios-notification-slide-up 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== GLOW EFFECT ===== */
+@keyframes ios-glow {
+    0%, 100% {
+        box-shadow: 0 0 5px var(--ios-blue);
+    }
+    50% {
+        box-shadow: 0 0 20px var(--ios-blue);
+    }
+}
+
+.ios-glow {
+    animation: ios-glow 2s ease-in-out infinite;
+}
+
+/* ===== PROGRESS BAR ANIMATION ===== */
+@keyframes ios-progress-indeterminate {
+    0% {
+        left: -35%;
+        right: 100%;
+    }
+    60% {
+        left: 100%;
+        right: -90%;
+    }
+    100% {
+        left: 100%;
+        right: -90%;
+    }
+}
+
+.ios-progress-indeterminate {
+    position: relative;
+    overflow: hidden;
+}
+
+.ios-progress-indeterminate::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -35%;
+    background-color: var(--ios-blue);
+    animation: ios-progress-indeterminate 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* ===== REDUCE MOTION ===== */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* ===== PERFORMANCE OPTIMIZATIONS ===== */
+.ios-will-change-transform {
+    will-change: transform;
+}
+
+.ios-will-change-opacity {
+    will-change: opacity;
+}
+
+.ios-gpu-accelerated {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+}

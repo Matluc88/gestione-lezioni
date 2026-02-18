@@ -1,0 +1,553 @@
+/* ============================================
+   iOS COMPONENTS - Cards, Lists, Buttons, Forms
+   ============================================ */
+
+/* ===== CARDS ===== */
+.ios-card {
+    background-color: var(--ios-card-background);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    margin-bottom: var(--spacing-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.ios-card-header {
+    padding: var(--spacing-md);
+    border-bottom: 0.5px solid var(--ios-separator);
+}
+
+.ios-card-title {
+    font-size: var(--font-title3);
+    font-weight: 600;
+    color: var(--ios-label);
+    margin-bottom: 4px;
+}
+
+.ios-card-subtitle {
+    font-size: var(--font-subhead);
+    color: var(--ios-secondary-label);
+}
+
+.ios-card-body {
+    padding: var(--spacing-md);
+}
+
+.ios-card-footer {
+    padding: var(--spacing-md);
+    border-top: 0.5px solid var(--ios-separator);
+    background-color: var(--ios-secondary-background);
+}
+
+/* Card Group - multiple cards together */
+.ios-card-group {
+    margin: var(--spacing-md);
+}
+
+.ios-card-group .ios-card {
+    margin-bottom: 0;
+}
+
+.ios-card-group .ios-card + .ios-card {
+    border-top: 0.5px solid var(--ios-separator);
+    border-radius: 0;
+}
+
+.ios-card-group .ios-card:first-child {
+    border-radius: var(--radius-card) var(--radius-card) 0 0;
+}
+
+.ios-card-group .ios-card:last-child {
+    border-radius: 0 0 var(--radius-card) var(--radius-card);
+}
+
+/* ===== LIST GROUP (iOS Settings Style) ===== */
+.ios-list-group {
+    background-color: var(--ios-card-background);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    margin: var(--spacing-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.ios-list-header {
+    padding: 8px var(--spacing-md);
+    font-size: var(--font-footnote);
+    font-weight: 400;
+    color: var(--ios-secondary-label);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.ios-list-item {
+    display: flex;
+    align-items: center;
+    padding: 12px var(--spacing-md);
+    min-height: 44px;
+    background-color: var(--ios-card-background);
+    border-bottom: 0.5px solid var(--ios-separator);
+    transition: background-color var(--transition-fast);
+    cursor: pointer;
+    text-decoration: none;
+    color: var(--ios-label);
+}
+
+.ios-list-item:last-child {
+    border-bottom: none;
+}
+
+.ios-list-item:active {
+    background-color: var(--ios-gray6);
+}
+
+@media (prefers-color-scheme: dark) {
+    .ios-list-item:active {
+        background-color: var(--ios-tertiary-background);
+    }
+}
+
+.ios-list-item.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.ios-list-icon {
+    width: 28px;
+    height: 28px;
+    margin-right: var(--spacing-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.ios-list-icon.rounded {
+    border-radius: 6px;
+    background-color: var(--ios-blue);
+    color: white;
+}
+
+.ios-list-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.ios-list-title {
+    font-size: var(--font-body);
+    font-weight: 400;
+    color: var(--ios-label);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ios-list-subtitle {
+    font-size: var(--font-subhead);
+    color: var(--ios-secondary-label);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ios-list-value {
+    font-size: var(--font-body);
+    color: var(--ios-gray);
+    margin-left: var(--spacing-sm);
+    flex-shrink: 0;
+}
+
+.ios-list-chevron {
+    margin-left: var(--spacing-sm);
+    color: var(--ios-gray3);
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.ios-list-chevron::after {
+    content: '›';
+    font-size: 20px;
+    font-weight: 400;
+}
+
+/* ===== BUTTONS ===== */
+.ios-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 20px;
+    min-height: 44px;
+    font-size: var(--font-body);
+    font-weight: 600;
+    border-radius: var(--radius-md);
+    border: none;
+    cursor: pointer;
+    transition: opacity var(--transition-fast), transform var(--transition-fast);
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+
+.ios-button:active {
+    opacity: 0.6;
+    transform: scale(0.98);
+}
+
+.ios-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Primary Button */
+.ios-button-primary {
+    background-color: var(--ios-blue);
+    color: white;
+}
+
+.ios-button-success {
+    background-color: var(--ios-green);
+    color: white;
+}
+
+.ios-button-warning {
+    background-color: var(--ios-orange);
+    color: white;
+}
+
+.ios-button-danger {
+    background-color: var(--ios-red);
+    color: white;
+}
+
+/* Secondary Button */
+.ios-button-secondary {
+    background-color: var(--ios-gray5);
+    color: var(--ios-label);
+}
+
+@media (prefers-color-scheme: dark) {
+    .ios-button-secondary {
+        background-color: var(--ios-tertiary-background);
+    }
+}
+
+/* Outline Button */
+.ios-button-outline {
+    background-color: transparent;
+    border: 1px solid var(--ios-blue);
+    color: var(--ios-blue);
+}
+
+/* Text Button */
+.ios-button-text {
+    background-color: transparent;
+    color: var(--ios-blue);
+    padding: 8px 12px;
+    min-height: 36px;
+}
+
+/* Button Sizes */
+.ios-button-sm {
+    padding: 8px 16px;
+    min-height: 36px;
+    font-size: var(--font-subhead);
+}
+
+.ios-button-lg {
+    padding: 16px 24px;
+    min-height: 50px;
+    font-size: 18px;
+}
+
+/* Full width button */
+.ios-button-block {
+    width: 100%;
+    display: flex;
+}
+
+/* ===== FLOATING ACTION BUTTON ===== */
+.ios-fab {
+    position: fixed;
+    bottom: calc(var(--tab-bar-total) + var(--spacing-md));
+    right: var(--spacing-md);
+    width: 56px;
+    height: 56px;
+    border-radius: 28px;
+    background-color: var(--ios-blue);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    box-shadow: var(--shadow-lg);
+    cursor: pointer;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    z-index: 999;
+    text-decoration: none;
+}
+
+.ios-fab:active {
+    transform: scale(0.95);
+    box-shadow: var(--shadow-md);
+}
+
+/* ===== FORMS ===== */
+.ios-form-group {
+    margin-bottom: var(--spacing-md);
+}
+
+.ios-form-label {
+    display: block;
+    font-size: var(--font-subhead);
+    font-weight: 400;
+    color: var(--ios-label);
+    margin-bottom: var(--spacing-sm);
+}
+
+.ios-form-input,
+.ios-form-textarea,
+.ios-form-select {
+    width: 100%;
+    padding: 12px var(--spacing-md);
+    min-height: 44px;
+    font-size: var(--font-body);
+    font-family: var(--font-system);
+    color: var(--ios-label);
+    background-color: var(--ios-card-background);
+    border: 1px solid var(--ios-separator);
+    border-radius: var(--radius-md);
+    outline: none;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.ios-form-input:focus,
+.ios-form-textarea:focus,
+.ios-form-select:focus {
+    border-color: var(--ios-blue);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+.ios-form-input::placeholder,
+.ios-form-textarea::placeholder {
+    color: var(--ios-gray);
+}
+
+.ios-form-textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+/* iOS Toggle Switch */
+.ios-switch {
+    position: relative;
+    display: inline-block;
+    width: 51px;
+    height: 31px;
+}
+
+.ios-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.ios-switch-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--ios-gray5);
+    transition: var(--transition-base);
+    border-radius: 31px;
+}
+
+.ios-switch-slider:before {
+    position: absolute;
+    content: "";
+    height: 27px;
+    width: 27px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: var(--transition-base);
+    border-radius: 50%;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+
+.ios-switch input:checked + .ios-switch-slider {
+    background-color: var(--ios-green);
+}
+
+.ios-switch input:checked + .ios-switch-slider:before {
+    transform: translateX(20px);
+}
+
+/* iOS Checkbox */
+.ios-checkbox {
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+}
+
+.ios-checkbox input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.ios-checkbox-mark {
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--ios-gray3);
+    border-radius: 50%;
+    margin-right: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+}
+
+.ios-checkbox input:checked + .ios-checkbox-mark {
+    background-color: var(--ios-blue);
+    border-color: var(--ios-blue);
+}
+
+.ios-checkbox input:checked + .ios-checkbox-mark::after {
+    content: '✓';
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* ===== BADGES ===== */
+.ios-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    min-height: 20px;
+    font-size: var(--font-caption1);
+    font-weight: 600;
+    border-radius: 10px;
+    background-color: var(--ios-gray5);
+    color: var(--ios-label);
+}
+
+.ios-badge-primary { background-color: var(--ios-blue); color: white; }
+.ios-badge-success { background-color: var(--ios-green); color: white; }
+.ios-badge-warning { background-color: var(--ios-orange); color: white; }
+.ios-badge-danger { background-color: var(--ios-red); color: white; }
+
+/* ===== ALERTS ===== */
+.ios-alert {
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    margin: var(--spacing-md);
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+}
+
+.ios-alert-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.ios-alert-content {
+    flex: 1;
+}
+
+.ios-alert-title {
+    font-size: var(--font-body);
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.ios-alert-message {
+    font-size: var(--font-subhead);
+    color: var(--ios-secondary-label);
+}
+
+.ios-alert-info {
+    background-color: rgba(0, 122, 255, 0.1);
+    color: var(--ios-blue);
+}
+
+.ios-alert-success {
+    background-color: rgba(52, 199, 89, 0.1);
+    color: var(--ios-green);
+}
+
+.ios-alert-warning {
+    background-color: rgba(255, 149, 0, 0.1);
+    color: var(--ios-orange);
+}
+
+.ios-alert-danger {
+    background-color: rgba(255, 59, 48, 0.1);
+    color: var(--ios-red);
+}
+
+/* ===== DIVIDER ===== */
+.ios-divider {
+    height: 0.5px;
+    background-color: var(--ios-separator);
+    margin: var(--spacing-md) 0;
+}
+
+/* ===== AVATAR ===== */
+.ios-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--ios-gray5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--ios-label);
+    overflow: hidden;
+}
+
+.ios-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.ios-avatar-sm { width: 32px; height: 32px; font-size: 14px; }
+.ios-avatar-lg { width: 56px; height: 56px; font-size: 24px; }
+
+/* ===== EMPTY STATE ===== */
+.ios-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xl);
+    text-align: center;
+    min-height: 300px;
+}
+
+.ios-empty-icon {
+    font-size: 64px;
+    color: var(--ios-gray);
+    margin-bottom: var(--spacing-md);
+}
+
+.ios-empty-title {
+    font-size: var(--font-title2);
+    font-weight: 600;
+    color: var(--ios-label);
+    margin-bottom: var(--spacing-sm);
+}
+
+.ios-empty-message {
+    font-size: var(--font-body);
+    color: var(--ios-secondary-label);
+    margin-bottom: var(--spacing-lg);
+    max-width: 300px;
+}

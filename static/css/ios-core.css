@@ -1,0 +1,309 @@
+/* ============================================
+   iOS CORE - Variables, Reset & Utilities
+   Ottimizzato per iPhone 16 Pro Max
+   ============================================ */
+
+:root {
+    /* iOS System Colors */
+    --ios-blue: #007AFF;
+    --ios-green: #34C759;
+    --ios-orange: #FF9500;
+    --ios-red: #FF3B30;
+    --ios-yellow: #FFCC00;
+    --ios-purple: #AF52DE;
+    --ios-pink: #FF2D55;
+    --ios-teal: #5AC8FA;
+    
+    /* iOS Gray Scale */
+    --ios-gray: #8E8E93;
+    --ios-gray2: #AEAEB2;
+    --ios-gray3: #C7C7CC;
+    --ios-gray4: #D1D1D6;
+    --ios-gray5: #E5E5EA;
+    --ios-gray6: #F2F2F7;
+    
+    /* Light Mode */
+    --ios-background: #FFFFFF;
+    --ios-secondary-background: #F2F2F7;
+    --ios-tertiary-background: #FFFFFF;
+    --ios-grouped-background: #F2F2F7;
+    --ios-label: #000000;
+    --ios-secondary-label: #3C3C43;
+    --ios-tertiary-label: #3C3C4399;
+    --ios-separator: #3C3C4349;
+    --ios-card-background: #FFFFFF;
+    
+    /* Navigation & Bars */
+    --ios-nav-background: rgba(248, 248, 248, 0.92);
+    --ios-nav-blur: blur(20px);
+    --ios-toolbar-background: rgba(248, 248, 248, 0.92);
+    
+    /* Safe Areas iPhone 16 Pro Max */
+    --safe-area-top: env(safe-area-inset-top, 59px);
+    --safe-area-bottom: env(safe-area-inset-bottom, 34px);
+    --safe-area-left: env(safe-area-inset-left, 0px);
+    --safe-area-right: env(safe-area-inset-right, 0px);
+    
+    /* Navigation Heights */
+    --nav-bar-height: 44px;
+    --nav-bar-total: calc(var(--nav-bar-height) + var(--safe-area-top));
+    --tab-bar-height: 49px;
+    --tab-bar-total: calc(var(--tab-bar-height) + var(--safe-area-bottom));
+    --large-title-height: 52px;
+    
+    /* Typography */
+    --font-system: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    --font-body: 17px;
+    --font-callout: 16px;
+    --font-subhead: 15px;
+    --font-footnote: 13px;
+    --font-caption1: 12px;
+    --font-caption2: 11px;
+    --font-large-title: 34px;
+    --font-title1: 28px;
+    --font-title2: 22px;
+    --font-title3: 20px;
+    --font-headline: 17px;
+    
+    /* Spacing */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 20px;
+    --spacing-xl: 24px;
+    
+    /* Border Radius */
+    --radius-sm: 8px;
+    --radius-md: 10px;
+    --radius-lg: 13px;
+    --radius-xl: 16px;
+    --radius-card: 10px;
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+    
+    /* Transitions */
+    --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-base: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Dark Mode */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --ios-background: #000000;
+        --ios-secondary-background: #1C1C1E;
+        --ios-tertiary-background: #2C2C2E;
+        --ios-grouped-background: #000000;
+        --ios-label: #FFFFFF;
+        --ios-secondary-label: #EBEBF5;
+        --ios-tertiary-label: #EBEBF599;
+        --ios-separator: #54545899;
+        --ios-card-background: #1C1C1E;
+        
+        --ios-nav-background: rgba(28, 28, 30, 0.92);
+        --ios-toolbar-background: rgba(28, 28, 30, 0.92);
+        
+        /* Adjusted colors for dark mode */
+        --ios-blue: #0A84FF;
+        --ios-green: #30D158;
+        --ios-orange: #FF9F0A;
+        --ios-red: #FF453A;
+        --ios-yellow: #FFD60A;
+        --ios-purple: #BF5AF2;
+        --ios-pink: #FF375F;
+        --ios-teal: #64D2FF;
+        
+        --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+        --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+        --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+    }
+}
+
+/* Reset & Base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    font-family: var(--font-system);
+    font-size: var(--font-body);
+    line-height: 1.47059;
+    letter-spacing: -0.022em;
+    color: var(--ios-label);
+    background-color: var(--ios-grouped-background);
+    overflow-x: hidden;
+    padding-top: var(--nav-bar-total);
+    padding-bottom: var(--tab-bar-total);
+    position: relative;
+    min-height: 100vh;
+}
+
+/* Remove body padding on login page */
+body.no-navigation {
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.022em;
+    color: var(--ios-label);
+}
+
+.ios-large-title {
+    font-size: var(--font-large-title);
+    font-weight: 700;
+    letter-spacing: 0.011em;
+}
+
+.ios-title1 { font-size: var(--font-title1); font-weight: 700; }
+.ios-title2 { font-size: var(--font-title2); font-weight: 600; }
+.ios-title3 { font-size: var(--font-title3); font-weight: 600; }
+.ios-headline { font-size: var(--font-headline); font-weight: 600; }
+.ios-body { font-size: var(--font-body); font-weight: 400; }
+.ios-callout { font-size: var(--font-callout); font-weight: 400; }
+.ios-subhead { font-size: var(--font-subhead); font-weight: 400; }
+.ios-footnote { font-size: var(--font-footnote); font-weight: 400; }
+.ios-caption1 { font-size: var(--font-caption1); font-weight: 400; }
+.ios-caption2 { font-size: var(--font-caption2); font-weight: 400; }
+
+/* Links */
+a {
+    color: var(--ios-blue);
+    text-decoration: none;
+    transition: opacity var(--transition-fast);
+}
+
+a:active {
+    opacity: 0.6;
+}
+
+/* Buttons */
+button {
+    font-family: var(--font-system);
+    cursor: pointer;
+    border: none;
+    background: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Utility Classes */
+.text-primary { color: var(--ios-blue); }
+.text-success { color: var(--ios-green); }
+.text-warning { color: var(--ios-orange); }
+.text-danger { color: var(--ios-red); }
+.text-secondary { color: var(--ios-gray); }
+
+.bg-primary { background-color: var(--ios-blue); }
+.bg-success { background-color: var(--ios-green); }
+.bg-warning { background-color: var(--ios-orange); }
+.bg-danger { background-color: var(--ios-red); }
+
+.fw-light { font-weight: 300; }
+.fw-regular { font-weight: 400; }
+.fw-medium { font-weight: 500; }
+.fw-semibold { font-weight: 600; }
+.fw-bold { font-weight: 700; }
+
+/* Spacing Utilities */
+.mt-xs { margin-top: var(--spacing-xs); }
+.mt-sm { margin-top: var(--spacing-sm); }
+.mt-md { margin-top: var(--spacing-md); }
+.mt-lg { margin-top: var(--spacing-lg); }
+.mt-xl { margin-top: var(--spacing-xl); }
+
+.mb-xs { margin-bottom: var(--spacing-xs); }
+.mb-sm { margin-bottom: var(--spacing-sm); }
+.mb-md { margin-bottom: var(--spacing-md); }
+.mb-lg { margin-bottom: var(--spacing-lg); }
+.mb-xl { margin-bottom: var(--spacing-xl); }
+
+.p-xs { padding: var(--spacing-xs); }
+.p-sm { padding: var(--spacing-sm); }
+.p-md { padding: var(--spacing-md); }
+.p-lg { padding: var(--spacing-lg); }
+.p-xl { padding: var(--spacing-xl); }
+
+/* Container */
+.ios-container {
+    width: 100%;
+    max-width: 100%;
+    padding-left: var(--spacing-md);
+    padding-right: var(--spacing-md);
+}
+
+/* Content Area */
+.ios-content {
+    position: relative;
+    min-height: calc(100vh - var(--nav-bar-total) - var(--tab-bar-total));
+    padding-bottom: var(--spacing-lg);
+}
+
+/* Page with large title */
+.ios-content.has-large-title {
+    padding-top: var(--large-title-height);
+}
+
+/* Loading Spinner iOS */
+.ios-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--ios-gray5);
+    border-top-color: var(--ios-blue);
+    border-radius: 50%;
+    animation: ios-spin 0.8s linear infinite;
+}
+
+@keyframes ios-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Smooth Scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Hide scrollbar but keep functionality */
+::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+}
+
+/* Selection */
+::selection {
+    background-color: var(--ios-blue);
+    color: white;
+}
+
+/* Focus visible for accessibility */
+*:focus-visible {
+    outline: 2px solid var(--ios-blue);
+    outline-offset: 2px;
+}
+
+/* Disable blue highlight on tap for iOS */
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent text selection on UI elements */
+button, .ios-button, .ios-tab-bar, .ios-nav-bar {
+    -webkit-user-select: none;
+    user-select: none;
+}

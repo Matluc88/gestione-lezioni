@@ -1,0 +1,430 @@
+/* ============================================
+   iOS NAVIGATION - Nav Bar & Bottom Tab Bar
+   ============================================ */
+
+/* ===== TOP NAVIGATION BAR ===== */
+.ios-nav-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--nav-bar-total);
+    background-color: var(--ios-nav-background);
+    backdrop-filter: var(--ios-nav-blur);
+    -webkit-backdrop-filter: var(--ios-nav-blur);
+    border-bottom: 0.5px solid var(--ios-separator);
+    z-index: 1000;
+    display: flex;
+    align-items: flex-end;
+    padding-top: var(--safe-area-top);
+    transition: transform var(--transition-fast);
+}
+
+.ios-nav-bar-inner {
+    width: 100%;
+    height: var(--nav-bar-height);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--spacing-md);
+}
+
+/* Nav Bar Title */
+.ios-nav-title {
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.022em;
+    color: var(--ios-label);
+    flex: 1;
+    text-align: center;
+    padding: 0 var(--spacing-sm);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Nav Bar Buttons */
+.ios-nav-left,
+.ios-nav-right {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    min-width: 60px;
+}
+
+.ios-nav-left {
+    justify-content: flex-start;
+}
+
+.ios-nav-right {
+    justify-content: flex-end;
+}
+
+.ios-nav-button {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    font-size: 17px;
+    font-weight: 400;
+    color: var(--ios-blue);
+    background: none;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: opacity var(--transition-fast), background-color var(--transition-fast);
+    -webkit-tap-highlight-color: transparent;
+    min-height: 36px;
+}
+
+.ios-nav-button:active {
+    opacity: 0.4;
+    background-color: rgba(0, 122, 255, 0.1);
+}
+
+.ios-nav-button.back {
+    padding-left: 0;
+    font-weight: 400;
+}
+
+.ios-nav-button.back::before {
+    content: '‹';
+    font-size: 28px;
+    font-weight: 400;
+    margin-right: -4px;
+}
+
+.ios-nav-button.icon-only {
+    padding: 8px;
+    min-width: 36px;
+    justify-content: center;
+}
+
+/* Large Title */
+.ios-large-title-container {
+    position: fixed;
+    top: var(--nav-bar-total);
+    left: 0;
+    right: 0;
+    height: var(--large-title-height);
+    padding: 0 var(--spacing-md);
+    display: flex;
+    align-items: center;
+    background-color: var(--ios-grouped-background);
+    z-index: 999;
+    transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.ios-large-title-container.hidden {
+    opacity: 0;
+    transform: translateY(-10px);
+    pointer-events: none;
+}
+
+.ios-large-title {
+    font-size: 34px;
+    font-weight: 700;
+    letter-spacing: 0.011em;
+    color: var(--ios-label);
+    line-height: 1.2;
+}
+
+/* ===== BOTTOM TAB BAR ===== */
+.ios-tab-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: var(--tab-bar-total);
+    background-color: var(--ios-toolbar-background);
+    backdrop-filter: var(--ios-nav-blur);
+    -webkit-backdrop-filter: var(--ios-nav-blur);
+    border-top: 0.5px solid var(--ios-separator);
+    z-index: 1000;
+    display: flex;
+    align-items: flex-start;
+    padding-bottom: var(--safe-area-bottom);
+}
+
+.ios-tab-bar-inner {
+    width: 100%;
+    height: var(--tab-bar-height);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+}
+
+.ios-tab-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    height: 100%;
+    color: var(--ios-gray);
+    font-size: var(--font-caption2);
+    font-weight: 500;
+    text-decoration: none;
+    transition: color var(--transition-fast);
+    cursor: pointer;
+    gap: 2px;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.ios-tab-item:active {
+    opacity: 0.6;
+}
+
+.ios-tab-item.active {
+    color: var(--ios-blue);
+}
+
+.ios-tab-icon {
+    font-size: 24px;
+    line-height: 1;
+    transition: transform var(--transition-fast);
+}
+
+.ios-tab-item.active .ios-tab-icon {
+    transform: scale(1.1);
+}
+
+.ios-tab-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    margin-top: 1px;
+}
+
+/* Badge on tab */
+.ios-tab-item .badge {
+    position: absolute;
+    top: 6px;
+    right: calc(50% - 16px);
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    background-color: var(--ios-red);
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ===== SEGMENTED CONTROL ===== */
+.ios-segmented-control {
+    display: flex;
+    background-color: var(--ios-tertiary-background);
+    border-radius: var(--radius-md);
+    padding: 2px;
+    gap: 2px;
+}
+
+.ios-segment {
+    flex: 1;
+    padding: 8px 16px;
+    font-size: var(--font-subhead);
+    font-weight: 400;
+    color: var(--ios-label);
+    background-color: transparent;
+    border-radius: calc(var(--radius-md) - 2px);
+    border: none;
+    cursor: pointer;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+    text-align: center;
+}
+
+.ios-segment.active {
+    background-color: var(--ios-card-background);
+    font-weight: 500;
+    box-shadow: var(--shadow-sm);
+}
+
+/* ===== SEARCH BAR ===== */
+.ios-search-bar {
+    display: flex;
+    align-items: center;
+    background-color: var(--ios-tertiary-background);
+    border-radius: var(--radius-md);
+    padding: 8px 12px;
+    gap: 8px;
+}
+
+.ios-search-icon {
+    color: var(--ios-gray);
+    font-size: 16px;
+}
+
+.ios-search-input {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    font-size: var(--font-body);
+    color: var(--ios-label);
+    font-family: var(--font-system);
+}
+
+.ios-search-input::placeholder {
+    color: var(--ios-gray);
+}
+
+.ios-search-clear {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background-color: var(--ios-gray);
+    color: white;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.ios-search-bar:focus-within .ios-search-clear,
+.ios-search-bar.has-value .ios-search-clear {
+    opacity: 1;
+}
+
+/* ===== TOOLBAR ===== */
+.ios-toolbar {
+    position: sticky;
+    bottom: var(--tab-bar-total);
+    left: 0;
+    right: 0;
+    height: 44px;
+    background-color: var(--ios-toolbar-background);
+    backdrop-filter: var(--ios-nav-blur);
+    -webkit-backdrop-filter: var(--ios-nav-blur);
+    border-top: 0.5px solid var(--ios-separator);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 var(--spacing-md);
+    z-index: 999;
+}
+
+.ios-toolbar-button {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 12px;
+    font-size: 17px;
+    font-weight: 400;
+    color: var(--ios-blue);
+    background: none;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: opacity var(--transition-fast);
+}
+
+.ios-toolbar-button:active {
+    opacity: 0.4;
+}
+
+.ios-toolbar-button:disabled {
+    color: var(--ios-gray3);
+    opacity: 0.4;
+}
+
+/* ===== MODAL HEADER ===== */
+.ios-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    padding: 0 var(--spacing-md);
+    border-bottom: 0.5px solid var(--ios-separator);
+}
+
+.ios-modal-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--ios-label);
+}
+
+.ios-modal-close {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: var(--ios-gray5);
+    color: var(--ios-secondary-label);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: opacity var(--transition-fast);
+}
+
+@media (prefers-color-scheme: dark) {
+    .ios-modal-close {
+        background-color: var(--ios-tertiary-background);
+    }
+}
+
+.ios-modal-close:active {
+    opacity: 0.6;
+}
+
+/* ===== PULL TO REFRESH ===== */
+.ios-pull-refresh {
+    position: absolute;
+    top: -60px;
+    left: 0;
+    right: 0;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform var(--transition-base);
+}
+
+.ios-pull-refresh.pulling {
+    transform: translateY(60px);
+}
+
+.ios-pull-refresh .ios-spinner {
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.ios-pull-refresh.loading .ios-spinner {
+    opacity: 1;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .ios-nav-button {
+        font-size: 16px;
+    }
+    
+    .ios-large-title {
+        font-size: 30px;
+    }
+}
+
+@media (max-width: 393px) {
+    .ios-nav-button {
+        font-size: 15px;
+        padding: 4px 6px;
+    }
+    
+    .ios-large-title {
+        font-size: 28px;
+    }
+    
+    .ios-tab-icon {
+        font-size: 22px;
+    }
+    
+    .ios-tab-label {
+        font-size: 9px;
+    }
+}

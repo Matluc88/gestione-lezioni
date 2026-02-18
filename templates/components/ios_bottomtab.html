@@ -1,0 +1,175 @@
+{# iOS Bottom Tab Bar Component #}
+{# Parameters:
+   - current_tab: String to identify the active tab
+   Possible values: 'home', 'calendario', 'corsi', 'fatture', 'altro'
+#}
+
+<nav class="ios-tab-bar">
+    <div class="ios-tab-bar-inner">
+        <a href="{{ url_for('lezioni.dashboard') }}" class="ios-tab-item {% if current_tab == 'home' %}active{% endif %}">
+            <span class="ios-tab-icon">🏠</span>
+            <span class="ios-tab-label">Home</span>
+        </a>
+        
+        <a href="{{ url_for('calendario.calendario') }}" class="ios-tab-item {% if current_tab == 'calendario' %}active{% endif %}">
+            <span class="ios-tab-icon">📅</span>
+            <span class="ios-tab-label">Calendario</span>
+        </a>
+        
+        <a href="{{ url_for('corsi.lista_corsi') }}" class="ios-tab-item {% if current_tab == 'corsi' %}active{% endif %}">
+            <span class="ios-tab-icon">📚</span>
+            <span class="ios-tab-label">Corsi</span>
+        </a>
+        
+        <a href="{{ url_for('fatture.index') }}" class="ios-tab-item {% if current_tab == 'fatture' %}active{% endif %}">
+            <span class="ios-tab-icon">💰</span>
+            <span class="ios-tab-label">Fatture</span>
+        </a>
+        
+        <a href="javascript:void(0)" onclick="toggleAltroMenu()" class="ios-tab-item {% if current_tab == 'altro' %}active{% endif %}">
+            <span class="ios-tab-icon">⋯</span>
+            <span class="ios-tab-label">Altro</span>
+        </a>
+    </div>
+</nav>
+
+{# Modal menu for "Altro" tab #}
+<div id="altroMenuModal" class="ios-modal" style="display: none;">
+    <div class="ios-modal-overlay" onclick="toggleAltroMenu()"></div>
+    <div class="ios-modal-content">
+        <div class="ios-modal-header">
+            <h3 class="ios-modal-title">Menu</h3>
+            <button class="ios-modal-close" onclick="toggleAltroMenu()">✕</button>
+        </div>
+        <div class="ios-list-group" style="margin: 0; border-radius: 0;">
+            <a href="{{ url_for('stato_crediti.stato_crediti') }}" class="ios-list-item">
+                <span class="ios-list-icon">📊</span>
+                <span class="ios-list-content">
+                    <span class="ios-list-title">Stato Crediti</span>
+                </span>
+                <span class="ios-list-chevron"></span>
+            </a>
+            <a href="{{ url_for('lezioni.compenso') }}" class="ios-list-item">
+                <span class="ios-list-icon">💵</span>
+                <span class="ios-list-content">
+                    <span class="ios-list-title">Compenso</span>
+                </span>
+                <span class="ios-list-chevron"></span>
+            </a>
+            <a href="{{ url_for('resoconto.resoconto_annuale') }}" class="ios-list-item">
+                <span class="ios-list-icon">📈</span>
+                <span class="ios-list-content">
+                    <span class="ios-list-title">Resoconto Annuale</span>
+                </span>
+                <span class="ios-list-chevron"></span>
+            </a>
+            <a href="{{ url_for('archivio.lezioni_archiviate') }}" class="ios-list-item">
+                <span class="ios-list-icon">📂</span>
+                <span class="ios-list-content">
+                    <span class="ios-list-title">Lezioni Archiviate</span>
+                </span>
+                <span class="ios-list-chevron"></span>
+            </a>
+            <a href="{{ url_for('archivio.corsi_archiviati') }}" class="ios-list-item">
+                <span class="ios-list-icon">📁</span>
+                <span class="ios-list-content">
+                    <span class="ios-list-title">Corsi Archiviati</span>
+                </span>
+                <span class="ios-list-chevron"></span>
+            </a>
+            <a href="{{ url_for('export.importa_csv') }}" class="ios-list-item">
+                <span class="ios-list-icon">📥</span>
+                <span class="ios-list-content">
+                    <span class="ios-list-title">Importa CSV</span>
+                </span>
+                <span class="ios-list-chevron"></span>
+            </a>
+            <a href="{{ url_for('export.esporta_csv') }}" class="ios-list-item">
+                <span class="ios-list-icon">📤</span>
+                <span class="ios-list-content">
+                    <span class="ios-list-title">Esporta CSV</span>
+                </span>
+                <span class="ios-list-chevron"></span>
+            </a>
+            <a href="{{ url_for('google_calendar.sincronizza') }}" class="ios-list-item">
+                <span class="ios-list-icon">🔄</span>
+                <span class="ios-list-content">
+                    <span class="ios-list-title">Sincronizza Google Calendar</span>
+                </span>
+                <span class="ios-list-chevron"></span>
+            </a>
+            <a href="{{ url_for('auth.logout') }}" class="ios-list-item">
+                <span class="ios-list-icon">🚪</span>
+                <span class="ios-list-content">
+                    <span class="ios-list-title">Logout</span>
+                </span>
+                <span class="ios-list-chevron"></span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+.ios-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: flex-end;
+}
+
+.ios-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.ios-modal-content {
+    position: relative;
+    width: 100%;
+    max-height: 70vh;
+    background-color: var(--ios-card-background);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    overflow: hidden;
+    animation: ios-modal-slide-up 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ios-modal.closing .ios-modal-content {
+    animation: ios-modal-slide-down 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+</style>
+
+<script>
+function toggleAltroMenu() {
+    const modal = document.getElementById('altroMenuModal');
+    if (modal.style.display === 'none') {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    } else {
+        modal.classList.add('closing');
+        setTimeout(() => {
+            modal.style.display = 'none';
+            modal.classList.remove('closing');
+            document.body.style.overflow = '';
+        }, 300);
+    }
+}
+
+// Close on escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const modal = document.getElementById('altroMenuModal');
+        if (modal.style.display !== 'none') {
+            toggleAltroMenu();
+        }
+    }
+});
+</script>

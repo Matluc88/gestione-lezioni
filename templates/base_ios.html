@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#F8F8F8">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    
+    {# PWA Meta Tags #}
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-180.png') }}">
+    
+    <title>{% block title %}Gestione Lezioni{% endblock %}</title>
+    
+    {# iOS Styles #}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ios-core.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ios-navigation.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ios-components.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ios-animations.css') }}">
+    
+    {# Additional styles per page #}
+    {% block extra_css %}{% endblock %}
+</head>
+<body {% block body_class %}{% endblock %}>
+    
+    {# Navigation Bar #}
+    {% block navbar %}
+        {% include 'components/ios_navbar.html' %}
+    {% endblock %}
+    
+    {# Large Title (optional) #}
+    {% if large_title %}
+    <div class="ios-large-title-container" id="largeTitleContainer">
+        <h1 class="ios-large-title">{{ large_title }}</h1>
+    </div>
+    {% endif %}
+    
+    {# Main Content #}
+    <main class="ios-content {% if large_title %}has-large-title{% endif %}">
+        <div class="ios-container">
+            {# Flash Messages #}
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="ios-alert ios-alert-{{ category }} ios-notification-enter">
+                            <span class="ios-alert-icon">
+                                {% if category == 'success' %}✓
+                                {% elif category == 'danger' %}⚠️
+                                {% elif category == 'warning' %}⚡
+                                {% else %}ℹ️{% endif %}
+                            </span>
+                            <div class="ios-alert-content">
+                                <div class="ios-alert-message">{{ message }}</div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            {# Page Content #}
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+    
+    {# Bottom Tab Bar #}
+    {% block bottomtab %}
+        {% include 'components/ios_bottomtab.html' %}
+    {% endblock %}
+    
+    {# Floating Action Button (optional) #}
+    {% if fab_url %}
+    <a href="{{ fab_url }}" class="ios-fab" title="{{ fab_title|default('Aggiungi') }}">
+        {{ fab_icon|default('➕') }}
+    </a>
+    {% endif %}
+    
+    {# Core JavaScript #}
+    <script>
+        // Handle large title animation on scroll
+        {% if large_title %}
+        let lastScrollTop = 0;
+        const largeTitleContainer = document.getElementById('largeTitleContainer');
+        const navBar = document.querySelector('.ios-nav-bar');
+        
+        window.addEventListener('scroll', function() {
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            
+            // Hide large title when scrolling down
+            if (scrollTop > 20) {
+                largeTitleContainer.classList.add('hidden');
+            } else {
+                largeTitleContainer.classList.remove('hidden');
+            }
+            
+            lastScrollTop = scrollTop;
+        }, { passive: true });
+        {% endif %}
+        
+        // Auto-dismiss alerts after 5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            const alerts = document.querySelectorAll('.ios-alert');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    alert.classList.remove('ios-notification-enter');
+                    alert.classList.add('ios-notification-exit');
+                    setTimeout(() => alert.remove(), 300);
+                }, 5000);
+            });
+        });
+        
+        // Haptic feedback simulation (vibration)
+        function hapticFeedback(type = 'light') {
+            if ('vibrate' in navigator) {
+                switch(type) {
+                    case 'light':
+                        navigator.vibrate(10);
+                        break;
+                    case 'medium':
+                        navigator.vibrate(20);
+                        break;
+                    case 'heavy':
+                        navigator.vibrate(30);
+                        break;
+                    case 'success':
+                        navigator.vibrate([10, 50, 10]);
+                        break;
+                    case 'error':
+                        navigator.vibrate([50, 100, 50]);
+                        break;
+                }
+            }
+        }
+        
+        // Add haptic feedback to buttons and links
+        document.addEventListener('DOMContentLoaded', function() {
+            const interactiveElements = document.querySelectorAll('button, .ios-button, .ios-nav-button, .ios-tab-item, .ios-list-item');
+            interactiveElements.forEach(element => {
+                element.addEventListener('touchstart', () => hapticFeedback('light'), { passive: true });
+            });
+        });
+        
+        // Swipe back gesture
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let isSwiping = false;
+        
+        document.addEventListener('touchstart', function(e) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            isSwiping = touchStartX < 30; // Start from left edge
+        }, { passive: true });
+        
+        document.addEventListener('touchmove', function(e) {
+            if (!isSwiping) return;
+            
+            const touchX = e.touches[0].clientX;
+            const touchY = e.touches[0].clientY;
+            const diffX = touchX - touchStartX;
+            const diffY = Math.abs(touchY - touchStartY);
+            
+            // Swipe right from left edge (and mostly horizontal)
+            if (diffX > 50 && diffY < 50) {
+                hapticFeedback('light');
+                const backButton = document.querySelector('.ios-nav-button.back');
+                if (backButton) {
+                    window.location.href = backButton.href;
+                } else {
+                    window.history.back();
+                }
+                isSwiping = false;
+            }
+        }, { passive: true });
+        
+        // Pull to refresh
+        let touchStartY2 = 0;
+        let isPulling = false;
+        const content = document.querySelector('.ios-content');
+        
+        content.addEventListener('touchstart', function(e) {
+            if (window.pageYOffset === 0) {
+                touchStartY2 = e.touches[0].clientY;
+                isPulling = true;
+            }
+        }, { passive: true });
+        
+        content.addEventListener('touchmove', function(e) {
+            if (!isPulling) return;
+            
+            const touchY = e.touches[0].clientY;
+            const diff = touchY - touchStartY2;
+            
+            if (diff > 80 && window.pageYOffset === 0) {
+                hapticFeedback('medium');
+                location.reload();
+                isPulling = false;
+            }
+        }, { passive: true });
+        
+        content.addEventListener('touchend', function() {
+            isPulling = false;
+        }, { passive: true });
+    </script>
+    
+    {# Page-specific JavaScript #}
+    {% block extra_js %}{% endblock %}
+    
+    {# PWA Service Worker Registration #}
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(reg => console.log('Service Worker registrato'))
+                    .catch(err => console.log('Service Worker non registrato:', err));
+            });
+        }
+    </script>
+</body>
+</html>

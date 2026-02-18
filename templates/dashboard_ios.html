@@ -1,0 +1,258 @@
+{% extends 'base_ios.html' %}
+
+{% block title %}Dashboard Lezioni{% endblock %}
+
+{% set current_tab = 'home' %}
+{% set large_title = "Lezioni Attive" %}
+{% set fab_url = url_for('lezioni.aggiungi_lezione') %}
+{% set fab_icon = '➕' %}
+
+{% block navbar %}
+    {% set title = "Lezioni Attive" %}
+    {% include 'components/ios_navbar.html' %}
+{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .chart-container {
+        background-color: var(--ios-card-background);
+        border-radius: var(--radius-card);
+        padding: var(--spacing-md);
+        margin-bottom: var(--spacing-md);
+        box-shadow: var(--shadow-sm);
+    }
+    
+    #lezioniPerMeseChart {
+        max-height: 300px;
+    }
+    
+    .filter-accordion {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+    }
+    
+    .filter-accordion.active {
+        max-height: 800px;
+    }
+    
+    .lezioni-table-container {
+        background-color: var(--ios-card-background);
+        border-radius: var(--radius-card);
+        overflow: hidden;
+        margin: var(--spacing-md) 0;
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .lezioni-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .lezioni-table th,
+    .lezioni-table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 0.5px solid var(--ios-separator);
+        font-size: var(--font-subhead);
+    }
+    
+    .lezioni-table th {
+        background-color: var(--ios-secondary-background);
+        font-weight: 600;
+        color: var(--ios-label);
+    }
+    
+    .lezioni-table tbody tr:active {
+        background-color: var(--ios-gray6);
+    }
+    
+    @media (prefers-color-scheme: dark) {
+        .lezioni-table tbody tr:active {
+            background-color: var(--ios-tertiary-background);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Chart Card -->
+<div class="chart-container ios-fade-in">
+    <h3 class="ios-title3" style="margin-bottom: var(--spacing-md);">📊 Distribuzione Lezioni per Mese</h3>
+    <canvas id="lezioniPerMeseChart"></canvas>
+</div>
+
+<!-- Filters Section -->
+<div class="ios-card ios-stagger-item" style="margin-bottom: var(--spacing-md);">
+    <button class="ios-list-item" onclick="toggleFilters()" style="width: 100%; border: none; cursor: pointer;">
+        <span class="ios-list-icon">🔍</span>
+        <span class="ios-list-content">
+            <span class="ios-list-title">Filtra Lezioni</span>
+        </span>
+        <span id="filterArrow" style="transition: transform 0.3s ease;">▼</span>
+    </button>
+    
+    <div id="filterAccordion" class="filter-accordion">
+        <div style="padding: var(--spacing-md); border-top: 0.5px solid var(--ios-separator);">
+            <form method="GET" action="{{ url_for('lezioni.dashboard') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="ios-form-group">
+                    <label class="ios-form-label">Materia</label>
+                    <input type="text" name="materia" class="ios-form-input" value="{{ request.args.get('materia', '') }}" placeholder="Cerca materia...">
+                </div>
+                
+                <div class="ios-form-group">
+                    <label class="ios-form-label">Data</label>
+                    <input type="date" name="data" class="ios-form-input" value="{{ request.args.get('data', '') }}">
+                </div>
+                
+                <div class="ios-form-group">
+                    <label class="ios-form-label">Stato</label>
+                    <select name="stato" class="ios-form-select">
+                        <option value="">Tutti</option>
+                        <option value="Pianificato" {% if request.args.get('stato') == 'Pianificato' %}selected{% endif %}>Pianificato</option>
+                        <option value="Completato" {% if request.args.get('stato') == 'Completato' %}selected{% endif %}>Completato</option>
+                        <option value="Cancellato" {% if request.args.get('stato') == 'Cancellato' %}selected{% endif %}>Cancellato</option>
+                    </select>
+                </div>
+                
+                <div class="ios-form-group">
+                    <label class="ios-form-label">Luogo</label>
+                    <input type="text" name="luogo" class="ios-form-input" value="{{ request.args.get('luogo', '') }}" placeholder="Cerca luogo...">
+                </div>
+                
+                <div class="ios-form-group">
+                    <label class="ios-form-label">Corso</label>
+                    <select name="corso" class="ios-form-select">
+                        <option value="">Tutti</option>
+                        {% for corso in corsi %}
+                            <option value="{{ corso.id_corso }}" {% if request.args.get('corso') == corso.id_corso|string %}selected{% endif %}>
+                                {{ corso.nome }} ({{ corso.id_corso }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <button type="submit" class="ios-button ios-button-primary ios-button-block">
+                    🔍 Applica Filtro
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Action Buttons -->
+<div class="ios-stagger-item" style="display: flex; gap: var(--spacing-sm); margin-bottom: var(--spacing-md);">
+    <button type="button" class="ios-button ios-button-warning" style="flex: 1;" id="archivia-button">
+        📁 Archivia
+    </button>
+    <button type="button" class="ios-button ios-button-danger" style="flex: 1;" id="elimina-button">
+        🗑️ Elimina
+    </button>
+</div>
+
+<!-- Lezioni Table (will be included from component) -->
+{% include 'components/lezioni_table.html' %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Toggle Filters
+function toggleFilters() {
+    const accordion = document.getElementById('filterAccordion');
+    const arrow = document.getElementById('filterArrow');
+    accordion.classList.toggle('active');
+    arrow.style.transform = accordion.classList.contains('active') ? 'rotate(180deg)' : 'rotate(0deg)';
+}
+
+// Chart.js Configuration
+document.addEventListener('DOMContentLoaded', function() {
+    var ctx = document.getElementById('lezioniPerMeseChart').getContext('2d');
+    var mesi = {{ mesi|tojson }};
+    var conteggi = {{ conteggi|tojson }};
+    
+    var mesiFormattati = mesi.map(function(mese) {
+        var anno = mese.split('-')[0];
+        var numeroMese = parseInt(mese.split('-')[1]);
+        var nomiMesi = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
+        return nomiMesi[numeroMese - 1] + ' ' + anno;
+    });
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: mesiFormattati,
+            datasets: [{
+                label: 'Numero di Lezioni',
+                data: conteggi,
+                backgroundColor: function(context) {
+                    const chart = context.chart;
+                    const {ctx, chartArea} = chart;
+                    if (!chartArea) return null;
+                    
+                    const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+                    gradient.addColorStop(0, 'rgba(0, 122, 255, 0.1)');
+                    gradient.addColorStop(1, 'rgba(0, 122, 255, 0.3)');
+                    return gradient;
+                },
+                borderColor: 'rgba(0, 122, 255, 0.8)',
+                borderWidth: 2.5,
+                tension: 0.4,
+                fill: true,
+                pointRadius: 0,
+                pointHoverRadius: 8,
+                pointBackgroundColor: 'rgba(0, 122, 255, 1)',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 3,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            aspectRatio: 2,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(255, 255, 255, 0.98)',
+                    titleColor: 'rgba(0, 0, 0, 0.9)',
+                    bodyColor: 'rgba(0, 0, 0, 0.8)',
+                    borderColor: 'rgba(0, 122, 255, 0.3)',
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                    displayColors: false,
+                    callbacks: {
+                        label: function(context) {
+                            return context.raw + ' lezioni';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0,
+                        color: 'rgba(142, 142, 147, 0.8)',
+                        font: { family: var(--font-system), size: 12 }
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)',
+                        drawBorder: false
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: 'rgba(142, 142, 147, 0.8)',
+                        font: { family: var(--font-system), size: 12 }
+                    },
+                    grid: { display: false }
+                }
+            }
+        }
+    });
+});
+</script>
+{% include 'components/lezioni_scripts.html' %}
+{% endblock %}

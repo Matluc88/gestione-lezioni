@@ -1,0 +1,40 @@
+{# iOS Navigation Bar Component #}
+{# Parameters:
+   - title: Nav bar title (centered)
+   - back_url: URL for back button (optional)
+   - back_text: Text for back button (optional, default: "Indietro")
+   - right_button_text: Text for right button (optional)
+   - right_button_url: URL for right button (optional)
+   - right_button_icon: Icon for right button (optional)
+#}
+
+<nav class="ios-nav-bar">
+    <div class="ios-nav-bar-inner">
+        <div class="ios-nav-left">
+            {% if back_url %}
+                <a href="{{ back_url }}" class="ios-nav-button back">
+                    {{ back_text|default('Indietro') }}
+                </a>
+            {% endif %}
+        </div>
+        
+        <div class="ios-nav-title">
+            {{ title }}
+        </div>
+        
+        <div class="ios-nav-right">
+            {% if right_button_url %}
+                <a href="{{ right_button_url }}" class="ios-nav-button {% if right_button_icon %}icon-only{% endif %}">
+                    {% if right_button_icon %}
+                        {{ right_button_icon }}
+                    {% else %}
+                        {{ right_button_text }}
+                    {% endif %}
+                </a>
+            {% endif %}
+            {% if extra_buttons %}
+                {{ extra_buttons|safe }}
+            {% endif %}
+        </div>
+    </div>
+</nav>
