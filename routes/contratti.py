@@ -38,7 +38,7 @@ def extract_text_from_pdf(file_path):
         print(f"Errore nell'estrazione del testo PDF: {e}")
         return ""
 
-def pdf_to_base64_images(file_path, max_pages=10):
+def pdf_to_base64_images(file_path, max_pages=5):
     """Converte PDF in immagini base64 per Claude Vision"""
     try:
         # Converti PDF in immagini (max 10 pagine per non superare limiti)
@@ -117,7 +117,7 @@ Formatta in modo chiaro in italiano."""
             
             message = client.messages.create(
                 model="claude-sonnet-4-5-20250929",
-                max_tokens=6000,
+                max_tokens=4000,
                 messages=[{
                     "role": "user",
                     "content": content
