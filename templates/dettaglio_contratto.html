@@ -15,9 +15,23 @@
             <!-- Pulsante Download PDF -->
             <a href="{{ url_for('contratti.download_contratto', contratto_id=contratto.id) }}" 
                class="ios-button ios-button-primary ios-button-block download-pdf-btn"
-               style="margin-bottom: 20px;">
+               style="margin-bottom: 15px;">
                 📥 Scarica PDF
             </a>
+            
+            <!-- Pulsante Verifica Conformità -->
+            {% if contratto.id_corso %}
+            <a href="{{ url_for('contratti.verifica_conformita', contratto_id=contratto.id) }}" 
+               class="ios-button ios-button-secondary ios-button-block"
+               style="margin-bottom: 20px;">
+                🔍 Verifica Conformità con Database
+            </a>
+            {% else %}
+            <div class="alert-info" style="margin-bottom: 20px;">
+                <span class="alert-icon">ℹ️</span>
+                <span>Collega un corso per verificare la conformità</span>
+            </div>
+            {% endif %}
             
             <div class="info-grid">
                 {% if contratto.numero_contratto %}
@@ -358,6 +372,22 @@
 
 .ios-button-danger:hover {
     background-color: #ff2d20;
+}
+
+.alert-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background-color: #e3f2fd;
+    border-left: 4px solid #2196f3;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    color: #1976d2;
+}
+
+.alert-icon {
+    font-size: 20px;
 }
 </style>
 

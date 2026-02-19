@@ -1,0 +1,368 @@
+{% extends "base_ios.html" %}
+
+{% block title %}Verifica Conformità - {{ contratto.nome_file }}{% endblock %}
+
+{% set large_title = "Verifica Conformità" %}
+
+{% block content %}
+<div class="ios-page">
+    <!-- Header Info -->
+    <div class="ios-card">
+        <div class="ios-card-header">
+            <h3 class="ios-card-title">📋 {{ contratto.nome_file }}</h3>
+        </div>
+        <div class="ios-card-body">
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Corso:</span>
+                    <span class="info-value">{{ contratto.nome_corso }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Lezioni nel Contratto:</span>
+                    <span class="info-value">{{ risultato.totale_contratto }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Lezioni nel Database:</span>
+                    <span class="info-value">{{ risultato.totale_db }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Riepilogo -->
+    <div class="summary-grid">
+        <div class="summary-card success">
+            <div class="summary-icon">✅</div>
+            <div class="summary-number">{{ risultato.conformi|length }}</div>
+            <div class="summary-label">Conformi</div>
+        </div>
+        
+        <div class="summary-card warning">
+            <div class="summary-icon">⚠️</div>
+            <div class="summary-number">{{ risultato.da_aggiungere|length }}</div>
+            <div class="summary-label">Da Aggiungere</div>
+        </div>
+        
+        <div class="summary-card info">
+            <div class="summary-icon">ℹ️</div>
+            <div class="summary-number">{{ risultato.extra_db|length }}</div>
+            <div class="summary-label">Extra in DB</div>
+        </div>
+        
+        <div class="summary-card danger">
+            <div class="summary-icon">🔄</div>
+            <div class="summary-number">{{ risultato.differenze_orari|length }}</div>
+            <div class="summary-label">Differenze Orari</div>
+        </div>
+    </div>
+
+    <!-- Lezioni Conformi -->
+    {% if risultato.conformi %}
+    <div class="ios-card">
+        <div class="ios-card-header" style="background-color: #34c759; color: white;">
+            <h3 class="ios-card-title">✅ Lezioni Conformi ({{ risultato.conformi|length }})</h3>
+        </div>
+        <div class="ios-card-body">
+            <div class="lezioni-list">
+                {% for item in risultato.conformi %}
+                <div class="lezione-item conforme">
+                    <div class="lezione-date">{{ item.contratto.data }}</div>
+                    <div class="lezione-orario">{{ item.contratto.ora_inizio }} - {{ item.contratto.ora_fine }}</div>
+                    <div class="lezione-status">✓ OK</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Lezioni Da Aggiungere -->
+    {% if risultato.da_aggiungere %}
+    <div class="ios-card">
+        <div class="ios-card-header" style="background-color: #ff9500; color: white;">
+            <h3 class="ios-card-title">⚠️ Da Aggiungere al Database ({{ risultato.da_aggiungere|length }})</h3>
+        </div>
+        <div class="ios-card-body">
+            <p class="info-text">Queste lezioni sono presenti nel contratto ma non nel database:</p>
+            <div class="lezioni-list">
+                {% for lez in risultato.da_aggiungere %}
+                <div class="lezione-item warning">
+                    <div class="lezione-date">{{ lez.data }}</div>
+                    <div class="lezione-orario">{{ lez.ora_inizio }} - {{ lez.ora_fine }}</div>
+                    <div class="lezione-status">→ Mancante</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Lezioni Extra nel Database -->
+    {% if risultato.extra_db %}
+    <div class="ios-card">
+        <div class="ios-card-header" style="background-color: #5ac8fa; color: white;">
+            <h3 class="ios-card-title">ℹ️ Extra nel Database ({{ risultato.extra_db|length }})</h3>
+        </div>
+        <div class="ios-card-body">
+            <p class="info-text">Queste lezioni sono nel database ma non nel contratto:</p>
+            <div class="lezioni-list">
+                {% for lez in risultato.extra_db %}
+                <div class="lezione-item info">
+                    <div class="lezione-date">{{ lez.data }}</div>
+                    <div class="lezione-orario">{{ lez.ora_inizio }} - {{ lez.ora_fine }}</div>
+                    <div class="lezione-status">← Extra</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Differenze Orari -->
+    {% if risultato.differenze_orari %}
+    <div class="ios-card">
+        <div class="ios-card-header" style="background-color: #ff3b30; color: white;">
+            <h3 class="ios-card-title">🔄 Differenze Orari ({{ risultato.differenze_orari|length }})</h3>
+        </div>
+        <div class="ios-card-body">
+            <p class="info-text">Stessa data ma orari diversi:</p>
+            <div class="lezioni-list">
+                {% for item in risultato.differenze_orari %}
+                <div class="lezione-item danger">
+                    <div class="lezione-header">
+                        <strong>{{ item.contratto.data }}</strong>
+                    </div>
+                    <div class="lezione-compare">
+                        <div class="compare-side">
+                            <div class="compare-label">📄 Contratto:</div>
+                            <div class="compare-value">{{ item.contratto.ora_inizio }} - {{ item.contratto.ora_fine }}</div>
+                        </div>
+                        <div class="compare-separator">≠</div>
+                        <div class="compare-side">
+                            <div class="compare-label">💾 Database:</div>
+                            <div class="compare-value">{{ item.db.ora_inizio }} - {{ item.db.ora_fine }}</div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Nessuna lezione trovata -->
+    {% if risultato.totale_contratto == 0 %}
+    <div class="ios-card">
+        <div class="ios-card-body" style="text-align: center; padding: 40px 20px;">
+            <div style="font-size: 48px; margin-bottom: 15px;">📭</div>
+            <h3>Nessuna lezione trovata nel contratto</h3>
+            <p style="color: var(--ios-text-secondary); margin-top: 10px;">
+                Il sistema non è riuscito a trovare date e orari nel calendario estratto.
+                Verifica che il calendario sia stato estratto correttamente dal PDF.
+            </p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Azioni -->
+    <div class="ios-card">
+        <div class="ios-card-body">
+            <a href="{{ url_for('contratti.dettaglio_contratto', contratto_id=contratto.id) }}" 
+               class="ios-button ios-button-primary ios-button-block">
+                ← Torna al Contratto
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+.info-grid {
+    display: grid;
+    gap: 12px;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--ios-separator);
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    font-size: 15px;
+    color: var(--ios-text-secondary);
+}
+
+.info-value {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ios-text-primary);
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.summary-card {
+    background: white;
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+}
+
+.summary-card.success {
+    border-left: 4px solid #34c759;
+}
+
+.summary-card.warning {
+    border-left: 4px solid #ff9500;
+}
+
+.summary-card.info {
+    border-left: 4px solid #5ac8fa;
+}
+
+.summary-card.danger {
+    border-left: 4px solid #ff3b30;
+}
+
+.summary-icon {
+    font-size: 32px;
+    margin-bottom: 8px;
+}
+
+.summary-number {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--ios-text-primary);
+    margin-bottom: 4px;
+}
+
+.summary-label {
+    font-size: 13px;
+    color: var(--ios-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-text {
+    font-size: 14px;
+    color: var(--ios-text-secondary);
+    margin-bottom: 15px;
+    padding: 10px;
+    background-color: var(--ios-background);
+    border-radius: var(--radius-md);
+}
+
+.lezioni-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.lezione-item {
+    padding: 15px;
+    border-radius: var(--radius-md);
+    background-color: var(--ios-background);
+    border-left: 4px solid var(--ios-separator);
+}
+
+.lezione-item.conforme {
+    border-left-color: #34c759;
+    background-color: #f0fdf4;
+}
+
+.lezione-item.warning {
+    border-left-color: #ff9500;
+    background-color: #fff7ed;
+}
+
+.lezione-item.info {
+    border-left-color: #5ac8fa;
+    background-color: #f0f9ff;
+}
+
+.lezione-item.danger {
+    border-left-color: #ff3b30;
+    background-color: #fef2f2;
+}
+
+.lezione-date {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ios-text-primary);
+    margin-bottom: 5px;
+}
+
+.lezione-orario {
+    font-size: 14px;
+    color: var(--ios-text-secondary);
+}
+
+.lezione-status {
+    font-size: 13px;
+    font-weight: 600;
+    margin-top: 5px;
+    color: var(--ios-blue);
+}
+
+.lezione-header {
+    font-size: 16px;
+    margin-bottom: 10px;
+}
+
+.lezione-compare {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.compare-side {
+    flex: 1;
+}
+
+.compare-label {
+    font-size: 12px;
+    color: var(--ios-text-secondary);
+    margin-bottom: 4px;
+}
+
+.compare-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ios-text-primary);
+}
+
+.compare-separator {
+    font-size: 20px;
+    font-weight: bold;
+    color: #ff3b30;
+}
+
+@media (max-width: 768px) {
+    .summary-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .lezione-compare {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .compare-separator {
+        text-align: center;
+        margin: 10px 0;
+    }
+}
+</style>
+{% endblock %}

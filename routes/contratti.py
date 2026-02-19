@@ -502,3 +502,185 @@ def collega_corso(contratto_id):
     except Exception as e:
         flash(f"❌ Errore durante il collegamento: {str(e)}", "danger")
         return redirect(url_for('contratti.dettaglio_contratto', contratto_id=contratto_id))
+
+
+@contratti_bp.route("/contratti/<int:contratto_id>/verifica-conformita")
+@login_required
+def verifica_conformita(contratto_id):
+    """Verifica conformità tra calendario contratto e lezioni in database"""
+    try:
+        with db_connection() as conn:
+            cursor = conn.cursor()
+            placeholder = get_placeholder()
+            
+            # Recupera contratto
+            cursor.execute(f"""
+                SELECT c.*, co.nome as nome_corso
+                FROM contratti c
+                LEFT JOIN corsi co ON c.id_corso = co.id_corso
+                WHERE c.id = {placeholder}
+            """, (contratto_id,))
+            contratto = cursor.fetchone()
+            
+            if not contratto:
+                flash("❌ Contratto non trovato", "danger")
+                return redirect(url_for('contratti.lista_contratti'))
+            
+            if not contratto['id_corso']:
+                flash("⚠️ Nessun corso collegato al contratto. Collega prima un corso per verificare la conformità.", "warning")
+                return redirect(url_for('contratti.dettaglio_contratto', contratto_id=contratto_id))
+            
+            # Parse calendario dal contenuto estratto
+            lezioni_contratto = parse_calendario_da_contratto(contratto['contenuto_estratto'])
+            
+            # Recupera lezioni dal database per questo corso
+            cursor.execute(f"""
+                SELECT id, data, ora_inizio, ora_fine
+                FROM lezioni
+                WHERE id_corso = {placeholder}
+                ORDER BY data, ora_inizio
+            """, (contratto['id_corso'],))
+            lezioni_db = cursor.fetchall()
+            
+            # Confronta e categorizza
+            risultato = confronta_lezioni(lezioni_contratto, lezioni_db)
+        
+        return render_template("verifica_conformita.html",
+                             contratto=contratto,
+                             risultato=risultato,
+                             current_tab='altro')
+    
+    except Exception as e:
+        flash(f"❌ Errore durante la verifica: {str(e)}", "danger")
+        return redirect(url_for('contratti.dettaglio_contratto', contratto_id=contratto_id))
+
+
+def parse_calendario_da_contratto(contenuto_estratto):
+    """Estrae le lezioni dal calendario nel contenuto estratto"""
+    import re
+    from datetime import datetime as dt
+    
+    lezioni = []
+    
+    if not contenuto_estratto:
+        return lezioni
+    
+    # Pattern per trovare date in vari formati
+    # Cerca pattern tipo: 13/02/2026 | 09:00 | 13:00 | 4
+    pattern_tabella = r'(\d{1,2}[/\-]\d{1,2}[/\-]\d{4})\s*[\|]\s*(\d{1,2}:\d{2})\s*[\|]\s*(\d{1,2}:\d{2})'
+    
+    matches = re.findall(pattern_tabella, contenuto_estratto)
+    
+    for match in matches:
+        data_str, ora_inizio, ora_fine = match
+        
+        # Normalizza data in formato YYYY-MM-DD
+        try:
+            if '/' in data_str:
+                parti = data_str.split('/')
+            else:
+                parti = data_str.split('-')
+            
+            if len(parti) == 3:
+                giorno, mese, anno = parti
+                data_norm = f"{anno}-{mese.zfill(2)}-{giorno.zfill(2)}"
+                
+                lezioni.append({
+                    'data': data_norm,
+                    'ora_inizio': ora_inizio,
+                    'ora_fine': ora_fine
+                })
+        except:
+            continue
+    
+    # Se non trova pattern tabella, cerca date e orari nel testo
+    if not lezioni:
+        # Pattern alternativo: cerca "13/02/2026 09:00-13:00" o simili
+        pattern_alt = r'(\d{1,2}[/\-]\d{1,2}[/\-]\d{4})\s+(\d{1,2}:\d{2})\s*[-–]\s*(\d{1,2}:\d{2})'
+        matches_alt = re.findall(pattern_alt, contenuto_estratto)
+        
+        for match in matches_alt:
+            data_str, ora_inizio, ora_fine = match
+            try:
+                if '/' in data_str:
+                    parti = data_str.split('/')
+                else:
+                    parti = data_str.split('-')
+                
+                if len(parti) == 3:
+                    giorno, mese, anno = parti
+                    data_norm = f"{anno}-{mese.zfill(2)}-{giorno.zfill(2)}"
+                    
+                    lezioni.append({
+                        'data': data_norm,
+                        'ora_inizio': ora_inizio,
+                        'ora_fine': ora_fine
+                    })
+            except:
+                continue
+    
+    return lezioni
+
+
+def confronta_lezioni(lezioni_contratto, lezioni_db):
+    """Confronta lezioni del contratto con quelle nel database"""
+    conformi = []
+    da_aggiungere = []
+    extra_db = []
+    differenze_orari = []
+    
+    # Converti lezioni_db in lista di dict per facilità
+    lezioni_db_list = []
+    for lez in lezioni_db:
+        lezioni_db_list.append({
+            'id': lez['id'],
+            'data': lez['data'],
+            'ora_inizio': lez['ora_inizio'],
+            'ora_fine': lez['ora_fine']
+        })
+    
+    # Controlla ogni lezione del contratto
+    for lez_contratto in lezioni_contratto:
+        trovata = False
+        differenza = False
+        
+        for lez_db in lezioni_db_list:
+            # Stesso giorno?
+            if lez_contratto['data'] == lez_db['data']:
+                # Stesso orario?
+                if (lez_contratto['ora_inizio'] == lez_db['ora_inizio'] and 
+                    lez_contratto['ora_fine'] == lez_db['ora_fine']):
+                    conformi.append({
+                        'contratto': lez_contratto,
+                        'db': lez_db
+                    })
+                    lez_db['matched'] = True
+                    trovata = True
+                    break
+                else:
+                    # Stessa data ma orari diversi
+                    differenze_orari.append({
+                        'contratto': lez_contratto,
+                        'db': lez_db
+                    })
+                    lez_db['matched'] = True
+                    differenza = True
+                    break
+        
+        # Se non trovata e non differenza, va aggiunta
+        if not trovata and not differenza:
+            da_aggiungere.append(lez_contratto)
+    
+    # Lezioni nel DB ma non nel contratto
+    for lez_db in lezioni_db_list:
+        if not lez_db.get('matched'):
+            extra_db.append(lez_db)
+    
+    return {
+        'conformi': conformi,
+        'da_aggiungere': da_aggiungere,
+        'extra_db': extra_db,
+        'differenze_orari': differenze_orari,
+        'totale_contratto': len(lezioni_contratto),
+        'totale_db': len(lezioni_db_list)
+    }
