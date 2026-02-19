@@ -85,15 +85,28 @@ def analyze_contract_with_claude(text, pdf_path=None):
             if not images:
                 return None, None, "Impossibile convertire il PDF in immagini"
             
-            # Prima: estrai TUTTO il testo per la chat
-            print("📝 Estrazione testo completo...")
-            content_text = [{
+            # Unica chiamata ottimizzata
+            print("🤖 Analisi e estrazione con Claude...")
+            content = [{
                 "type": "text",
-                "text": "Estrai TUTTO il testo da questo documento PDF, parola per parola. Includi tutto: intestazioni, corpo, tabelle, calendari, allegati, note a piè di pagina. Non omettere nulla."
+                "text": """Analizza questo contratto PDF ed estrai:
+
+1. INFORMAZIONI CHIAVE (per l'analisi):
+   - Numero contratto
+   - Cliente/studente
+   - Date (inizio, fine)
+   - Compenso
+   - Materie
+   - Ore previste
+
+2. TESTO COMPLETO DEL DOCUMENTO:
+   Trascrivi tutto il contenuto del PDF inclusi calendari, tabelle e allegati.
+
+Formatta in modo chiaro in italiano."""
             }]
             
             for img_base64 in images:
-                content_text.append({
+                content.append({
                     "type": "image",
                     "source": {
                         "type": "base64",
@@ -102,35 +115,18 @@ def analyze_contract_with_claude(text, pdf_path=None):
                     }
                 })
             
-            text_msg = client.messages.create(
+            message = client.messages.create(
                 model="claude-sonnet-4-5-20250929",
-                max_tokens=8000,
+                max_tokens=6000,
                 messages=[{
                     "role": "user",
-                    "content": content_text
+                    "content": content
                 }]
             )
             
-            full_text = text_msg.content[0].text
+            response = message.content[0].text
             
-            # Poi: crea analisi strutturata
-            print("🔍 Creazione analisi strutturata...")
-            analysis = f"""# ANALISI CONTRATTO
-
-Basato sul documento analizzato:
-
-- **Numero contratto**: Vedi documento completo
-- **Cliente**: Vedi documento completo  
-- **Date**: Vedi documento completo
-- **Compenso**: Vedi documento completo
-- **Materie**: Vedi documento completo
-- **Ore previste**: Vedi documento completo
-
-📄 **Testo completo estratto e salvato per la chat**
-
-Usa la chat qui sotto per fare domande specifiche sul contratto!"""
-            
-            return analysis, full_text, None
+            return response, response, None
         else:
             # Usa il testo estratto
             message = client.messages.create(
