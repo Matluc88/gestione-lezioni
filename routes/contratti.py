@@ -65,11 +65,15 @@ def pdf_to_base64_images(file_path, max_pages=10):
         return None
 
 def analyze_contract_with_claude(text, pdf_path=None):
-    """Analizza il contratto con Claude AI (testo o immagini)"""
+    """Analizza il contratto con Claude AI (testo o immagini)
+    
+    Returns:
+        tuple: (analysis, extracted_text, error)
+    """
     try:
         api_key = os.environ.get('ANTHROPIC_API_KEY')
         if not api_key:
-            return None, "Chiave API Anthropic non configurata"
+            return None, None, "Chiave API Anthropic non configurata"
         
         client = Anthropic(api_key=api_key)
         
@@ -79,12 +83,40 @@ def analyze_contract_with_claude(text, pdf_path=None):
             images = pdf_to_base64_images(pdf_path)
             
             if not images:
-                return None, "Impossibile convertire il PDF in immagini"
+                return None, None, "Impossibile convertire il PDF in immagini"
             
-            # Costruisci il contenuto con immagini
-            content = [{
+            # Prima richiesta: estrai tutto il testo dal PDF
+            content_extract = [{
                 "type": "text",
-                "text": """Analizza questo contratto PDF scansionato e estrai le seguenti informazioni chiave in formato strutturato:
+                "text": """Estrai TUTTO il testo presente in questo documento PDF, parola per parola, preservando la formattazione quando possibile. Non omettere nulla, includi tutto il testo visibile."""
+            }]
+            
+            for img_base64 in images:
+                content_extract.append({
+                    "type": "image",
+                    "source": {
+                        "type": "base64",
+                        "media_type": "image/png",
+                        "data": img_base64
+                    }
+                })
+            
+            # Estrai il testo completo
+            extract_msg = client.messages.create(
+                model="claude-sonnet-4-5-20250929",
+                max_tokens=4096,
+                messages=[{
+                    "role": "user",
+                    "content": content_extract
+                }]
+            )
+            
+            extracted_text = extract_msg.content[0].text
+            
+            # Seconda richiesta: analizza il contratto
+            content_analyze = [{
+                "type": "text",
+                "text": """Analizza questo contratto PDF e estrai le seguenti informazioni chiave in formato strutturato:
 - Numero contratto (se presente)
 - Nome cliente/studente
 - Date (inizio, fine, durata)
@@ -96,9 +128,8 @@ def analyze_contract_with_claude(text, pdf_path=None):
 Rispondi in italiano in modo chiaro e strutturato."""
             }]
             
-            # Aggiungi le immagini
             for img_base64 in images:
-                content.append({
+                content_analyze.append({
                     "type": "image",
                     "source": {
                         "type": "base64",
@@ -107,14 +138,16 @@ Rispondi in italiano in modo chiaro e strutturato."""
                     }
                 })
             
-            message = client.messages.create(
+            analyze_msg = client.messages.create(
                 model="claude-sonnet-4-5-20250929",
                 max_tokens=2048,
                 messages=[{
                     "role": "user",
-                    "content": content
+                    "content": content_analyze
                 }]
             )
+            
+            return analyze_msg.content[0].text, extracted_text, None
         else:
             # Usa il testo estratto
             message = client.messages.create(
@@ -138,10 +171,10 @@ Ecco il testo del contratto:
 Rispondi in italiano in modo chiaro e strutturato."""
                 }]
             )
-        
-        return message.content[0].text, None
+            
+            return message.content[0].text, text, None
     except Exception as e:
-        return None, f"Errore nell'analisi con Claude: {str(e)}"
+        return None, None, f"Errore nell'analisi con Claude: {str(e)}"
 
 def chat_with_contract(contract_text, user_question, conversation_history=None):
     """Chat interattiva con il contratto usando Claude"""
@@ -248,11 +281,15 @@ def upload_contratto():
         
         # Analizza con Claude (usa visione se testo vuoto o scansione)
         flash("🤖 Analisi del contratto con Claude AI...", "info")
-        analysis, error = analyze_contract_with_claude(text, pdf_path=file_path)
+        analysis, extracted_text, error = analyze_contract_with_claude(text, pdf_path=file_path)
         
         if error:
             flash(f"⚠️ {error}", "warning")
             analysis = "Analisi non disponibile"
+            extracted_text = text  # Fallback al testo originale
+        
+        # Usa il testo estratto da Claude se disponibile, altrimenti usa quello di PyPDF2
+        final_text = extracted_text if extracted_text else text
         
         # Dati dal form
         numero_contratto = sanitize_input(request.form.get('numero_contratto', ''))
@@ -261,7 +298,7 @@ def upload_contratto():
         if id_corso == '':
             id_corso = None
         
-        # Salva nel database
+        # Salva nel database con il testo estratto da Claude
         with db_connection() as conn:
             cursor = conn.cursor()
             placeholder = get_placeholder()
@@ -270,7 +307,7 @@ def upload_contratto():
                 INSERT INTO contratti (numero_contratto, nome_file, file_path, data_upload, cliente, contenuto_estratto, id_corso)
                 VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})
             """, (numero_contratto, file.filename, file_path, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), 
-                  cliente, text, id_corso))
+                  cliente, final_text, id_corso))
             conn.commit()
             
             # Ottieni l'ID del contratto appena inserito
@@ -309,12 +346,22 @@ def dettaglio_contratto(contratto_id):
             return redirect(url_for('contratti.lista_contratti'))
         
         # Ottieni analisi iniziale con Claude (usa visione se il contenuto è vuoto)
-        analysis, error = analyze_contract_with_claude(
+        analysis, extracted_text, error = analyze_contract_with_claude(
             contratto['contenuto_estratto'], 
             pdf_path=contratto['file_path']
         )
         if error:
             analysis = "Analisi non disponibile. Usa la chat per fare domande."
+        
+        # Se Claude ha estratto testo e il DB è vuoto, aggiorna il database
+        if extracted_text and (not contratto['contenuto_estratto'] or len(contratto['contenuto_estratto']) < 50):
+            cursor.execute(f"""
+                UPDATE contratti 
+                SET contenuto_estratto = {placeholder}
+                WHERE id = {placeholder}
+            """, (extracted_text, contratto_id))
+            conn.commit()
+            print(f"✅ Testo estratto salvato nel database per contratto {contratto_id}")
         
         # Ottieni tutti i corsi per collegamento
         cursor.execute("SELECT * FROM corsi ORDER BY nome")
