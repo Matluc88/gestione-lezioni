@@ -1,0 +1,131 @@
+<style>
+    .navbar-zara {
+        background: #1a1a1a;
+        border-bottom: 1px solid #333333;
+        padding: 0;
+        min-height: 60px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+    }
+    
+    .navbar-zara .navbar-brand {
+        color: #ffffff;
+        font-weight: 300;
+        font-size: 16px;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        padding: 20px 24px;
+        transition: color 0.2s;
+    }
+    
+    .navbar-zara .navbar-brand:hover {
+        color: #a67c52;
+    }
+    
+    .navbar-zara .nav-link {
+        color: #ffffff;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        font-size: 11px;
+        font-weight: 400;
+        padding: 20px 20px 18px 20px;
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s;
+        position: relative;
+    }
+    
+    .navbar-zara .nav-link:hover {
+        color: #ffffff;
+        border-bottom-color: #a67c52;
+    }
+    
+    .navbar-zara .nav-link.active {
+        border-bottom-color: #ffffff;
+        color: #ffffff;
+    }
+    
+    .navbar-zara .badge {
+        font-size: 9px;
+        padding: 3px 6px;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+        margin-left: 6px;
+        border-radius: 2px;
+    }
+    
+    .navbar-zara .navbar-toggler {
+        border: none;
+        padding: 8px;
+        color: #ffffff;
+    }
+    
+    .navbar-zara .navbar-toggler:focus {
+        box-shadow: none;
+    }
+    
+    .navbar-zara .navbar-toggler-icon {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 1%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+    }
+    
+    @media (max-width: 991px) {
+        .navbar-zara .navbar-collapse {
+            background: #1a1a1a;
+            padding: 15px 0;
+            margin-top: 1px;
+            border-top: 1px solid #333333;
+        }
+        
+        .navbar-zara .nav-link {
+            border-bottom: none;
+            border-left: 2px solid transparent;
+            padding: 12px 24px;
+        }
+        
+        .navbar-zara .nav-link:hover,
+        .navbar-zara .nav-link.active {
+            border-left-color: #a67c52;
+            border-bottom-color: transparent;
+            background: rgba(166, 124, 82, 0.1);
+        }
+    }
+</style>
+
+<nav class="navbar navbar-zara navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="{{ url_for('lezioni.dashboard') }}">📚 Gestione Lezioni</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'lezioni.dashboard' %}active{% endif %}" href="{{ url_for('lezioni.dashboard') }}">
+                        🏠 Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint and 'corsi' in request.endpoint %}active{% endif %}" href="{{ url_for('corsi.lista_corsi') }}">
+                        📚 Corsi
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint and 'fatture' in request.endpoint %}active{% endif %}" href="{{ url_for('fatture.index') }}">
+                        💰 Fatture
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'stato_crediti.stato_crediti' %}active{% endif %}" href="{{ url_for('stato_crediti.stato_crediti') }}">
+                        📊 Stato Crediti
+                        {% if corsi_pronti is defined and corsi_pronti > 0 %}
+                        <span class="badge bg-danger">{{ corsi_pronti }}</span>
+                        {% endif %}
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('auth.logout') }}">
+                        Logout
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>

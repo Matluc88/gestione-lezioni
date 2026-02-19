@@ -7,64 +7,94 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <style>
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #d4c5b9 0%, #e8dfd6 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
         }
         .login-container {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(10px);
-            padding: 40px;
+            background: #ffffff;
+            border: 1px solid #e5e5e5;
+            border-radius: 2px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+            padding: 50px 40px;
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
         }
         .login-header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
+            border-bottom: 1px solid #e5e5e5;
+            padding-bottom: 25px;
         }
         .login-header h2 {
-            color: #333;
-            font-weight: 600;
-            margin-bottom: 10px;
+            color: #1a1a1a;
+            font-weight: 300;
+            font-size: 24px;
+            margin-bottom: 8px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .login-header p {
+            color: #6b6b6b;
+            font-size: 13px;
+            letter-spacing: 0.5px;
+            margin: 0;
         }
         .form-control {
-            border-radius: 15px;
-            border: 2px solid #e0e0e0;
-            padding: 15px 20px;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            margin-bottom: 20px;
+            border-radius: 2px;
+            border: 1px solid #d1d1d1;
+            padding: 16px 18px;
+            font-size: 15px;
+            font-weight: 300;
+            transition: all 0.2s ease;
+            margin-bottom: 18px;
+            background: #fafaf9;
         }
         .form-control:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            border-color: #1a1a1a;
+            box-shadow: none;
+            background: #ffffff;
+            outline: none;
+        }
+        .form-control::placeholder {
+            color: #9b9b9b;
+            font-weight: 300;
         }
         .btn-login {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #1a1a1a;
             border: none;
-            border-radius: 15px;
-            padding: 15px;
-            font-size: 16px;
-            font-weight: 600;
+            border-radius: 2px;
+            padding: 16px;
+            font-size: 13px;
+            font-weight: 500;
             color: white;
             width: 100%;
             transition: all 0.3s ease;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
+            margin-top: 10px;
         }
         .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+            background: #2d2d2d;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(26, 26, 26, 0.2);
+        }
+        .btn-login:active {
+            transform: translateY(0);
         }
         .alert {
-            border-radius: 15px;
-            border: none;
+            border-radius: 2px;
+            border: 1px solid;
             margin-bottom: 20px;
+            font-size: 14px;
+        }
+        .alert-danger {
+            background: #fff5f5;
+            border-color: #8b4513;
+            color: #8b4513;
         }
         
         @media (max-width: 768px) {
