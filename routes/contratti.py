@@ -1,9 +1,13 @@
 import os
+import base64
+from io import BytesIO
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required
 from datetime import datetime
 from werkzeug.utils import secure_filename
 import PyPDF2
+from pdf2image import convert_from_path
+from PIL import Image
 from anthropic import Anthropic
 from db_utils import db_connection, get_placeholder
 from utils.security import sanitize_input
@@ -29,13 +33,39 @@ def extract_text_from_pdf(file_path):
             pdf_reader = PyPDF2.PdfReader(file)
             for page in pdf_reader.pages:
                 text += page.extract_text() + "\n"
-        return text
+        return text.strip()
     except Exception as e:
         print(f"Errore nell'estrazione del testo PDF: {e}")
+        return ""
+
+def pdf_to_base64_images(file_path, max_pages=10):
+    """Converte PDF in immagini base64 per Claude Vision"""
+    try:
+        # Converti PDF in immagini (max 10 pagine per non superare limiti)
+        images = convert_from_path(file_path, first_page=1, last_page=max_pages)
+        
+        base64_images = []
+        for img in images:
+            # Ridimensiona se troppo grande
+            max_size = 1568
+            if img.width > max_size or img.height > max_size:
+                ratio = min(max_size / img.width, max_size / img.height)
+                new_size = (int(img.width * ratio), int(img.height * ratio))
+                img = img.resize(new_size, Image.Resampling.LANCZOS)
+            
+            # Converti in base64
+            buffered = BytesIO()
+            img.save(buffered, format="PNG")
+            img_str = base64.b64encode(buffered.getvalue()).decode()
+            base64_images.append(img_str)
+        
+        return base64_images
+    except Exception as e:
+        print(f"Errore nella conversione PDF in immagini: {e}")
         return None
 
-def analyze_contract_with_claude(text):
-    """Analizza il contratto con Claude AI"""
+def analyze_contract_with_claude(text, pdf_path=None):
+    """Analizza il contratto con Claude AI (testo o immagini)"""
     try:
         api_key = os.environ.get('ANTHROPIC_API_KEY')
         if not api_key:
@@ -43,11 +73,54 @@ def analyze_contract_with_claude(text):
         
         client = Anthropic(api_key=api_key)
         
-        message = client.messages.create(
-            model="claude-sonnet-4-5-20250929",
-            max_tokens=1024,
-            messages=[
-                {
+        # Se il testo è vuoto o quasi, usa la visione di Claude
+        if (not text or len(text) < 50) and pdf_path:
+            print("📸 PDF scansionato rilevato, uso visione Claude...")
+            images = pdf_to_base64_images(pdf_path)
+            
+            if not images:
+                return None, "Impossibile convertire il PDF in immagini"
+            
+            # Costruisci il contenuto con immagini
+            content = [{
+                "type": "text",
+                "text": """Analizza questo contratto PDF scansionato e estrai le seguenti informazioni chiave in formato strutturato:
+- Numero contratto (se presente)
+- Nome cliente/studente
+- Date (inizio, fine, durata)
+- Compenso (orario o totale)
+- Materie/argomenti
+- Numero ore previste
+- Altre informazioni rilevanti
+
+Rispondi in italiano in modo chiaro e strutturato."""
+            }]
+            
+            # Aggiungi le immagini
+            for img_base64 in images:
+                content.append({
+                    "type": "image",
+                    "source": {
+                        "type": "base64",
+                        "media_type": "image/png",
+                        "data": img_base64
+                    }
+                })
+            
+            message = client.messages.create(
+                model="claude-sonnet-4-5-20250929",
+                max_tokens=2048,
+                messages=[{
+                    "role": "user",
+                    "content": content
+                }]
+            )
+        else:
+            # Usa il testo estratto
+            message = client.messages.create(
+                model="claude-sonnet-4-5-20250929",
+                max_tokens=1024,
+                messages=[{
                     "role": "user",
                     "content": f"""Analizza questo contratto e estrai le seguenti informazioni chiave in formato strutturato:
 - Numero contratto (se presente)
@@ -63,9 +136,8 @@ Ecco il testo del contratto:
 {text}
 
 Rispondi in italiano in modo chiaro e strutturato."""
-                }
-            ]
-        )
+                }]
+            )
         
         return message.content[0].text, None
     except Exception as e:
@@ -174,14 +246,9 @@ def upload_contratto():
         flash("⏳ Estrazione testo dal PDF...", "info")
         text = extract_text_from_pdf(file_path)
         
-        if not text:
-            flash("❌ Impossibile estrarre il testo dal PDF", "danger")
-            os.remove(file_path)
-            return redirect(url_for('contratti.nuovo_contratto'))
-        
-        # Analizza con Claude
+        # Analizza con Claude (usa visione se testo vuoto o scansione)
         flash("🤖 Analisi del contratto con Claude AI...", "info")
-        analysis, error = analyze_contract_with_claude(text)
+        analysis, error = analyze_contract_with_claude(text, pdf_path=file_path)
         
         if error:
             flash(f"⚠️ {error}", "warning")
@@ -241,8 +308,11 @@ def dettaglio_contratto(contratto_id):
             flash("❌ Contratto non trovato", "danger")
             return redirect(url_for('contratti.lista_contratti'))
         
-        # Ottieni analisi iniziale con Claude
-        analysis, error = analyze_contract_with_claude(contratto['contenuto_estratto'])
+        # Ottieni analisi iniziale con Claude (usa visione se il contenuto è vuoto)
+        analysis, error = analyze_contract_with_claude(
+            contratto['contenuto_estratto'], 
+            pdf_path=contratto['file_path']
+        )
         if error:
             analysis = "Analisi non disponibile. Usa la chat per fare domande."
         
