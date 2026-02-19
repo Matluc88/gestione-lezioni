@@ -89,20 +89,44 @@ def analyze_contract_with_claude(text, pdf_path=None):
             print("🤖 Analisi e estrazione con Claude...")
             content = [{
                 "type": "text",
-                "text": """Analizza questo contratto PDF ed estrai:
+                "text": """Sei un assistente esperto nell'estrazione di dati da contratti di formazione.
 
-1. INFORMAZIONI CHIAVE (per l'analisi):
-   - Numero contratto
-   - Cliente/studente
-   - Date (inizio, fine)
-   - Compenso
-   - Materie
-   - Ore previste
+ANALIZZA QUESTO CONTRATTO ED ESTRAI:
 
-2. TESTO COMPLETO DEL DOCUMENTO:
-   Trascrivi tutto il contenuto del PDF inclusi calendari, tabelle e allegati.
+## 1. INFORMAZIONI PRINCIPALI
+- Numero contratto / Codice corso
+- Cliente/studente
+- Periodo: data inizio e data fine
+- Ore totali previste
+- Compenso (orario o totale)
+- Materia/argomento del corso
+- Luogo di svolgimento
 
-Formatta in modo chiaro in italiano."""
+## 2. CALENDARIO COMPLETO DELLE LEZIONI (FONDAMENTALE!)
+
+CERCA ATTENTAMENTE il "CALENDARIO" o "ALLEGATO A" nel documento.
+Per OGNI lezione del calendario, estrai:
+- Data della lezione (giorno/mese/anno)
+- Ora inizio e ora fine
+- Durata in ore
+- Eventuali note
+
+Trascrivi il calendario in formato tabella chiaro come:
+```
+DATA | INIZIO | FINE | ORE | NOTE
+13/02/2026 | 09:00 | 13:00 | 4 | 
+...
+```
+
+## 3. ALTRE INFORMAZIONI
+- Clausole importanti
+- Modalità di pagamento
+- Referenti/contatti
+
+**IMPORTANTE**: Non saltare nessuna pagina del calendario anche se è lungo.
+Trascrivi TUTTE le date presenti.
+
+Rispondi in italiano in modo strutturato e completo."""
             }]
             
             for img_base64 in images:
