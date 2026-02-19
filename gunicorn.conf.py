@@ -3,7 +3,7 @@ Configurazione Gunicorn per Render
 """
 
 # Timeout aumentato per gestire PDF scansionati con visione Claude
-timeout = 120  # 2 minuti invece di 30 secondi
+timeout = 180  # 3 minuti per PDF complessi
 
 # Numero di workers
 workers = 2
