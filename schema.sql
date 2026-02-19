@@ -63,3 +63,15 @@ CREATE TABLE users (
     username TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL
 );
+
+CREATE TABLE contratti (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    numero_contratto TEXT,
+    nome_file TEXT NOT NULL,
+    file_path TEXT NOT NULL,
+    data_upload TEXT NOT NULL,
+    cliente TEXT,
+    contenuto_estratto TEXT,
+    id_corso TEXT,
+    FOREIGN KEY (id_corso) REFERENCES corsi(id_corso)
+);

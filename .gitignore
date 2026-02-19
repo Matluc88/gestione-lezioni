@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+
+# Ambiente e configurazioni sensibili
+.env
+*.env
+.env.local
+
+# Database locale
+*.db
+*.sqlite
+*.sqlite3
+lezioni.db
+
+# Upload e file utente
+uploads/
+*.pdf
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# File temporanei
+*.log
+*.tmp
+*.bak
+
+# Cache Python
+routes/__pycache__/
+models/__pycache__/
+utils/__pycache__/
+
+# File di test
+test_*.py
+investigazione_*.py
+verifica_*.py

@@ -20,6 +20,7 @@ from routes.export import export_bp
 from routes.resoconto import resoconto_bp
 from routes.google_calendar import google_calendar_bp
 from routes.stato_crediti import stato_crediti_bp
+from routes.contratti import contratti_bp
 
 load_dotenv()
 
@@ -87,6 +88,7 @@ app.register_blueprint(export_bp)
 app.register_blueprint(resoconto_bp)
 app.register_blueprint(google_calendar_bp)
 app.register_blueprint(stato_crediti_bp)
+app.register_blueprint(contratti_bp)
 
 # ---------------------------------------------------
 # AVVIO SERVER

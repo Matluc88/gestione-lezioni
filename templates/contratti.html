@@ -1,0 +1,90 @@
+{% extends "base_ios.html" %}
+
+{% block title %}Contratti{% endblock %}
+
+{% set large_title = "Contratti" %}
+{% set fab_url = url_for('contratti.nuovo_contratto') %}
+{% set fab_title = "Carica Contratto" %}
+{% set fab_icon = "📄" %}
+
+{% block content %}
+<div class="ios-page">
+    {% if contratti|length == 0 %}
+    <div class="ios-empty-state">
+        <div class="ios-empty-icon">📄</div>
+        <h3 class="ios-empty-title">Nessun contratto</h3>
+        <p class="ios-empty-text">Carica il tuo primo contratto PDF per iniziare l'analisi con AI</p>
+        <a href="{{ url_for('contratti.nuovo_contratto') }}" class="ios-button ios-button-primary">
+            📄 Carica Contratto
+        </a>
+    </div>
+    {% else %}
+    <div class="ios-list-group">
+        {% for contratto in contratti %}
+        <a href="{{ url_for('contratti.dettaglio_contratto', contratto_id=contratto.id) }}" class="ios-list-item">
+            <span class="ios-list-icon">📄</span>
+            <div class="ios-list-content">
+                <div class="ios-list-title">
+                    {{ contratto.nome_file }}
+                    {% if contratto.numero_contratto %}
+                    <span class="ios-badge">{{ contratto.numero_contratto }}</span>
+                    {% endif %}
+                </div>
+                <div class="ios-list-subtitle">
+                    {% if contratto.cliente %}
+                    👤 {{ contratto.cliente }}
+                    {% endif %}
+                    {% if contratto.nome_corso %}
+                    • 📚 {{ contratto.nome_corso }}
+                    {% endif %}
+                </div>
+                <div class="ios-list-meta">
+                    📅 {{ contratto.data_upload[:10] }}
+                </div>
+            </div>
+            <span class="ios-list-chevron"></span>
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.ios-empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    margin-top: 40px;
+}
+
+.ios-empty-icon {
+    font-size: 80px;
+    margin-bottom: 20px;
+    opacity: 0.3;
+}
+
+.ios-empty-title {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: var(--ios-text-primary);
+}
+
+.ios-empty-text {
+    font-size: 16px;
+    color: var(--ios-text-secondary);
+    margin-bottom: 30px;
+    line-height: 1.5;
+}
+
+.ios-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    background-color: var(--ios-blue);
+    color: white;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: 8px;
+}
+</style>
+{% endblock %}

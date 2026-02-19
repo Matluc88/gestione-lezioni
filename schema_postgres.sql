@@ -107,6 +107,18 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE TABLE IF NOT EXISTS contratti (
+    id SERIAL PRIMARY KEY,
+    numero_contratto TEXT,
+    nome_file TEXT NOT NULL,
+    file_path TEXT NOT NULL,
+    data_upload TEXT NOT NULL,
+    cliente TEXT,
+    contenuto_estratto TEXT,
+    id_corso TEXT,
+    FOREIGN KEY (id_corso) REFERENCES corsi(id_corso)
+);
+
 INSERT INTO users (username, password) 
 VALUES ('admin', 'pbkdf2:sha256:600000$Ub4Nt9Oa$e0c7e2c1c9e5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5')
 ON CONFLICT (username) DO NOTHING;
