@@ -6,11 +6,149 @@
     <title>Gestione Corsi - Gestione Lezioni</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f4f6f9; }
-        .navbar { background: linear-gradient(45deg, #007bff, #6610f2); }
-        .card { border-radius: 15px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); }
-        .corso-fatturato { background-color: #d1e7dd; }
-        .corso-non-fatturato { background-color: #fff; }
+        /* Zara Style - Minimalist & Professional */
+        body { 
+            background-color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: #1a1a1a;
+            padding-top: 76px;
+        }
+        
+        .card { 
+            border: 1px solid #e0e0e0;
+            border-radius: 0;
+            box-shadow: none;
+            background-color: #ffffff;
+        }
+        
+        .card-body {
+            padding: 2rem;
+        }
+        
+        h4 {
+            color: #1a1a1a;
+            font-weight: 300;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-size: 1.1rem;
+        }
+        
+        /* Buttons Zara Style */
+        .btn {
+            border-radius: 0;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+            border: none;
+        }
+        
+        .btn-success {
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+        
+        .btn-success:hover {
+            background-color: #a67c52;
+            color: #1a1a1a;
+        }
+        
+        .btn-info {
+            background-color: #d4c5b9;
+            color: #1a1a1a;
+        }
+        
+        .btn-info:hover {
+            background-color: #a67c52;
+            color: #ffffff;
+        }
+        
+        .btn-secondary {
+            background-color: #ffffff;
+            color: #1a1a1a;
+            border: 1px solid #1a1a1a;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+        
+        .btn-primary {
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+        
+        .btn-primary:hover {
+            background-color: #a67c52;
+            color: #1a1a1a;
+        }
+        
+        .btn-warning {
+            background-color: #a67c52;
+            color: #1a1a1a;
+        }
+        
+        .btn-warning:hover {
+            background-color: #d4c5b9;
+            color: #1a1a1a;
+        }
+        
+        .btn-danger {
+            background-color: #dc3545;
+            color: #ffffff;
+        }
+        
+        .btn-danger:hover {
+            background-color: #bb2d3b;
+        }
+        
+        /* Table Zara Style */
+        .table {
+            border: 1px solid #e0e0e0;
+        }
+        
+        .table-primary {
+            background-color: #d4c5b9;
+            color: #1a1a1a;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+        
+        .table-hover tbody tr:hover {
+            background-color: #f8f8f8;
+        }
+        
+        .corso-fatturato { 
+            background-color: #f0f8f0;
+            border-left: 3px solid #28a745;
+        }
+        
+        .corso-non-fatturato { 
+            background-color: #fff;
+            border-left: 3px solid #ffc107;
+        }
+        
+        /* Badges Zara Style */
+        .badge {
+            border-radius: 0;
+            padding: 6px 12px;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+        
+        /* Alerts Zara Style */
+        .alert {
+            border-radius: 0;
+            border: 1px solid #e0e0e0;
+            border-left-width: 3px;
+        }
+        
+        .alert-info {
+            background-color: #f8f8f8;
+            border-left-color: #a67c52;
+            color: #1a1a1a;
+        }
+        
         .checkbox-column { width: 40px; text-align: center; }
         .select-all-container { margin-bottom: 10px; }
         .action-buttons { margin-bottom: 15px; }
