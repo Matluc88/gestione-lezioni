@@ -184,6 +184,37 @@ def resoconto_annuale():
         dati_cancellate_per_anno = [totali_per_anno[a]['cancellate'] for a in anni_grafico]
         dati_totali_per_anno = [totali_per_anno[a]['totale'] for a in anni_grafico]
         
+        # ========== NUOVA SEZIONE: FATTURE EMESSE NELL'ANNO ==========
+        cursor.execute("""
+            SELECT f.id_fattura, f.numero_fattura, f.id_corso, f.data_fattura, 
+                   f.importo, f.tipo_fatturazione, f.note,
+                   COALESCE(c.cliente, ca.cliente, 'Sconosciuto') as cliente,
+                   COALESCE(c.nome, ca.nome, f.id_corso) as nome_corso
+            FROM fatture f
+            LEFT JOIN corsi c ON f.id_corso = c.id_corso
+            LEFT JOIN corsi_archiviati ca ON f.id_corso = ca.id_corso
+            WHERE EXTRACT(YEAR FROM TO_DATE(f.data_fattura, 'YYYY-MM-DD')) = %s
+            ORDER BY f.data_fattura DESC, f.numero_fattura DESC
+        """, (anno_selezionato,))
+        
+        fatture_emesse = cursor.fetchall()
+        
+        # Calcola il totale delle fatture emesse
+        totale_fatture_emesse = sum(f['importo'] for f in fatture_emesse)
+        
+        # Raggruppa fatture per tipo
+        fatture_totali = [f for f in fatture_emesse if f['tipo_fatturazione'] == 'totale']
+        fatture_parziali = [f for f in fatture_emesse if f['tipo_fatturazione'] == 'parziale']
+        
+        totale_fatture_totali = sum(f['importo'] for f in fatture_totali)
+        totale_fatture_parziali = sum(f['importo'] for f in fatture_parziali)
+        
+        # Prepara dati mensili per fatture emesse
+        dati_mensili_fatture_emesse = [0] * 12
+        for fattura in fatture_emesse:
+            mese_fattura = int(fattura['data_fattura'].split('-')[1]) - 1
+            dati_mensili_fatture_emesse[mese_fattura] += fattura['importo']
+        
         return render_template(
             'resoconto_annuale.html',
             anno=anno_selezionato,
@@ -212,5 +243,13 @@ def resoconto_annuale():
             dati_da_fatturare_per_anno=json.dumps(dati_da_fatturare_per_anno),
             dati_pianificate_per_anno=json.dumps(dati_pianificate_per_anno),
             dati_cancellate_per_anno=json.dumps(dati_cancellate_per_anno),
-            dati_totali_per_anno=json.dumps(dati_totali_per_anno)
+            dati_totali_per_anno=json.dumps(dati_totali_per_anno),
+            # Nuovi dati per fatture emesse
+            fatture_emesse=fatture_emesse,
+            totale_fatture_emesse=totale_fatture_emesse,
+            fatture_totali=fatture_totali,
+            fatture_parziali=fatture_parziali,
+            totale_fatture_totali=totale_fatture_totali,
+            totale_fatture_parziali=totale_fatture_parziali,
+            dati_mensili_fatture_emesse=json.dumps(dati_mensili_fatture_emesse)
         )
