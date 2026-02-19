@@ -68,7 +68,20 @@
                 <div class="lezione-item conforme">
                     <div class="lezione-date">{{ item.contratto.data }}</div>
                     <div class="lezione-orario">{{ item.contratto.ora_inizio }} - {{ item.contratto.ora_fine }}</div>
-                    <div class="lezione-status">✓ OK</div>
+                    <div class="lezione-status-container">
+                        <span class="lezione-status">✓ OK</span>
+                        {% if item.suddiviso %}
+                        <span class="badge-suddiviso" title="Lezione suddivisa nel contratto ma unica nel database">🔀 Suddiviso</span>
+                        {% endif %}
+                    </div>
+                    {% if item.suddiviso and item.contratto_dettaglio %}
+                    <div class="lezione-suddivisione">
+                        <small>Nel contratto:</small>
+                        {% for lez_sub in item.contratto_dettaglio %}
+                        <div class="sub-lezione">→ {{ lez_sub.ora_inizio }} - {{ lez_sub.ora_fine }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
                 </div>
                 {% endfor %}
             </div>
@@ -308,11 +321,53 @@
     color: var(--ios-text-secondary);
 }
 
+.lezione-status-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 5px;
+    flex-wrap: wrap;
+}
+
 .lezione-status {
     font-size: 13px;
     font-weight: 600;
-    margin-top: 5px;
     color: var(--ios-blue);
+}
+
+.badge-suddiviso {
+    display: inline-block;
+    padding: 3px 8px;
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: help;
+}
+
+.lezione-suddivisione {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: rgba(255, 255, 255, 0.5);
+    border-radius: var(--radius-sm);
+    border-left: 2px solid #ffd60a;
+}
+
+.lezione-suddivisione small {
+    display: block;
+    font-size: 12px;
+    color: var(--ios-text-secondary);
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.sub-lezione {
+    font-size: 13px;
+    color: var(--ios-text-primary);
+    padding: 3px 0;
+    margin-left: 5px;
 }
 
 .lezione-header {

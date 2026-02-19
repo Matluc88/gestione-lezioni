@@ -652,7 +652,8 @@ def confronta_lezioni(lezioni_contratto, lezioni_db):
                     lez_contratto['ora_fine'] == lez_db['ora_fine']):
                     conformi.append({
                         'contratto': lez_contratto,
-                        'db': lez_db
+                        'db': lez_db,
+                        'suddiviso': False
                     })
                     lez_db['matched'] = True
                     trovata = True
@@ -671,6 +672,11 @@ def confronta_lezioni(lezioni_contratto, lezioni_db):
         if not trovata and not differenza:
             da_aggiungere.append(lez_contratto)
     
+    # NUOVA LOGICA: Riconosci lezioni consecutive che combinate corrispondono a una lezione unica
+    conformi, differenze_orari = riconosci_lezioni_suddivise(
+        lezioni_contratto, lezioni_db_list, conformi, differenze_orari
+    )
+    
     # Lezioni nel DB ma non nel contratto
     for lez_db in lezioni_db_list:
         if not lez_db.get('matched'):
@@ -684,3 +690,96 @@ def confronta_lezioni(lezioni_contratto, lezioni_db):
         'totale_contratto': len(lezioni_contratto),
         'totale_db': len(lezioni_db_list)
     }
+
+
+def riconosci_lezioni_suddivise(lezioni_contratto, lezioni_db_list, conformi, differenze_orari):
+    """Riconosce quando più lezioni consecutive del contratto corrispondono a 1 lezione nel DB"""
+    
+    # Raggruppa lezioni contratto per data
+    lezioni_per_data = {}
+    for lez in lezioni_contratto:
+        data = lez['data']
+        if data not in lezioni_per_data:
+            lezioni_per_data[data] = []
+        lezioni_per_data[data].append(lez)
+    
+    nuove_conformi = list(conformi)
+    nuove_differenze = []
+    
+    # Per ogni data, controlla se ci sono multiple lezioni che possono essere combinate
+    for data, lezioni_data in lezioni_per_data.items():
+        if len(lezioni_data) <= 1:
+            continue
+            
+        # Ordina per ora inizio
+        lezioni_data_ordinate = sorted(lezioni_data, key=lambda x: x['ora_inizio'])
+        
+        # Trova lezioni consecutive (dove fine di una = inizio della successiva)
+        gruppi_consecutivi = []
+        gruppo_corrente = [lezioni_data_ordinate[0]]
+        
+        for i in range(1, len(lezioni_data_ordinate)):
+            lez_prev = gruppo_corrente[-1]
+            lez_curr = lezioni_data_ordinate[i]
+            
+            # Consecutive?
+            if lez_prev['ora_fine'] == lez_curr['ora_inizio']:
+                gruppo_corrente.append(lez_curr)
+            else:
+                if len(gruppo_corrente) > 1:
+                    gruppi_consecutivi.append(gruppo_corrente)
+                gruppo_corrente = [lez_curr]
+        
+        # Aggiungi ultimo gruppo se consecutivo
+        if len(gruppo_corrente) > 1:
+            gruppi_consecutivi.append(gruppo_corrente)
+        
+        # Per ogni gruppo consecutivo, verifica se corrisponde a una lezione DB
+        for gruppo in gruppi_consecutivi:
+            ora_inizio_combinata = gruppo[0]['ora_inizio']
+            ora_fine_combinata = gruppo[-1]['ora_fine']
+            
+            # Cerca lezione DB con questi orari
+            for lez_db in lezioni_db_list:
+                if (lez_db['data'] == data and 
+                    lez_db['ora_inizio'] == ora_inizio_combinata and 
+                    lez_db['ora_fine'] == ora_fine_combinata):
+                    
+                    # MATCH! Rimuovi dalle differenze e aggiungi a conformi
+                    # Rimuovi le singole lezioni del gruppo dalle differenze
+                    differenze_da_rimuovere = []
+                    for diff in differenze_orari:
+                        for lez_gruppo in gruppo:
+                            if (diff['contratto']['data'] == lez_gruppo['data'] and
+                                diff['contratto']['ora_inizio'] == lez_gruppo['ora_inizio'] and
+                                diff['contratto']['ora_fine'] == lez_gruppo['ora_fine']):
+                                differenze_da_rimuovere.append(diff)
+                                break
+                    
+                    # Rimuovi duplicati
+                    for diff_rem in set(tuple(sorted(d.items())) for d in differenze_da_rimuovere):
+                        diff_dict = dict(diff_rem)
+                        if diff_dict in differenze_orari:
+                            differenze_orari.remove(diff_dict)
+                    
+                    # Aggiungi a conformi con flag suddiviso
+                    nuove_conformi.append({
+                        'contratto': {
+                            'data': data,
+                            'ora_inizio': ora_inizio_combinata,
+                            'ora_fine': ora_fine_combinata
+                        },
+                        'contratto_dettaglio': gruppo,  # Lezioni separate
+                        'db': lez_db,
+                        'suddiviso': True
+                    })
+                    
+                    lez_db['matched'] = True
+                    break
+    
+    # Aggiungi le differenze non rimosse
+    for diff in differenze_orari:
+        if diff not in nuove_differenze:
+            nuove_differenze.append(diff)
+    
+    return nuove_conformi, nuove_differenze
