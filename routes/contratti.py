@@ -44,7 +44,7 @@ def analyze_contract_with_claude(text):
         client = Anthropic(api_key=api_key)
         
         message = client.messages.create(
-            model="claude-3-5-sonnet-20240620",
+            model="claude-3-5-sonnet-latest",
             max_tokens=1024,
             messages=[
                 {
@@ -102,7 +102,7 @@ Rispondi in modo preciso basandoti esclusivamente sul contenuto del contratto. S
         })
         
         message = client.messages.create(
-            model="claude-3-5-sonnet-20240620",
+            model="claude-3-5-sonnet-latest",
             max_tokens=2000,
             messages=messages
         )
