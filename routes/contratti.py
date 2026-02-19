@@ -85,38 +85,10 @@ def analyze_contract_with_claude(text, pdf_path=None):
             if not images:
                 return None, None, "Impossibile convertire il PDF in immagini"
             
-            # Prima richiesta: estrai tutto il testo dal PDF
-            content_extract = [{
+            # Unica chiamata per analisi
+            content = [{
                 "type": "text",
-                "text": """Estrai TUTTO il testo presente in questo documento PDF, parola per parola, preservando la formattazione quando possibile. Non omettere nulla, includi tutto il testo visibile."""
-            }]
-            
-            for img_base64 in images:
-                content_extract.append({
-                    "type": "image",
-                    "source": {
-                        "type": "base64",
-                        "media_type": "image/png",
-                        "data": img_base64
-                    }
-                })
-            
-            # Estrai il testo completo
-            extract_msg = client.messages.create(
-                model="claude-sonnet-4-5-20250929",
-                max_tokens=4096,
-                messages=[{
-                    "role": "user",
-                    "content": content_extract
-                }]
-            )
-            
-            extracted_text = extract_msg.content[0].text
-            
-            # Seconda richiesta: analizza il contratto
-            content_analyze = [{
-                "type": "text",
-                "text": """Analizza questo contratto PDF e estrai le seguenti informazioni chiave in formato strutturato:
+                "text": """Analizza questo contratto PDF ed estrai le informazioni chiave in formato strutturato:
 - Numero contratto (se presente)
 - Nome cliente/studente
 - Date (inizio, fine, durata)
@@ -125,11 +97,11 @@ def analyze_contract_with_claude(text, pdf_path=None):
 - Numero ore previste
 - Altre informazioni rilevanti
 
-Rispondi in italiano in modo chiaro e strutturato."""
+Rispondi in italiano."""
             }]
             
             for img_base64 in images:
-                content_analyze.append({
+                content.append({
                     "type": "image",
                     "source": {
                         "type": "base64",
@@ -138,16 +110,19 @@ Rispondi in italiano in modo chiaro e strutturato."""
                     }
                 })
             
-            analyze_msg = client.messages.create(
+            message = client.messages.create(
                 model="claude-sonnet-4-5-20250929",
-                max_tokens=2048,
+                max_tokens=4096,
                 messages=[{
                     "role": "user",
-                    "content": content_analyze
+                    "content": content
                 }]
             )
             
-            return analyze_msg.content[0].text, extracted_text, None
+            # Claude risponde con l'analisi, usiamo quella come testo estratto
+            response_text = message.content[0].text
+            
+            return response_text, response_text, None
         else:
             # Usa il testo estratto
             message = client.messages.create(
