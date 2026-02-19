@@ -12,6 +12,13 @@
             <h3 class="ios-card-title">📄 {{ contratto.nome_file }}</h3>
         </div>
         <div class="ios-card-body">
+            <!-- Pulsante Download PDF -->
+            <a href="{{ url_for('contratti.download_contratto', contratto_id=contratto.id) }}" 
+               class="ios-button ios-button-primary ios-button-block download-pdf-btn"
+               style="margin-bottom: 20px;">
+                📥 Scarica PDF
+            </a>
+            
             <div class="info-grid">
                 {% if contratto.numero_contratto %}
                 <div class="info-item">

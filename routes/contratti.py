@@ -416,6 +416,32 @@ def chat_contratto(contratto_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@contratti_bp.route("/contratti/<int:contratto_id>/download")
+@login_required
+def download_contratto(contratto_id):
+    """Scarica il PDF del contratto"""
+    try:
+        with db_connection() as conn:
+            cursor = conn.cursor()
+            placeholder = get_placeholder()
+            
+            cursor.execute(f"SELECT file_path, nome_file FROM contratti WHERE id = {placeholder}", (contratto_id,))
+            contratto = cursor.fetchone()
+            
+            if not contratto:
+                flash("❌ Contratto non trovato", "danger")
+                return redirect(url_for('contratti.lista_contratti'))
+            
+            from flask import send_file
+            return send_file(contratto['file_path'], 
+                           as_attachment=True, 
+                           download_name=contratto['nome_file'])
+    
+    except Exception as e:
+        flash(f"❌ Errore durante il download: {str(e)}", "danger")
+        return redirect(url_for('contratti.dettaglio_contratto', contratto_id=contratto_id))
+
+
 @contratti_bp.route("/contratti/<int:contratto_id>/elimina", methods=["POST"])
 @login_required
 def elimina_contratto(contratto_id):
