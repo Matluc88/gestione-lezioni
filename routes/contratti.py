@@ -747,20 +747,20 @@ def riconosci_lezioni_suddivise(lezioni_contratto, lezioni_db_list, conformi, di
                     
                     # MATCH! Rimuovi dalle differenze e aggiungi a conformi
                     # Rimuovi le singole lezioni del gruppo dalle differenze
-                    differenze_da_rimuovere = []
+                    nuove_differenze_temp = []
                     for diff in differenze_orari:
+                        dovrebbe_rimuovere = False
                         for lez_gruppo in gruppo:
                             if (diff['contratto']['data'] == lez_gruppo['data'] and
                                 diff['contratto']['ora_inizio'] == lez_gruppo['ora_inizio'] and
                                 diff['contratto']['ora_fine'] == lez_gruppo['ora_fine']):
-                                differenze_da_rimuovere.append(diff)
+                                dovrebbe_rimuovere = True
                                 break
+                        
+                        if not dovrebbe_rimuovere:
+                            nuove_differenze_temp.append(diff)
                     
-                    # Rimuovi duplicati
-                    for diff_rem in set(tuple(sorted(d.items())) for d in differenze_da_rimuovere):
-                        diff_dict = dict(diff_rem)
-                        if diff_dict in differenze_orari:
-                            differenze_orari.remove(diff_dict)
+                    differenze_orari = nuove_differenze_temp
                     
                     # Aggiungi a conformi con flag suddiviso
                     nuove_conformi.append({
