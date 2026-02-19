@@ -12,21 +12,6 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root {
-            --primary-color: #1976d2;
-            --primary-dark: #1565c0;
-            --secondary-color: #03dac6;
-            --surface-color: #ffffff;
-            --background-color: #f5f5f5;
-            --on-surface: #000000;
-            --on-primary: #ffffff;
-            --shadow-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-            --shadow-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
-            --shadow-3: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
-            --border-radius: 8px;
-            --top-bar-height: 56px;
-        }
-
         * {
             box-sizing: border-box;
         }
@@ -34,47 +19,14 @@
         body {
             margin: 0;
             padding: 0;
-            font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--background-color);
-            color: var(--on-surface);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: #ffffff;
+            color: #1a1a1a;
             line-height: 1.5;
         }
 
-        .top-bar {
-            height: var(--top-bar-height);
-            background-color: var(--primary-color);
-            color: var(--on-primary);
-            box-shadow: var(--shadow-2);
-            z-index: 1000;
-        }
-
-        .app-title {
-            font-size: 1.25rem;
-            font-weight: 500;
-            color: var(--on-primary);
-        }
-
-        .hamburger-menu {
-            color: var(--on-primary);
-            border: none;
-            background: none;
-            font-size: 1.5rem;
-            padding: 8px;
-            border-radius: 50%;
-            transition: background-color 0.2s;
-            min-height: 48px;
-            min-width: 48px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .hamburger-menu:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-
         .main-content {
-            padding-top: var(--top-bar-height);
+            padding-top: 76px;
             min-height: 100vh;
         }
 
@@ -467,14 +419,7 @@
     </style>
 </head>
 <body>
-    <header class="top-bar fixed-top">
-        <div class="container-fluid d-flex justify-content-between align-items-center h-100">
-            <h1 class="app-title mb-0">📚 Gestione Lezioni</h1>
-            <button class="hamburger-menu btn btn-link p-0" id="hamburgerMenu">
-                <span class="hamburger-icon">☰</span>
-            </button>
-        </div>
-    </header>
+    {% include 'components/navbar_unified.html' %}
 
     <main class="main-content">
         <section class="page-header">
