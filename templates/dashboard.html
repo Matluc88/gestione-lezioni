@@ -494,28 +494,6 @@
             <button type="button" class="action-btn delete" id="elimina-button">🗑️ Elimina</button>
         </div>
 
-        <nav class="hamburger-nav" id="hamburgerNav">
-            <div class="nav-overlay" id="navOverlay"></div>
-            <div class="nav-drawer">
-                <div class="nav-header">
-                    <h3>Menu</h3>
-                    <button class="nav-close" id="navClose">✕</button>
-                </div>
-                <ul class="nav-menu">
-                    <li><a href="{{ url_for('calendario.calendario') }}" class="nav-item">📅 Calendario</a></li>
-                    <li><a href="{{ url_for('corsi.lista_corsi') }}" class="nav-item">📚 Corsi</a></li>
-                    <li><a href="{{ url_for('export.importa_csv') }}" class="nav-item">📂 Importa CSV</a></li>
-                    <li><a href="{{ url_for('export.esporta_csv') }}" class="nav-item">📥 Esporta CSV</a></li>
-                    <li><a href="{{ url_for('archivio.lezioni_archiviate') }}" class="nav-item">📂 Archiviate</a></li>
-                    <li><a href="{{ url_for('fatture.index') }}" class="nav-item">📄 Fatture</a></li>
-                    <li><a href="{{ url_for('stato_crediti.stato_crediti') }}" class="nav-item">📊 Stato Crediti</a></li>
-                    <li><a href="{{ url_for('lezioni.compenso') }}" class="nav-item">💰 Compenso</a></li>
-                    <li><a href="{{ url_for('resoconto.resoconto_annuale') }}" class="nav-item">📊 Resoconto</a></li>
-                    <li><a href="{{ url_for('google_calendar.sincronizza') }}" class="nav-item">🔄 Sincronizza con Google Calendar</a></li>
-                </ul>
-            </div>
-        </nav>
-
         <a href="{{ url_for('lezioni.aggiungi_lezione') }}" class="fab" title="Aggiungi Lezione">
             <span class="fab-icon">➕</span>
         </a>
@@ -526,38 +504,16 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const hamburgerMenu = document.getElementById('hamburgerMenu');
-            const hamburgerNav = document.getElementById('hamburgerNav');
-            const navOverlay = document.getElementById('navOverlay');
-            const navClose = document.getElementById('navClose');
-
-            function openNav() {
-                hamburgerNav.classList.add('active');
-                document.body.style.overflow = 'hidden';
-            }
-
-            function closeNav() {
-                hamburgerNav.classList.remove('active');
-                document.body.style.overflow = '';
-            }
-
-            hamburgerMenu.addEventListener('click', openNav);
-            navClose.addEventListener('click', closeNav);
-            navOverlay.addEventListener('click', closeNav);
-
+            // Filter toggle functionality
             const filterToggle = document.getElementById('filterToggle');
             const filterAccordion = document.getElementById('filterAccordion');
 
-            filterToggle.addEventListener('click', function() {
-                filterToggle.classList.toggle('active');
-                filterAccordion.classList.toggle('active');
-            });
-
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') {
-                    closeNav();
-                }
-            });
+            if (filterToggle && filterAccordion) {
+                filterToggle.addEventListener('click', function() {
+                    filterToggle.classList.toggle('active');
+                    filterAccordion.classList.toggle('active');
+                });
+            }
 
             var ctx = document.getElementById('lezioniPerMeseChart').getContext('2d');
             var mesi = {{ mesi|tojson }};
