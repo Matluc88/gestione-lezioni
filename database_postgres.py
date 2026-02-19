@@ -137,6 +137,31 @@ def ensure_database():
             
             print("✅ Colonna 'numero_fattura' aggiunta con successo alla tabella 'fatture'")
         
+        # Verifica e crea la tabella contratti se non esiste
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_schema = 'public' AND table_name = 'contratti'
+            )
+        """)
+        
+        if not cursor.fetchone()[0]:
+            print("La tabella 'contratti' non esiste. Creazione in corso...")
+            cursor.execute("""
+                CREATE TABLE contratti (
+                    id SERIAL PRIMARY KEY,
+                    numero_contratto TEXT,
+                    nome_file TEXT NOT NULL,
+                    file_path TEXT NOT NULL,
+                    data_upload TEXT NOT NULL,
+                    cliente TEXT,
+                    contenuto_estratto TEXT,
+                    id_corso TEXT,
+                    FOREIGN KEY (id_corso) REFERENCES corsi(id_corso)
+                )
+            """)
+            print("✅ Tabella 'contratti' creata con successo!")
+        
         conn.commit()
     
     print("✅ Database verificato e aggiornato con successo!")
