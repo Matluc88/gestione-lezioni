@@ -566,8 +566,8 @@ def parse_calendario_da_contratto(contenuto_estratto):
         return lezioni
     
     # Pattern per trovare date in vari formati
-    # Cerca pattern tipo: 13/02/2026 | 09:00 | 13:00 | 4
-    pattern_tabella = r'(\d{1,2}[/\-]\d{1,2}[/\-]\d{4})\s*[\|]\s*(\d{1,2}:\d{2})\s*[\|]\s*(\d{1,2}:\d{2})'
+    # Cerca pattern tipo: 12/06/2025 | 14:30 - 20:30 | 6,00
+    pattern_tabella = r'(\d{1,2}[/\-]\d{1,2}[/\-]\d{4})\s*\|\s*(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})'
     
     matches = re.findall(pattern_tabella, contenuto_estratto)
     
