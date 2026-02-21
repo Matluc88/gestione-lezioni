@@ -1,456 +1,333 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestione Corsi - Gestione Lezioni</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        /* Zara Style - Minimalist & Professional */
-        body { 
-            background: linear-gradient(135deg, #d4c5b9 0%, #e8dfd6 100%);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            color: #1a1a1a;
-            padding-top: 76px;
-        }
-        
-        .card { 
-            border: 1px solid #e0e0e0;
-            border-radius: 0;
-            box-shadow: none;
-            background-color: #ffffff;
-        }
-        
-        .card-body {
-            padding: 2rem;
-        }
-        
-        h4 {
-            color: #1a1a1a;
-            font-weight: 300;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            font-size: 1.1rem;
-        }
-        
-        /* Buttons Zara Style */
-        .btn {
-            border-radius: 0;
-            font-weight: 500;
-            letter-spacing: 0.5px;
-            transition: all 0.3s ease;
-            border: none;
-        }
-        
-        .btn-success {
-            background-color: #1a1a1a;
-            color: #ffffff;
-        }
-        
-        .btn-success:hover {
-            background-color: #a67c52;
-            color: #1a1a1a;
-        }
-        
-        .btn-info {
-            background-color: #d4c5b9;
-            color: #1a1a1a;
-        }
-        
-        .btn-info:hover {
-            background-color: #a67c52;
-            color: #ffffff;
-        }
-        
-        .btn-secondary {
-            background-color: #ffffff;
-            color: #1a1a1a;
-            border: 1px solid #1a1a1a;
-        }
-        
-        .btn-secondary:hover {
-            background-color: #1a1a1a;
-            color: #ffffff;
-        }
-        
-        .btn-primary {
-            background-color: #1a1a1a;
-            color: #ffffff;
-        }
-        
-        .btn-primary:hover {
-            background-color: #a67c52;
-            color: #1a1a1a;
-        }
-        
-        .btn-warning {
-            background-color: #a67c52;
-            color: #1a1a1a;
-        }
-        
-        .btn-warning:hover {
-            background-color: #d4c5b9;
-            color: #1a1a1a;
-        }
-        
-        .btn-danger {
-            background-color: #dc3545;
-            color: #ffffff;
-        }
-        
-        .btn-danger:hover {
-            background-color: #bb2d3b;
-        }
-        
-        /* Table Zara Style */
-        .table {
-            border: 1px solid #e0e0e0;
-        }
-        
-        .table-primary {
-            background-color: #d4c5b9;
-            color: #1a1a1a;
-            font-weight: 500;
-            letter-spacing: 0.5px;
-        }
-        
-        .table-hover tbody tr:hover {
-            background-color: #f8f8f8;
-        }
-        
-        .corso-fatturato { 
-            background-color: #f0f8f0;
-            border-left: 3px solid #28a745;
-        }
-        
-        .corso-non-fatturato { 
-            background-color: #fff;
-            border-left: 3px solid #ffc107;
-        }
-        
-        /* Badges Zara Style */
-        .badge {
-            border-radius: 0;
-            padding: 6px 12px;
-            font-weight: 500;
-            letter-spacing: 0.3px;
-        }
-        
-        /* Alerts Zara Style */
-        .alert {
-            border-radius: 0;
-            border: 1px solid #e0e0e0;
-            border-left-width: 3px;
-        }
-        
-        .alert-info {
-            background-color: #f8f8f8;
-            border-left-color: #a67c52;
-            color: #1a1a1a;
-        }
-        
-        .checkbox-column { width: 40px; text-align: center; }
-        .select-all-container { margin-bottom: 10px; }
-        .action-buttons { margin-bottom: 15px; }
-        @media (max-width: 768px) {
-            .btn {
-                min-height: 44px;
-                margin-bottom: 0.5rem;
-            }
-            .btn-sm {
-                min-height: 36px;
-                padding: 8px 12px;
-            }
-            .card-body {
-                padding: 1rem;
-            }
-            .badge {
-                font-size: 0.8rem;
-            }
-            .navbar-brand {
-                font-size: 1.1rem;
-            }
-        }
-        
-        @media (max-width: 393px) {
-            .btn {
-                min-height: 48px;
-                margin-bottom: 0.75rem;
-                padding: 14px 16px;
-                font-size: 0.9rem;
-            }
-            .btn-sm {
-                min-height: 40px;
-                padding: 10px 14px;
-            }
-            .card-body {
-                padding: 0.75rem;
-            }
-            .badge {
-                font-size: 0.75rem;
-            }
-            .navbar-brand {
-                font-size: 1rem;
-            }
-            .d-flex.justify-content-between {
-                flex-direction: column;
-                gap: 0.75rem;
-            }
-        }
-    </style>
-</head>
-<body>
-    {% include 'components/navbar_unified.html' %}
+{% extends "base_ios.html" %}
 
-    <div class="container my-4">
-        <div class="card shadow-sm mb-4">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h4>Elenco Corsi</h4>
-                    <div>
-                        <a href="{{ url_for('corsi.aggiungi_corso') }}" class="btn btn-success me-2">➕ Nuovo Corso</a>
-                        <a href="{{ url_for('archivio.corsi_archiviati') }}" class="btn btn-info me-2">📁 Corsi Archiviati</a>
-                        <a href="{{ url_for('lezioni.dashboard') }}" class="btn btn-secondary">↩ Torna alla Dashboard</a>
-                    </div>
+{% block title %}Corsi{% endblock %}
+
+{% set large_title = "Corsi" %}
+{% set fab_url = url_for('corsi.aggiungi_corso') %}
+{% set fab_title = "Nuovo Corso" %}
+{% set fab_icon = "➕" %}
+
+{% block navbar %}
+    {% set title = "Corsi" %}
+    {% set right_button_url = url_for('archivio.corsi_archiviati') %}
+    {% set right_button_text = "Archiviati" %}
+    {% include 'components/ios_navbar.html' %}
+{% endblock %}
+
+{% block content %}
+<input type="hidden" id="csrf_token" value="{{ csrf_token() }}">
+
+{% if corsi %}
+
+<!-- Barra azioni multiple (appare solo quando si selezionano corsi) -->
+<div id="barra-azioni" style="display:none;" class="barra-azioni-multi">
+    <span id="contatore-selezionati" class="contatore-sel">0 selezionati</span>
+    <div class="azioni-multi-btn">
+        <button class="ios-button ios-button-warning ios-button-sm" id="archivia-corsi-button">📁 Archivia</button>
+        <button class="ios-button ios-button-danger ios-button-sm" id="elimina-corsi-button">🗑️ Elimina</button>
+    </div>
+</div>
+
+<!-- Seleziona tutti -->
+<div class="seleziona-tutti-row">
+    <label class="ios-checkbox">
+        <input type="checkbox" id="selectAllCorsi">
+        <span class="ios-checkbox-mark"></span>
+        <span style="font-size:14px; color: var(--ios-secondary-label);">Seleziona tutti</span>
+    </label>
+</div>
+
+<div class="ios-list-group" id="lista-corsi">
+    {% for corso in corsi %}
+    <div class="ios-corso-item {% if corso.completamente_fatturato %}corso-fatturato{% elif corso.parzialmente_fatturato %}corso-parziale{% else %}corso-non-fatturato{% endif %}">
+        <!-- Checkbox di selezione -->
+        <div class="corso-checkbox-wrap">
+            <label class="ios-checkbox">
+                <input class="corso-checkbox" type="checkbox" value="{{ corso.id_corso }}">
+                <span class="ios-checkbox-mark"></span>
+            </label>
+        </div>
+
+        <!-- Link ai dettagli -->
+        <a href="{{ url_for('corsi.dettagli_corso', corso=corso.id_corso) }}" class="corso-main-content">
+            <div class="corso-info">
+                <div class="corso-nome">
+                    {{ corso.nome }}
+                    <span class="corso-id-badge">{{ corso.id_corso }}</span>
                 </div>
-
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, msg in messages %}
-                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                                {{ msg }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-                {% endwith %}
-
-                {% if corsi %}
-                    <!-- Pulsanti per azioni multiple -->
-                    <div class="action-buttons">
-                        <div class="row">
-                            <div class="col-12 col-md-6 mb-2 mb-md-0">
-                                <div class="select-all-container">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="selectAllCorsi">
-                                        <label class="form-check-label" for="selectAllCorsi">Seleziona tutti i corsi</label>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-12 col-md-6 text-md-end">
-                                <button type="button" class="btn btn-danger me-2" id="elimina-corsi-button">🗑️ Elimina Selezionati</button>
-                                <button type="button" class="btn btn-warning" id="archivia-corsi-button">📁 Archivia Selezionati</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <input type="hidden" id="csrf_token" value="{{ csrf_token() }}">
-                    
-                    <!-- Desktop table view -->
-                    <div class="table-responsive d-none d-md-block">
-                        <table class="table table-hover">
-                            <thead class="table-primary">
-                                <tr>
-                                    <th class="checkbox-column">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="selectAllCorsiTable">
-                                        </div>
-                                    </th>
-                                    <th>ID Corso</th>
-                                    <th>Nome</th>
-                                    <th>Cliente</th>
-                                    <th>Stato Fatturazione</th>
-                                    <th>Azioni</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for corso in corsi %}
-                                <tr class="{% if corso.completamente_fatturato %}corso-fatturato{% else %}corso-non-fatturato{% endif %}">
-                                    <td class="checkbox-column">
-                                        <div class="form-check">
-                                            <input class="form-check-input corso-checkbox" type="checkbox" value="{{ corso.id_corso }}" id="corso-{{ corso.id_corso }}">
-                                        </div>
-                                    </td>
-                                    <td>{{ corso.id_corso }}</td>
-                                    <td>{{ corso.nome }}</td>
-                                    <td>{{ corso.cliente or '-' }}</td>
-                                    <td>
-                                        {% if corso.completamente_fatturato %}
-                                            <span class="badge bg-success">✅ Completamente Fatturato</span>
-                                        {% else %}
-                                            <span class="badge bg-warning">⚠️ Non Completamente Fatturato</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <a href="{{ url_for('corsi.dettagli_corso', corso=corso.id_corso) }}" class="btn btn-info btn-sm">📊 Dettagli</a>
-                                        <a href="{{ url_for('corsi.modifica_corso', id_corso=corso.id_corso) }}" class="btn btn-primary btn-sm">✏️ Modifica</a>
-
-                                        {% if corso.completamente_fatturato %}
-                                            <form action="{{ url_for('corsi.archivia_corso', id_corso=corso.id_corso) }}" method="POST" class="d-inline" onsubmit="return confirm('📁 Archiviare il corso {{ corso.id_corso }}? Tutte le lezioni verranno spostate nell\'archivio.');">
-                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                                <button type="submit" class="btn btn-warning btn-sm">📁 Archivia</button>
-                                            </form>
-                                        {% endif %}
-
-                                        <form action="{{ url_for('corsi.elimina_corso', id_corso=corso.id_corso) }}" method="POST" class="d-inline" onsubmit="return confirm('❌ Eliminare definitivamente il corso {{ corso.id_corso }} e tutte le sue lezioni? Questa operazione non può essere annullata!');">
-                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                            <button type="submit" class="btn btn-danger btn-sm">🗑️ Elimina</button>
-                                        </form>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- Mobile card layout -->
-                    <div class="d-md-none">
-                        {% for corso in corsi %}
-                        <div class="card mb-3 shadow-sm {% if corso.completamente_fatturato %}corso-fatturato{% else %}corso-non-fatturato{% endif %}">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h6 class="card-title mb-0 fw-bold">{{ corso.nome }}</h6>
-                                    <input class="form-check-input corso-checkbox" type="checkbox" value="{{ corso.id_corso }}" id="corso-mobile-{{ corso.id_corso }}">
-                                </div>
-                                <p class="card-text mb-2 small">
-                                    <strong>ID Corso:</strong> {{ corso.id_corso }}<br>
-                                    <strong>Cliente:</strong> {{ corso.cliente or '-' }}
-                                </p>
-                                <div class="mb-3">
-                                    {% if corso.completamente_fatturato %}
-                                        <span class="badge bg-success">✅ Completamente Fatturato</span>
-                                    {% else %}
-                                        <span class="badge bg-warning">⚠️ Non Completamente Fatturato</span>
-                                    {% endif %}
-                                </div>
-                                <div class="d-grid gap-2">
-                                    <div class="d-flex gap-2">
-                                        <a href="{{ url_for('corsi.dettagli_corso', corso=corso.id_corso) }}" class="btn btn-info btn-sm flex-fill">📊 Dettagli</a>
-                                        <a href="{{ url_for('corsi.modifica_corso', id_corso=corso.id_corso) }}" class="btn btn-primary btn-sm flex-fill">✏️ Modifica</a>
-                                    </div>
-                                    <div class="d-flex gap-2">
-                                        {% if corso.completamente_fatturato %}
-                                            <form action="{{ url_for('corsi.archivia_corso', id_corso=corso.id_corso) }}" method="POST" class="flex-fill" onsubmit="return confirm('📁 Archiviare il corso {{ corso.id_corso }}? Tutte le lezioni verranno spostate nell\'archivio.');">
-                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                                <button type="submit" class="btn btn-warning btn-sm w-100">📁 Archivia</button>
-                                            </form>
-                                        {% endif %}
-                                        <form action="{{ url_for('corsi.elimina_corso', id_corso=corso.id_corso) }}" method="POST" class="flex-fill" onsubmit="return confirm('❌ Eliminare definitivamente il corso {{ corso.id_corso }} e tutte le sue lezioni? Questa operazione non può essere annullata!');">
-                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                            <button type="submit" class="btn btn-danger btn-sm w-100">🗑️ Elimina</button>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <div class="alert alert-info">
-                        Nessun corso trovato. <a href="{{ url_for('corsi.aggiungi_corso') }}" class="alert-link">Aggiungi un nuovo corso</a>.
-                    </div>
+                {% if corso.cliente %}
+                <div class="corso-cliente">👤 {{ corso.cliente }}</div>
                 {% endif %}
+                <div class="corso-stats">
+                    <span class="stat-pill">📚 {{ corso.ore_totali|round(1) }}h totali</span>
+                    {% if corso.ore_fatturate > 0 %}
+                    <span class="stat-pill stat-green">💰 {{ corso.ore_fatturate|round(1) }}h fatt.</span>
+                    {% endif %}
+                    {% if corso.ore_rimanenti > 0 %}
+                    <span class="stat-pill stat-orange">⏳ {{ corso.ore_rimanenti|round(1) }}h rimaste</span>
+                    {% endif %}
+                </div>
             </div>
+            <div class="corso-right">
+                {% if corso.completamente_fatturato %}
+                    <span class="stato-badge stato-green">✅ Fatturato</span>
+                {% elif corso.parzialmente_fatturato %}
+                    <span class="stato-badge stato-orange">⚡ Parziale</span>
+                {% else %}
+                    <span class="stato-badge stato-gray">⏳ Da fatturare</span>
+                {% endif %}
+                <span class="ios-list-chevron"></span>
+            </div>
+        </a>
+
+        <!-- Azioni inline -->
+        <div class="corso-azioni">
+            <a href="{{ url_for('corsi.modifica_corso', id_corso=corso.id_corso) }}" class="ios-button ios-button-secondary ios-button-sm">✏️</a>
+
+            {% if corso.completamente_fatturato %}
+            <form action="{{ url_for('corsi.archivia_corso', id_corso=corso.id_corso) }}" method="POST" class="d-inline"
+                  onsubmit="return confirm('📁 Archiviare il corso {{ corso.id_corso }}?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="ios-button ios-button-warning ios-button-sm">📁</button>
+            </form>
+            {% endif %}
+
+            <form action="{{ url_for('corsi.elimina_corso', id_corso=corso.id_corso) }}" method="POST" class="d-inline"
+                  onsubmit="return confirm('❌ Eliminare definitivamente il corso {{ corso.id_corso }} e tutte le sue lezioni?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="ios-button ios-button-danger ios-button-sm">🗑️</button>
+            </form>
         </div>
     </div>
+    {% endfor %}
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Gestione checkbox "Seleziona tutti"
-            const selectAllCorsi = document.getElementById('selectAllCorsi');
-            const selectAllCorsiTable = document.getElementById('selectAllCorsiTable');
-            const corsoCheckboxes = document.querySelectorAll('.corso-checkbox');
-            
-            // Sincronizza i due checkbox "Seleziona tutti"
-            if (selectAllCorsi && selectAllCorsiTable) {
-                selectAllCorsi.addEventListener('change', function() {
-                    selectAllCorsiTable.checked = this.checked;
-                    corsoCheckboxes.forEach(checkbox => {
-                        checkbox.checked = this.checked;
-                    });
-                });
-                
-                selectAllCorsiTable.addEventListener('change', function() {
-                    selectAllCorsi.checked = this.checked;
-                    corsoCheckboxes.forEach(checkbox => {
-                        checkbox.checked = this.checked;
-                    });
-                });
-            }
-            
-            // Gestione checkbox per mobile
-            if (selectAllCorsi) {
-                selectAllCorsi.addEventListener('change', function() {
-                    corsoCheckboxes.forEach(checkbox => {
-                        checkbox.checked = this.checked;
-                    });
-                });
-            }
-            
-            // Funzione per gestire le azioni multiple
-            function postCorsi(url, confermaMsg, successoMsg, erroreMsg) {
-                const corsiSelezionati = Array.from(document.querySelectorAll('.corso-checkbox:checked')).map(cb => cb.value);
-                
-                if (corsiSelezionati.length === 0) {
-                    alert("❌ Nessun corso selezionato.");
-                    return;
-                }
-                
-                if (!confirm(confermaMsg)) return;
-                
-                // Ottieni il token CSRF dal campo nascosto
-                const csrfToken = document.getElementById('csrf_token')?.value;
-                if (!csrfToken) {
-                    alert("❌ Errore: Token CSRF non trovato.");
-                    return;
-                }
-                
-                const formData = new URLSearchParams();
-                corsiSelezionati.forEach(id => formData.append("corsi_selezionati[]", id));
-                formData.append("csrf_token", csrfToken);
-                
-                fetch(url, {
-                    method: "POST",
-                    headers: { 
-                        "Content-Type": "application/x-www-form-urlencoded"
-                    },
-                    body: formData.toString()
-                })
-                .then(res => {
-                    if (res.ok) {
-                        alert(successoMsg);
-                        window.location.reload();
-                    } else {
-                        alert(erroreMsg);
-                    }
-                })
-                .catch(() => alert("❌ Errore di connessione."));
-            }
-            
-            // Gestione pulsante elimina corsi
-            const eliminaCorsiBtn = document.getElementById("elimina-corsi-button");
-            if (eliminaCorsiBtn) {
-                eliminaCorsiBtn.addEventListener("click", function() {
-                    postCorsi("{{ url_for('corsi.elimina_corsi_multipli') }}", 
-                              "❌ Eliminare definitivamente i corsi selezionati e tutte le loro lezioni? Questa operazione non può essere annullata!", 
-                              "✅ Corsi eliminati con successo!", 
-                              "❌ Errore durante l'eliminazione dei corsi.");
-                });
-            }
-            
-            // Gestione pulsante archivia corsi
-            const archiviaCorsiBtn = document.getElementById("archivia-corsi-button");
-            if (archiviaCorsiBtn) {
-                archiviaCorsiBtn.addEventListener("click", function() {
-                    postCorsi("{{ url_for('corsi.archivia_corsi_multipli') }}", 
-                              "📁 Archiviare i corsi selezionati? Tutte le lezioni verranno spostate nell'archivio.", 
-                              "✅ Corsi archiviati con successo!", 
-                              "❌ Errore durante l'archiviazione dei corsi.");
-                });
-            }
+{% else %}
+<div class="ios-empty-state">
+    <div class="ios-empty-icon">📚</div>
+    <h3 class="ios-empty-title">Nessun corso</h3>
+    <p class="ios-empty-message">Aggiungi il tuo primo corso per iniziare a gestire le lezioni</p>
+    <a href="{{ url_for('corsi.aggiungi_corso') }}" class="ios-button ios-button-primary">
+        ➕ Nuovo Corso
+    </a>
+</div>
+{% endif %}
+
+<style>
+/* ---- Barra azioni multiple ---- */
+.barra-azioni-multi {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: var(--ios-card-background);
+    border-bottom: 0.5px solid var(--ios-separator);
+    margin-bottom: 4px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.contatore-sel {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ios-blue);
+}
+
+.azioni-multi-btn {
+    display: flex;
+    gap: 8px;
+}
+
+/* ---- Seleziona tutti ---- */
+.seleziona-tutti-row {
+    padding: 8px 16px 4px;
+    display: flex;
+    align-items: center;
+}
+
+/* ---- Item corso ---- */
+.ios-corso-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--ios-card-background);
+    border-bottom: 0.5px solid var(--ios-separator);
+    gap: 10px;
+    transition: background 0.15s;
+}
+
+.ios-corso-item:last-child {
+    border-bottom: none;
+}
+
+.corso-checkbox-wrap {
+    flex-shrink: 0;
+}
+
+.corso-main-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: inherit;
+    min-width: 0;
+}
+
+.corso-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.corso-nome {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ios-label);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.corso-id-badge {
+    display: inline-block;
+    padding: 1px 6px;
+    background: var(--ios-gray5, #E5E5EA);
+    color: var(--ios-secondary-label);
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.corso-cliente {
+    font-size: 13px;
+    color: var(--ios-secondary-label);
+    margin-top: 2px;
+}
+
+.corso-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+}
+
+.stat-pill {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: var(--ios-gray6, #F2F2F7);
+    color: var(--ios-secondary-label);
+    font-weight: 500;
+}
+
+.stat-green { background: rgba(52,199,89,0.12); color: var(--ios-green, #34C759); }
+.stat-orange { background: rgba(255,149,0,0.12); color: var(--ios-orange, #FF9500); }
+
+.corso-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.stato-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 10px;
+    white-space: nowrap;
+}
+
+.stato-green { background: rgba(52,199,89,0.12); color: var(--ios-green, #34C759); }
+.stato-orange { background: rgba(255,149,0,0.12); color: var(--ios-orange, #FF9500); }
+.stato-gray { background: var(--ios-gray6, #F2F2F7); color: var(--ios-secondary-label); }
+
+/* Colore bordo sinistro in base allo stato */
+.corso-fatturato { border-left: 3px solid var(--ios-green, #34C759); }
+.corso-parziale  { border-left: 3px solid var(--ios-orange, #FF9500); }
+.corso-non-fatturato { border-left: 3px solid var(--ios-gray3, #C7C7CC); }
+
+/* ---- Azioni inline ---- */
+.corso-azioni {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+/* ---- Rimuovi d-inline Bootstrap se presente ---- */
+.d-inline { display: inline; }
+</style>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('.corso-checkbox');
+    const selectAll = document.getElementById('selectAllCorsi');
+    const barraAzioni = document.getElementById('barra-azioni');
+    const contatore = document.getElementById('contatore-selezionati');
+
+    function aggiornaUI() {
+        const sel = document.querySelectorAll('.corso-checkbox:checked');
+        const n = sel.length;
+        if (n > 0) {
+            barraAzioni.style.display = 'flex';
+            contatore.textContent = n + (n === 1 ? ' selezionato' : ' selezionati');
+        } else {
+            barraAzioni.style.display = 'none';
+        }
+        // Aggiorna "seleziona tutti"
+        if (selectAll) selectAll.checked = (n === checkboxes.length && n > 0);
+    }
+
+    checkboxes.forEach(cb => cb.addEventListener('change', aggiornaUI));
+
+    if (selectAll) {
+        selectAll.addEventListener('change', function() {
+            checkboxes.forEach(cb => cb.checked = this.checked);
+            aggiornaUI();
         });
-    </script>
-</body>
-</html>
+    }
+
+    // Azione multipla
+    function postCorsi(url, confermaMsg) {
+        const sel = Array.from(document.querySelectorAll('.corso-checkbox:checked')).map(cb => cb.value);
+        if (sel.length === 0) { alert("❌ Nessun corso selezionato."); return; }
+        if (!confirm(confermaMsg)) return;
+
+        const csrfToken = document.getElementById('csrf_token')?.value;
+        const formData = new URLSearchParams();
+        sel.forEach(id => formData.append("corsi_selezionati[]", id));
+        formData.append("csrf_token", csrfToken);
+
+        fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: formData.toString()
+        }).then(res => {
+            if (res.ok) { window.location.reload(); }
+            else { alert("❌ Errore nell'operazione."); }
+        }).catch(() => alert("❌ Errore di connessione."));
+    }
+
+    const eliminaBtn = document.getElementById("elimina-corsi-button");
+    if (eliminaBtn) {
+        eliminaBtn.addEventListener("click", () =>
+            postCorsi("{{ url_for('corsi.elimina_corsi_multipli') }}",
+                "❌ Eliminare definitivamente i corsi selezionati e tutte le loro lezioni?")
+        );
+    }
+
+    const archiviaBtn = document.getElementById("archivia-corsi-button");
+    if (archiviaBtn) {
+        archiviaBtn.addEventListener("click", () =>
+            postCorsi("{{ url_for('corsi.archivia_corsi_multipli') }}",
+                "📁 Archiviare i corsi selezionati?")
+        );
+    }
+});
+</script>
+{% endblock %}
+{% endblock %}

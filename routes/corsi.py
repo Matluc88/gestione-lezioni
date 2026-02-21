@@ -160,7 +160,7 @@ def lista_corsi():
             
             corsi.append(corso)
                 
-    return render_template("corsi.html", corsi=corsi)
+    return render_template("corsi.html", corsi=corsi, current_tab='corsi')
 
 
 @corsi_bp.route("/modifica_corso/<string:id_corso>", methods=["GET", "POST"])
