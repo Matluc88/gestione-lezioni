@@ -29,7 +29,8 @@
         </div>
     </div>
 
-    <!-- Riepilogo -->
+    <!-- Riepilogo (solo se c'è un calendario) -->
+    {% if risultato.totale_contratto > 0 %}
     <div class="summary-grid">
         <div class="summary-card success">
             <div class="summary-icon">✅</div>
@@ -163,19 +164,79 @@
     </div>
     {% endif %}
 
-    <!-- Nessuna lezione trovata -->
+    {% endif %}{# fine: risultato.totale_contratto > 0 #}
+
+    <!-- Calendario assente: confronto monte ore -->
     {% if risultato.totale_contratto == 0 %}
+    {% if ore_contratto_estratte is not none %}
+        {% set scarto = ((ore_db_totali - ore_contratto_estratte) | abs) %}
+        {% if scarto <= 1.0 %}
+        <!-- CONFORME -->
+        <div class="ios-card ore-card ore-card--ok">
+            <div class="ios-card-header ore-card-header ore-card-header--ok">
+                <h3 class="ios-card-title">✅ Calendario non presente — Monte ore conforme</h3>
+            </div>
+            <div class="ios-card-body">
+                <p class="info-text">
+                    Il contratto non contiene un calendario dettagliato delle lezioni, ma il
+                    <strong>monte ore è coerente</strong> con le lezioni registrate nel database.
+                </p>
+                <div class="ore-compare-grid">
+                    <div class="ore-compare-item">
+                        <div class="ore-compare-label">📄 Contratto</div>
+                        <div class="ore-compare-value">{{ ore_contratto_estratte | int }} h</div>
+                    </div>
+                    <div class="ore-compare-sep">=</div>
+                    <div class="ore-compare-item">
+                        <div class="ore-compare-label">💾 Database</div>
+                        <div class="ore-compare-value">{{ ore_db_totali }} h</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <!-- NON CONFORME -->
+        <div class="ios-card ore-card ore-card--warn">
+            <div class="ios-card-header ore-card-header ore-card-header--warn">
+                <h3 class="ios-card-title">⚠️ Calendario non presente — Monte ore NON conforme</h3>
+            </div>
+            <div class="ios-card-body">
+                <p class="info-text">
+                    Il contratto non contiene un calendario dettagliato, e il
+                    <strong>monte ore risulta diverso</strong> rispetto a quello registrato nel database.
+                    Controlla se mancano lezioni o se il contratto è stato aggiornato.
+                </p>
+                <div class="ore-compare-grid">
+                    <div class="ore-compare-item">
+                        <div class="ore-compare-label">📄 Contratto</div>
+                        <div class="ore-compare-value">{{ ore_contratto_estratte | int }} h</div>
+                    </div>
+                    <div class="ore-compare-sep ore-compare-sep--diff">≠</div>
+                    <div class="ore-compare-item">
+                        <div class="ore-compare-label">💾 Database</div>
+                        <div class="ore-compare-value">{{ ore_db_totali }} h</div>
+                    </div>
+                </div>
+                <div class="ore-scarto">
+                    Scarto: <strong>{{ scarto | round(1) }} h</strong>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    {% else %}
+    <!-- Nessuna info trovata -->
     <div class="ios-card">
         <div class="ios-card-body" style="text-align: center; padding: 40px 20px;">
             <div style="font-size: 48px; margin-bottom: 15px;">📭</div>
-            <h3>Nessuna lezione trovata nel contratto</h3>
+            <h3>Calendario e monte ore non trovati</h3>
             <p style="color: var(--ios-text-secondary); margin-top: 10px;">
-                Il sistema non è riuscito a trovare date e orari nel calendario estratto.
-                Verifica che il calendario sia stato estratto correttamente dal PDF.
+                Il sistema non è riuscito a trovare né un calendario né le ore totali nel testo estratto
+                dal contratto. Verifica che il PDF sia stato analizzato correttamente.
             </p>
         </div>
     </div>
     {% endif %}
+    {% endif %}{# fine: totale_contratto == 0 #}
 
     <!-- Azioni -->
     <div class="ios-card">
@@ -404,6 +465,66 @@
     color: #ff3b30;
 }
 
+/* ── Blocco confronto monte ore (quando calendario assente) ── */
+.ore-card-header--ok {
+    background-color: #34c759 !important;
+    color: white;
+}
+
+.ore-card-header--warn {
+    background-color: #ff9500 !important;
+    color: white;
+}
+
+.ore-compare-grid {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 20px 10px;
+}
+
+.ore-compare-item {
+    text-align: center;
+    flex: 1;
+}
+
+.ore-compare-label {
+    font-size: 13px;
+    color: var(--ios-text-secondary);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.ore-compare-value {
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--ios-text-primary);
+}
+
+.ore-compare-sep {
+    font-size: 28px;
+    font-weight: 700;
+    color: #34c759;
+    flex: 0;
+    padding: 0 5px;
+}
+
+.ore-compare-sep--diff {
+    color: #ff3b30;
+}
+
+.ore-scarto {
+    margin-top: 12px;
+    padding: 10px 14px;
+    background-color: #fff3cd;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    color: #856404;
+    text-align: center;
+}
+
 @media (max-width: 768px) {
     .summary-grid {
         grid-template-columns: 1fr;
@@ -417,6 +538,14 @@
     .compare-separator {
         text-align: center;
         margin: 10px 0;
+    }
+
+    .ore-compare-grid {
+        gap: 12px;
+    }
+
+    .ore-compare-value {
+        font-size: 28px;
     }
 }
 </style>

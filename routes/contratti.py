@@ -549,15 +549,76 @@ def verifica_conformita(contratto_id):
             
             # Confronta e categorizza
             risultato = confronta_lezioni(lezioni_contratto, lezioni_db)
-        
+
+            # --- Fallback ore totali quando nessun calendario trovato ---
+            ore_contratto_estratte = None
+            ore_db_totali = None
+            if risultato['totale_contratto'] == 0:
+                ore_contratto_estratte = estrai_ore_da_contratto(contratto['contenuto_estratto'])
+
+                cursor.execute(f"""
+                    SELECT SUM(calcola_ore(ora_inizio, ora_fine))
+                    FROM lezioni
+                    WHERE id_corso = {placeholder}
+                """, (contratto['id_corso'],))
+                row = cursor.fetchone()
+                ore_db_totali = round(float(row[0]), 2) if row and row[0] is not None else 0.0
+
         return render_template("verifica_conformita.html",
                              contratto=contratto,
                              risultato=risultato,
+                             ore_contratto_estratte=ore_contratto_estratte,
+                             ore_db_totali=ore_db_totali,
                              current_tab='altro')
     
     except Exception as e:
         flash(f"❌ Errore durante la verifica: {str(e)}", "danger")
         return redirect(url_for('contratti.dettaglio_contratto', contratto_id=contratto_id))
+
+
+def estrai_ore_da_contratto(testo):
+    """Cerca nel testo estratto il monte ore totale previsto dal contratto.
+    
+    Returns:
+        float or None: numero di ore trovate, None se non trovato
+    """
+    import re
+
+    if not testo:
+        return None
+
+    # Lista di pattern ordinati per specificità (decrescente)
+    patterns = [
+        # "Ore Operatore: 116" / "Ore Operatore 116"
+        r'ore\s+operatore\s*[:=]?\s*(\d+(?:[.,]\d+)?)',
+        # "Monte ore: 116" / "Monte ore totale 116"
+        r'monte\s+ore\s+(?:totale\s+)?[:=]?\s*(\d+(?:[.,]\d+)?)',
+        # "Totale ore: 116" / "Totale ore 116h"
+        r'totale\s+ore\s*[:=]?\s*(\d+(?:[.,]\d+)?)',
+        # "Ore totali: 116" / "Ore totali 116"
+        r'ore\s+totali\s*[:=]?\s*(\d+(?:[.,]\d+)?)',
+        # "Durata: 116 ore" / "Durata 116 ore"
+        r'durata\s*[:=]?\s*(\d+(?:[.,]\d+)?)\s*ore',
+        # "116 ore" generico (cattura il primo numero prima di "ore")
+        r'(\d+(?:[.,]\d+)?)\s*ore\b',
+        # "ore: 116" generico
+        r'\bore\s*[:=]\s*(\d+(?:[.,]\d+)?)',
+    ]
+
+    testo_lower = testo.lower()
+
+    for pattern in patterns:
+        match = re.search(pattern, testo_lower)
+        if match:
+            try:
+                valore = float(match.group(1).replace(',', '.'))
+                # Sanity check: ore ragionevoli tra 1 e 2000
+                if 1 <= valore <= 2000:
+                    return valore
+            except ValueError:
+                continue
+
+    return None
 
 
 def parse_calendario_da_contratto(contenuto_estratto):
