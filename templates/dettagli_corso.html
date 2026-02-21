@@ -1,128 +1,173 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dettagli Corso - {{ nome_corso }}</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <style>
-        @media (max-width: 768px) {
-            .btn {
-                min-height: 44px;
-                margin-bottom: 0.5rem;
-                padding: 12px 16px;
-            }
-            .container {
-                padding: 0 15px;
-            }
-            h2 {
-                font-size: 1.5rem;
-                margin-bottom: 1.5rem;
-                text-align: center;
-            }
-            .card {
-                margin-bottom: 1rem;
-            }
-            .card-title {
-                font-size: 1rem;
-            }
-            .card-text {
-                font-size: 1.2rem;
-            }
-            .col-md-4 {
-                margin-bottom: 1rem;
-            }
-        }
-        @media (max-width: 480px) {
-            .btn {
-                font-size: 0.95rem;
-                padding: 14px 12px;
-            }
-            h2 {
-                font-size: 1.3rem;
-            }
-            .card-text {
-                font-size: 1.1rem;
-            }
-        }
-        
-        @media (max-width: 393px) {
-            .btn {
-                min-height: 48px;
-                font-size: 0.85rem;
-                padding: 14px 16px;
-            }
-            h2 {
-                font-size: 1.25rem;
-            }
-            .card-text {
-                font-size: 1rem;
-            }
-            .card-title {
-                font-size: 0.9rem;
-            }
-            .container {
-                padding: 0 10px;
-            }
-        }
-    </style>
-</head>
-<body class="container mt-5">
+{% extends "base_ios.html" %}
 
-    <h2 class="text-center mb-4">📊 Dettagli del Corso: {{ nome_corso }} <small class="text-muted">({{ corso }})</small></h2>
+{% block title %}Dettagli {{ nome_corso }}{% endblock %}
+
+{% set large_title = nome_corso %}
+
+{% block navbar %}
+    {% set title = "Dettagli Corso" %}
+    {% set back_url = url_for('corsi.lista_corsi') %}
+    {% set back_text = "Corsi" %}
+    {% include 'components/ios_navbar.html' %}
+{% endblock %}
+
+{% block content %}
+<div class="ios-page">
 
     {% if not ha_lezioni %}
-    <div class="alert alert-info text-center mb-4">
-        <h4>⚠️ Nessuna lezione trovata per questo corso</h4>
-        <p>Non ci sono lezioni associate a questo corso. Aggiungi delle lezioni per visualizzare le statistiche.</p>
-        <a href="{{ url_for('lezioni.aggiungi_lezione') }}" class="btn btn-primary mt-2">➕ Aggiungi Lezioni</a>
+    <div class="ios-empty-state">
+        <div class="ios-empty-icon">📚</div>
+        <h3 class="ios-empty-title">Nessuna lezione</h3>
+        <p class="ios-empty-message">Non ci sono lezioni associate a questo corso.</p>
+        <a href="{{ url_for('lezioni.aggiungi_lezione') }}" class="ios-button ios-button-primary">
+            ➕ Aggiungi Lezioni
+        </a>
     </div>
+
     {% else %}
-    <div class="row mb-4">
-        <div class="col-md-4">
-            <div class="card border-primary shadow">
-                <div class="card-body text-center">
-                    <h5 class="card-title text-primary">🕒 Ore Totali</h5>
-                    <p class="card-text fs-4">{{ ore_totali | round(2) }} ore</p>
-                </div>
-            </div>
+
+    <!-- Header info corso -->
+    <div class="corso-header-card">
+        <div class="corso-header-id">ID: {{ corso }}</div>
+        <div class="corso-header-nome">{{ nome_corso }}</div>
+    </div>
+
+    <!-- Sezione: ORE -->
+    <div class="ios-section-header">⏱️ Ore</div>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">📚</div>
+            <div class="stat-label">Totali</div>
+            <div class="stat-value">{{ ore_totali | round(1) }}h</div>
         </div>
-        <div class="col-md-4">
-            <div class="card border-warning shadow">
-                <div class="card-body text-center">
-                    <h5 class="card-title text-warning">✅ Ore Completate</h5>
-                    <p class="card-text fs-4">{{ ore_completate | round(2) }} ore</p>
-                </div>
-            </div>
+        <div class="stat-card stat-card-green">
+            <div class="stat-icon">✅</div>
+            <div class="stat-label">Completate</div>
+            <div class="stat-value">{{ ore_completate | round(1) }}h</div>
         </div>
-        <div class="col-md-4">
-            <div class="card border-success shadow">
-                <div class="card-body text-center">
-                    <h5 class="card-title text-success">💰 Ore Fatturate</h5>
-                    <p class="card-text fs-4">{{ ore_fatturate | round(2) }} ore</p>
-                </div>
-            </div>
+        <div class="stat-card stat-card-blue">
+            <div class="stat-icon">🧾</div>
+            <div class="stat-label">Fatturate</div>
+            <div class="stat-value">{{ ore_fatturate | round(1) }}h</div>
         </div>
     </div>
 
-    <div class="row mb-4">
-        <div class="col-md-4 mx-auto">
-            <div class="card border-danger shadow">
-                <div class="card-body text-center">
-                    <h5 class="card-title text-danger">💰 Totale Fatturato Lordo</h5>
-                    <p class="card-text fs-4">€{{ totale_fatturato_lordo | round(2) }}</p>
-                </div>
-            </div>
+    <!-- Sezione: AMMONTARE -->
+    <div class="ios-section-header">💶 Ammontare</div>
+    <div class="stats-grid">
+        <div class="stat-card stat-card-purple">
+            <div class="stat-icon">💶</div>
+            <div class="stat-label">Totale corso</div>
+            <div class="stat-value stat-value-euro">€{{ ammontare_totale | round(2) }}</div>
+        </div>
+        <div class="stat-card stat-card-green">
+            <div class="stat-icon">✅</div>
+            <div class="stat-label">Completato</div>
+            <div class="stat-value stat-value-euro">€{{ ammontare_completato | round(2) }}</div>
+        </div>
+        <div class="stat-card stat-card-blue">
+            <div class="stat-icon">🧾</div>
+            <div class="stat-label">Fatturato</div>
+            <div class="stat-value stat-value-euro">€{{ totale_fatturato_lordo | round(2) }}</div>
         </div>
     </div>
+
+    <!-- Azioni -->
+    <div class="ios-list-group" style="margin-top: 16px;">
+        <a href="{{ url_for('lezioni.dashboard') }}?corso={{ corso }}" class="ios-list-item">
+            <span class="ios-list-icon">👁️</span>
+            <div class="ios-list-content">
+                <span class="ios-list-title">Visualizza Lezioni</span>
+            </div>
+            <span class="ios-list-chevron"></span>
+        </a>
+        <a href="{{ url_for('corsi.modifica_corso', id_corso=corso) }}" class="ios-list-item">
+            <span class="ios-list-icon">✏️</span>
+            <div class="ios-list-content">
+                <span class="ios-list-title">Modifica Corso</span>
+            </div>
+            <span class="ios-list-chevron"></span>
+        </a>
+    </div>
+
     {% endif %}
+</div>
 
-    <div class="text-center mt-4">
-        <a href="{{ url_for('corsi.lista_corsi') }}" class="btn btn-secondary">⬅️ Torna alla Lista Corsi</a>
-        {% if ha_lezioni %}
-        <a href="{{ url_for('lezioni.dashboard') }}?corso={{ corso }}" class="btn btn-primary">👁️ Visualizza Lezioni</a>
-        {% endif %}
-    </div>
+<style>
+.corso-header-card {
+    margin: 12px 16px 4px;
+    padding: 16px;
+    background: var(--ios-card-background);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-sm);
+}
 
-</body>
-</html>
+.corso-header-id {
+    font-size: 12px;
+    color: var(--ios-secondary-label);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.corso-header-nome {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--ios-label);
+}
+
+.ios-section-header {
+    padding: 16px 16px 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ios-secondary-label);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 0 16px 8px;
+}
+
+.stat-card {
+    background: var(--ios-card-background);
+    border-radius: 12px;
+    padding: 14px 10px;
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+}
+
+.stat-card-green { background: rgba(52, 199, 89, 0.10); }
+.stat-card-blue  { background: rgba(0, 122, 255, 0.10); }
+.stat-card-purple { background: rgba(175, 82, 222, 0.10); }
+
+.stat-icon {
+    font-size: 22px;
+    margin-bottom: 4px;
+}
+
+.stat-label {
+    font-size: 11px;
+    color: var(--ios-secondary-label);
+    font-weight: 500;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.stat-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ios-label);
+}
+
+.stat-value-euro {
+    font-size: 15px;
+    color: var(--ios-label);
+}
+</style>
+{% endblock %}

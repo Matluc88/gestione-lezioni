@@ -100,16 +100,32 @@ def dettagli_corso(corso):
 
         placeholder = get_placeholder()
         ore_fatturate = ore(f"""
-            SELECT SUM(ore_fatturate)
-            FROM lezioni WHERE id_corso = {placeholder} AND fatturato > 0
+            SELECT SUM(CASE WHEN fatturato = 1 THEN calcola_ore(ora_inizio, ora_fine) ELSE 0 END)
+            FROM lezioni WHERE id_corso = {placeholder}
         """)
 
         placeholder = get_placeholder()
         cursor.execute(f"""
-            SELECT SUM(ore_fatturate * compenso_orario)
-            FROM lezioni WHERE id_corso = {placeholder} AND fatturato > 0
+            SELECT SUM(calcola_ore(ora_inizio, ora_fine) * compenso_orario)
+            FROM lezioni WHERE id_corso = {placeholder} AND fatturato = 1
         """, (corso,))
         totale_fatturato_lordo = cursor.fetchone()[0] or 0
+
+        # Ammontare totale del corso (tutte le ore × compenso)
+        placeholder = get_placeholder()
+        cursor.execute(f"""
+            SELECT SUM(calcola_ore(ora_inizio, ora_fine) * compenso_orario)
+            FROM lezioni WHERE id_corso = {placeholder}
+        """, (corso,))
+        ammontare_totale = cursor.fetchone()[0] or 0
+
+        # Ammontare completato (solo lezioni completate × compenso)
+        placeholder = get_placeholder()
+        cursor.execute(f"""
+            SELECT SUM(calcola_ore(ora_inizio, ora_fine) * compenso_orario)
+            FROM lezioni WHERE id_corso = {placeholder} AND stato = 'Completato'
+        """, (corso,))
+        ammontare_completato = cursor.fetchone()[0] or 0
 
     return render_template("dettagli_corso.html",
                            corso=corso,
@@ -118,6 +134,8 @@ def dettagli_corso(corso):
                            ore_completate=ore_completate,
                            ore_fatturate=ore_fatturate,
                            totale_fatturato_lordo=totale_fatturato_lordo,
+                           ammontare_totale=ammontare_totale,
+                           ammontare_completato=ammontare_completato,
                            ha_lezioni=ha_lezioni)
 
 
