@@ -129,7 +129,8 @@ def index():
                            corso_status=corso_status,
                            ore_fatturate_totali=round(ore_fatturate_totali, 2),
                            ore_totali_corso=ore_totali_corso,
-                           lezioni_fatturate=lezioni_fatturate)  # Ora è un JSON valido
+                           lezioni_fatturate=lezioni_fatturate,
+                           current_tab='altro')
 
 
 

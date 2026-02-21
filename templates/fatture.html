@@ -1,296 +1,327 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Gestione Fatture - Calendario Lezioni</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
-  <style>
-    body { 
-      background: linear-gradient(135deg, #d4c5b9 0%, #e8dfd6 100%); 
-      padding-top: 76px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    }
-    .section-header { 
-      margin-top: 2rem; 
-      margin-bottom: 1rem; 
-      color: #1a1a1a; 
-      text-align: center; 
-      font-weight: bold; 
-    }
-    #calendar { max-width: 1000px; margin: 0 auto; }
-    .card { 
-      border-radius: 0; 
-      box-shadow: none; 
-      border: 1px solid #e0e0e0;
-    }
-    .table thead { 
-      background-color: #d4c5b9; 
-      color: #1a1a1a; 
-    }
-    .btn-custom { 
-      background-color: #1a1a1a; 
-      color: white; 
-      border: none;
-      border-radius: 0;
-    }
-    .btn-custom:hover { 
-      background-color: #a67c52;
-      color: white;
-    }
-    .btn {
-      border-radius: 0;
-    }
-    .btn-success {
-      background-color: #1a1a1a;
-      border: none;
-    }
-    .btn-success:hover {
-      background-color: #a67c52;
-    }
-    .btn-secondary {
-      background-color: #d4c5b9;
-      color: #1a1a1a;
-      border: none;
-    }
-    .btn-secondary:hover {
-      background-color: #a67c52;
-      color: #ffffff;
-    }
-    .form-control, .form-select {
-      border-radius: 0;
-    }
-    .alert {
-      border-radius: 0;
-    }
-    
-    @media (max-width: 768px) {
-      .btn {
-        min-height: 44px;
-        margin-bottom: 0.5rem;
-        padding: 12px 16px;
-        font-size: 0.9rem;
-      }
-      .container {
-        padding: 0 15px;
-      }
-      h4, h5 {
-        font-size: 1.3rem;
-        margin-bottom: 1rem;
-      }
-      .form-control, .form-select {
-        min-height: 44px;
-        font-size: 1rem;
-      }
-      .navbar-brand {
-        font-size: 1.1rem;
-      }
-      .card {
-        margin-bottom: 1rem;
-      }
-      .table-responsive {
-        font-size: 0.85rem;
-      }
-      .btn-sm {
-        min-height: 36px;
-        padding: 8px 12px;
-      }
-      #calendar {
-        font-size: 0.9rem;
-      }
-      .d-flex.justify-content-between {
-        flex-direction: column;
-        gap: 1rem;
-      }
-      .d-flex.justify-content-between .btn {
-        width: 100%;
-      }
-    }
-    @media (max-width: 480px) {
-      .btn {
-        font-size: 0.85rem;
-        padding: 12px 14px;
-      }
-      h4, h5 {
-        font-size: 1.2rem;
-      }
-      .container {
-        padding: 0 10px;
-      }
-      .table-responsive {
-        font-size: 0.8rem;
-      }
-    }
-    
-    @media (max-width: 393px) {
-      .btn {
-        min-height: 48px;
-        font-size: 0.85rem;
-        padding: 14px 16px;
-      }
-      h4, h5 {
-        font-size: 1.1rem;
-      }
-      .container {
-        padding: 0 8px;
-      }
-      .table-responsive {
-        font-size: 0.75rem;
-      }
-      .btn-sm {
-        min-height: 40px;
-        padding: 10px 14px;
-      }
-      #calendar {
-        font-size: 0.8rem;
-      }
-      .form-control, .form-select {
-        min-height: 48px;
-        font-size: 16px;
-      }
-    }
-  </style>
-</head>
-<body>
-  {% include 'components/navbar_unified.html' %}
+{% extends "base_ios.html" %}
 
-  <div class="container my-4">
-    <div class="card shadow-sm">
-      <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h4>Seleziona un corso</h4>
-          <div>
-            <a href="{{ url_for('fatture.aggiungi_fattura') }}" class="btn btn-success me-2">📝 Nuova Fattura</a>
-            <a href="{{ url_for('lezioni.dashboard') }}" class="btn btn-secondary">🏠 Ritorna alla Dashboard</a>
-          </div>
+{% block title %}Fatture{% endblock %}
+
+{% set large_title = "Fatture" %}
+{% set fab_url = url_for('fatture.aggiungi_fattura') %}
+{% set fab_title = "Nuova Fattura" %}
+{% set fab_icon = "📝" %}
+
+{% block navbar %}
+    {% set title = "Fatture" %}
+    {% include 'components/ios_navbar.html' %}
+{% endblock %}
+
+{% block content %}
+<div class="ios-page">
+
+    <!-- ── Filtro corso ── -->
+    <div class="ios-card">
+        <div class="ios-card-body">
+            <form method="GET">
+                <label class="ios-field-label">Filtra per corso</label>
+                <select name="corso_scelto" class="ios-select" onchange="this.form.submit()">
+                    <option value="">— Tutti i corsi —</option>
+                    {% for corso in corsi %}
+                    <option value="{{ corso }}" {% if corso == corso_scelto %}selected{% endif %}>{{ corso }}</option>
+                    {% endfor %}
+                </select>
+            </form>
         </div>
-
-        <form method="GET" class="row g-3">
-          <div class="col-md-6">
-            <select id="corso_scelto" name="corso_scelto" class="form-select" onchange="this.form.submit()">
-              <option value="">-- Seleziona un corso --</option>
-              {% for corso in corsi %}
-              <option value="{{ corso }}" {% if corso == corso_scelto %}selected{% endif %}>
-                {{ corso }}
-              </option>
-              {% endfor %}
-            </select>
-          </div>
-        </form>
-      </div>
     </div>
 
+    <!-- ── Stato corso (solo se selezionato) ── -->
     {% if corso_scelto %}
-      <div class="alert alert-info shadow">
-        <h5 class="alert-heading">Stato del corso "{{ corso_scelto }}"</h5>
-        <p><strong>Totale ore fatturate:</strong> {{ ore_fatturate_totali }} ore</p>
-        <p>{{ corso_status }}</p>
-      </div>
-
-      <!-- Rimosso il pulsante "Fattura Corso" come richiesto dall'utente -->
-      <!-- La funzionalità di fusione corsi è stata rimossa come richiesto dall'utente -->
-    
-      <div class="card shadow-sm">
-        <div class="card-body">
-          <h4 class="card-title section-header">Calendario Lezioni</h4>
-          <div id="calendar"></div>
+    <div class="ios-card stato-card
+        {% if '✅' in corso_status %}stato-ok
+        {% elif '⚠️' in corso_status %}stato-warn
+        {% else %}stato-err{% endif %}">
+        <div class="ios-card-body">
+            <div class="stato-nome">🎓 {{ corso_scelto }}</div>
+            <div class="stato-testo">{{ corso_status }}</div>
+            <div class="stato-ore">⏱️ <strong>{{ ore_fatturate_totali }}h</strong> fatturate</div>
         </div>
-      </div>
+    </div>
     {% endif %}
 
-    <div class="card shadow-sm">
-      <div class="card-body">
-        <h4 class="card-title section-header">Fatture Emesse</h4>
-        <div class="table-responsive">
-          <table class="table table-striped table-hover">
-            <thead>
-              <tr>
-                <th>Numero</th>
-                <th>Corso</th>
-                <th>Data Fattura</th>
-                <th>Importo</th>
-                <th>Tipo Fatturazione</th>
-                <th>Lezioni Fatturate</th>
-                <th>PDF</th>
-                <th>Azioni</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for fattura in fatture %}
-              <tr>
-                <td>{{ fattura[1] }}</td>
-                <td>{{ fattura[2] }}</td>
-                <td>{{ fattura[3] }}</td>
-                <td>€{{ fattura[4] }}</td>
-                <td>{{ fattura[5] }}</td>
-                <td>
-                  {% if fattura[7] %}
-                    {{ fattura[7] }}
-                  {% else %}
-                    <span class="text-danger">Nessuna lezione</span>
-                  {% endif %}
-                </td>
-                <td>
-                  {% if fattura[6] %}
-                    <a href="{{ url_for('fatture.download_file', filename=fattura[6]) }}" class="btn btn-custom btn-sm">Scarica PDF</a>
-                  {% else %}
-                    <span class="text-danger">Nessun file</span>
-                  {% endif %}
-                </td>
-                <td>
-                  <a href="{{ url_for('fatture.modifica_fattura', id_fattura=fattura[0]) }}" class="btn btn-warning btn-sm mb-1">✏️ Modifica</a>
-                  <form action="{{ url_for('fatture.elimina_fattura', id_fattura=fattura[0]) }}" method="POST" onsubmit="return confirm('Sei sicuro di voler eliminare questa fattura? Le lezioni associate torneranno allo stato non fatturato.');" class="d-inline">
+    <!-- ── Lista fatture ── -->
+    {% if fatture %}
+    <div class="ios-section-header">Fatture emesse ({{ fatture|length }})</div>
+    <div class="ios-list-group fatture-list">
+        {% for fattura in fatture %}
+        <div class="fattura-item">
+
+            <!-- Riga principale -->
+            <div class="fattura-top">
+                <div class="fattura-num">N° {{ fattura['numero_fattura'] }}</div>
+                <div class="fattura-importo">€ {{ "%.2f"|format(fattura['importo']|float) }}</div>
+            </div>
+
+            <!-- Info secondarie -->
+            <div class="fattura-meta">
+                <span class="meta-pill">📚 {{ fattura['id_corso'] }}</span>
+                <span class="meta-pill">📅 {{ fattura['data_fattura'] }}</span>
+                <span class="meta-pill tipo-pill {% if fattura['tipo_fatturazione'] == 'totale' %}tipo-totale{% else %}tipo-parziale{% endif %}">
+                    {{ fattura['tipo_fatturazione'] | capitalize }}
+                </span>
+            </div>
+
+            <!-- Lezioni associate -->
+            {% if fattura['lezioni_fatturate'] %}
+            <div class="fattura-lezioni">
+                🗓️ {{ fattura['lezioni_fatturate'] }}
+            </div>
+            {% endif %}
+
+            <!-- Azioni -->
+            <div class="fattura-azioni">
+                {% if fattura['file_pdf'] %}
+                <a href="{{ url_for('fatture.download_file', filename=fattura['file_pdf']) }}"
+                   class="ios-button ios-button-secondary ios-button-sm">📎 PDF</a>
+                {% endif %}
+                <a href="{{ url_for('fatture.modifica_fattura', id_fattura=fattura['id_fattura']) }}"
+                   class="ios-button ios-button-secondary ios-button-sm">✏️ Modifica</a>
+                <form action="{{ url_for('fatture.elimina_fattura', id_fattura=fattura['id_fattura']) }}"
+                      method="POST"
+                      onsubmit="return confirm('Eliminare la fattura N° {{ fattura["numero_fattura"] }}?\nLe lezioni associate torneranno allo stato non fatturato.');"
+                      style="display:inline;">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="btn btn-danger btn-sm">🗑️ Elimina</button>
-                  </form>
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+                    <button type="submit" class="ios-button ios-button-danger ios-button-sm">🗑️ Elimina</button>
+                </form>
+            </div>
+
         </div>
-      </div>
+        {% endfor %}
     </div>
-  </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      var lezioni = {{ lezioni_fatturate|tojson|safe }};
-      var events = [];
+    {% else %}
+    <!-- Stato vuoto -->
+    <div class="ios-empty-state">
+        <div class="ios-empty-icon">🧾</div>
+        <h3 class="ios-empty-title">Nessuna fattura</h3>
+        <p class="ios-empty-message">Crea la prima fattura con il pulsante ＋ in basso</p>
+        <a href="{{ url_for('fatture.aggiungi_fattura') }}" class="ios-button ios-button-primary">
+            📝 Nuova Fattura
+        </a>
+    </div>
+    {% endif %}
 
-      lezioni.forEach(function(lezione) {
-        if (lezione.data && lezione.ora_inizio && lezione.ora_fine) {
-          var start = lezione.data + "T" + lezione.ora_inizio;
-          var end = lezione.data + "T" + lezione.ora_fine;
-          events.push({
-            title: 'Lezione (' + lezione.ora_inizio + '-' + lezione.ora_fine + ')',
-            start: start,
-            end: end,
-            color: '#28a745'
-          });
-        }
-      });
+    <!-- ── Calendario lezioni fatturate (solo se corso scelto) ── -->
+    {% if corso_scelto and lezioni_fatturate %}
+    <div class="ios-section-header">Calendario lezioni fatturate</div>
+    <div class="ios-card">
+        <div class="ios-card-body" style="padding: 12px 8px;">
+            <div id="calendar"></div>
+        </div>
+    </div>
+    {% endif %}
 
-      var calendarEl = document.getElementById('calendar');
-      var calendarOptions = {
+</div>
+
+<style>
+/* ── Filtro select ── */
+.ios-field-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ios-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.ios-select {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 16px;
+    border: 1px solid var(--ios-separator);
+    border-radius: var(--radius-md);
+    background: var(--ios-card-background);
+    color: var(--ios-text-primary);
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px;
+    cursor: pointer;
+}
+
+/* ── Stato corso ── */
+.stato-card {
+    border-left: 4px solid var(--ios-separator);
+}
+
+.stato-ok  { border-left-color: #34c759; }
+.stato-warn { border-left-color: #ff9500; }
+.stato-err  { border-left-color: #ff3b30; }
+
+.stato-nome {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ios-text-primary);
+    margin-bottom: 4px;
+}
+
+.stato-testo {
+    font-size: 14px;
+    color: var(--ios-text-secondary);
+    margin-bottom: 8px;
+}
+
+.stato-ore {
+    font-size: 14px;
+    color: var(--ios-text-primary);
+}
+
+/* ── Lista fatture ── */
+.fatture-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.fattura-item {
+    padding: 14px 16px;
+    background: var(--ios-card-background);
+    border-bottom: 0.5px solid var(--ios-separator);
+}
+
+.fattura-item:first-child {
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.fattura-item:last-child {
+    border-bottom: none;
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+.fattura-item:only-child {
+    border-radius: var(--radius-lg);
+}
+
+.fattura-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.fattura-num {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ios-text-primary);
+}
+
+.fattura-importo {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ios-blue, #007AFF);
+}
+
+.fattura-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.meta-pill {
+    display: inline-block;
+    font-size: 12px;
+    padding: 3px 8px;
+    background: var(--ios-gray6, #F2F2F7);
+    color: var(--ios-text-secondary);
+    border-radius: 10px;
+    font-weight: 500;
+}
+
+.tipo-pill {
+    font-weight: 600;
+}
+
+.tipo-totale {
+    background: rgba(52,199,89,0.12);
+    color: #34c759;
+}
+
+.tipo-parziale {
+    background: rgba(255,149,0,0.12);
+    color: #ff9500;
+}
+
+.fattura-lezioni {
+    font-size: 12px;
+    color: var(--ios-text-secondary);
+    background: var(--ios-gray6, #F2F2F7);
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 10px;
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+.fattura-azioni {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+/* ── Section header ── */
+.ios-section-header {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--ios-text-secondary);
+    padding: 16px 16px 6px;
+}
+
+/* ── Calendario ── */
+#calendar {
+    max-width: 100%;
+}
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+    .fattura-importo { font-size: 16px; }
+    .fattura-azioni { gap: 6px; }
+}
+</style>
+
+{% if corso_scelto and lezioni_fatturate %}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var lezioni = {{ lezioni_fatturate|tojson|safe }};
+    var events = lezioni
+        .filter(function(l) { return l.data && l.ora_inizio && l.ora_fine; })
+        .map(function(l) {
+            return {
+                title: l.ora_inizio + '–' + l.ora_fine,
+                start: l.data + 'T' + l.ora_inizio,
+                end:   l.data + 'T' + l.ora_fine,
+                color: '#34c759'
+            };
+        });
+
+    new FullCalendar.Calendar(document.getElementById('calendar'), {
         initialView: 'dayGridMonth',
         headerToolbar: {
-          left: 'prev,next today',
-          center: 'title',
-          right: 'dayGridMonth,timeGridWeek,timeGridDay,listMonth'
+            left:   'prev,next today',
+            center: 'title',
+            right:  'dayGridMonth,listMonth'
         },
+        locale: 'it',
         events: events,
         editable: false,
         eventTimeFormat: { hour: '2-digit', minute: '2-digit', meridiem: false },
         initialDate: events.length ? events[0].start : new Date()
-      };
+    }).render();
+});
+</script>
+{% endif %}
 
-      var calendar = new FullCalendar.Calendar(calendarEl, calendarOptions);
-      calendar.render();
-    });
-  </script>
-</body>
-</html>
+{% endblock %}
