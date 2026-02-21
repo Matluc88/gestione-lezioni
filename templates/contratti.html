@@ -19,9 +19,30 @@
         </a>
     </div>
     {% else %}
-    <div class="ios-list-group">
+
+    {% if clienti|length > 0 %}
+    <!-- Tab per cliente -->
+    <div class="clienti-tab-bar">
+        <div class="clienti-tab-scroll">
+            <button class="cliente-tab active" data-cliente="tutti" onclick="filtraCliente('tutti', this)">
+                Tutti
+                <span class="cliente-tab-count">{{ contratti|length }}</span>
+            </button>
+            {% for cliente in clienti %}
+            <button class="cliente-tab" data-cliente="{{ cliente }}" onclick="filtraCliente('{{ cliente }}', this)">
+                👤 {{ cliente }}
+                <span class="cliente-tab-count">{{ contratti | selectattr('cliente', 'equalto', cliente) | list | length }}</span>
+            </button>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="ios-list-group" id="lista-contratti">
         {% for contratto in contratti %}
-        <a href="{{ url_for('contratti.dettaglio_contratto', contratto_id=contratto.id) }}" class="ios-list-item">
+        <a href="{{ url_for('contratti.dettaglio_contratto', contratto_id=contratto.id) }}"
+           class="ios-list-item contratto-item"
+           data-cliente="{{ contratto.cliente or '' }}">
             <span class="ios-list-icon">📄</span>
             <div class="ios-list-content">
                 <div class="ios-list-title">
@@ -46,10 +67,86 @@
         </a>
         {% endfor %}
     </div>
+
+    <!-- Stato vuoto per filtro -->
+    <div class="ios-empty-state" id="empty-filtro" style="display:none;">
+        <div class="ios-empty-icon">🔍</div>
+        <h3 class="ios-empty-title">Nessun contratto</h3>
+        <p class="ios-empty-text">Nessun contratto trovato per questo cliente</p>
+    </div>
+
     {% endif %}
 </div>
 
 <style>
+/* ---- Tab bar clienti ---- */
+.clienti-tab-bar {
+    margin: 12px 16px 4px;
+    overflow: hidden;
+}
+
+.clienti-tab-scroll {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+
+.clienti-tab-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.cliente-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 20px;
+    border: none;
+    background-color: var(--ios-gray5, #E5E5EA);
+    color: var(--ios-label, #000);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.18s, color 0.18s;
+    -webkit-tap-highlight-color: transparent;
+    font-family: var(--font-system, -apple-system, BlinkMacSystemFont, sans-serif);
+}
+
+.cliente-tab.active {
+    background-color: var(--ios-blue, #007AFF);
+    color: white;
+}
+
+.cliente-tab-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    background-color: rgba(255,255,255,0.25);
+}
+
+.cliente-tab:not(.active) .cliente-tab-count {
+    background-color: var(--ios-gray3, #C7C7CC);
+    color: white;
+}
+
+/* ---- Meta riga data ---- */
+.ios-list-meta {
+    font-size: 12px;
+    color: var(--ios-gray, #8E8E93);
+    margin-top: 2px;
+}
+
+/* ---- Empty state ---- */
 .ios-empty-state {
     text-align: center;
     padding: 60px 20px;
@@ -86,5 +183,45 @@
     font-weight: 600;
     margin-left: 8px;
 }
+
+/* Nasconde item senza animazione brusca */
+.contratto-item.nascosto {
+    display: none;
+}
 </style>
+
+{% block extra_js %}
+<script>
+function filtraCliente(cliente, btn) {
+    // Aggiorna tab attivo
+    document.querySelectorAll('.cliente-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+
+    const items = document.querySelectorAll('.contratto-item');
+    let visibili = 0;
+
+    items.forEach(item => {
+        if (cliente === 'tutti' || item.dataset.cliente === cliente) {
+            item.classList.remove('nascosto');
+            visibili++;
+        } else {
+            item.classList.add('nascosto');
+        }
+    });
+
+    // Mostra/nascondi stato vuoto
+    const emptyFiltro = document.getElementById('empty-filtro');
+    const lista = document.getElementById('lista-contratti');
+    if (emptyFiltro && lista) {
+        if (visibili === 0) {
+            lista.style.display = 'none';
+            emptyFiltro.style.display = 'flex';
+        } else {
+            lista.style.display = '';
+            emptyFiltro.style.display = 'none';
+        }
+    }
+}
+</script>
+{% endblock %}
 {% endblock %}

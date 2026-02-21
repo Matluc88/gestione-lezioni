@@ -236,7 +236,12 @@ def lista_contratti():
         """)
         contratti = cursor.fetchall()
     
-    return render_template("contratti.html", contratti=contratti, current_tab='altro')
+    # Estrai lista clienti univoci (escludi None/vuoto)
+    clienti = sorted(set(
+        c['cliente'] for c in contratti if c['cliente']
+    ))
+    
+    return render_template("contratti.html", contratti=contratti, clienti=clienti, current_tab='altro')
 
 
 @contratti_bp.route("/contratti/nuovo")
