@@ -139,7 +139,7 @@ def lista_corsi():
                     SUM(CASE WHEN fatturato = 1 THEN 1 ELSE 0 END) as completamente_fatturate,
                     SUM(CASE WHEN fatturato = 2 THEN 1 ELSE 0 END) as parzialmente_fatturate,
                     SUM(calcola_ore(ora_inizio, ora_fine)) as ore_totali,
-                    SUM(ore_fatturate) as ore_fatturate
+                    SUM(CASE WHEN fatturato = 1 THEN calcola_ore(ora_inizio, ora_fine) ELSE 0 END) as ore_fatturate
                 FROM lezioni 
                 WHERE id_corso = {placeholder}
             """, (corso['id_corso'],))

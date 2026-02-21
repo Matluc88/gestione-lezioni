@@ -53,7 +53,9 @@
             <div class="corso-info">
                 <div class="corso-nome">
                     {{ corso.nome }}
+                    {% if corso.id_corso != corso.nome %}
                     <span class="corso-id-badge">{{ corso.id_corso }}</span>
+                    {% endif %}
                 </div>
                 {% if corso.cliente %}
                 <div class="corso-cliente">👤 {{ corso.cliente }}</div>
@@ -63,7 +65,7 @@
                     {% if corso.ore_fatturate > 0 %}
                     <span class="stat-pill stat-green">💰 {{ corso.ore_fatturate|round(1) }}h fatt.</span>
                     {% endif %}
-                    {% if corso.ore_rimanenti > 0 %}
+                    {% if corso.ore_rimanenti > 0 and not corso.completamente_fatturato %}
                     <span class="stat-pill stat-orange">⏳ {{ corso.ore_rimanenti|round(1) }}h rimaste</span>
                     {% endif %}
                 </div>
