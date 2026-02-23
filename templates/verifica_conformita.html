@@ -242,8 +242,13 @@
     <div class="ios-card">
         <div class="ios-card-body">
             <a href="{{ url_for('contratti.dettaglio_contratto', contratto_id=contratto.id) }}" 
-               class="ios-button ios-button-primary ios-button-block">
+               class="ios-button ios-button-primary ios-button-block"
+               style="margin-bottom: 12px;">
                 ← Torna al Contratto
+            </a>
+            <a href="{{ url_for('contratti.nuovo_contratto') }}" 
+               class="ios-button ios-button-secondary ios-button-block">
+                📤 Carica altro contratto
             </a>
         </div>
     </div>
