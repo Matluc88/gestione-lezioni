@@ -483,6 +483,42 @@ def elimina_contratto(contratto_id):
         return redirect(url_for('contratti.lista_contratti'))
 
 
+@contratti_bp.route("/contratti/elimina-multipli", methods=["POST"])
+@login_required
+def elimina_contratti_multipli():
+    """Elimina più contratti selezionati in batch"""
+    try:
+        ids = request.form.getlist("contratti_ids[]")
+        if not ids:
+            return jsonify({"success": False, "error": "Nessun contratto selezionato"}), 400
+
+        eliminati = 0
+        with db_connection() as conn:
+            cursor = conn.cursor()
+            placeholder = get_placeholder()
+
+            for contratto_id in ids:
+                try:
+                    contratto_id_int = int(contratto_id)
+                    cursor.execute(f"SELECT file_path FROM contratti WHERE id = {placeholder}", (contratto_id_int,))
+                    contratto = cursor.fetchone()
+                    if contratto:
+                        if contratto['file_path'] and os.path.exists(contratto['file_path']):
+                            os.remove(contratto['file_path'])
+                        cursor.execute(f"DELETE FROM contratti WHERE id = {placeholder}", (contratto_id_int,))
+                        eliminati += 1
+                except Exception as e:
+                    print(f"Errore eliminazione contratto {contratto_id}: {e}")
+                    continue
+
+            conn.commit()
+
+        return jsonify({"success": True, "eliminati": eliminati})
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @contratti_bp.route("/contratti/<int:contratto_id>/collega-corso", methods=["POST"])
 @login_required
 def collega_corso(contratto_id):
