@@ -257,8 +257,7 @@ def lista_contratti():
     """Lista di tutti i contratti caricati"""
     with db_connection() as conn:
         cursor = conn.cursor()
-        placeholder = get_placeholder()
-        
+
         cursor.execute("""
             SELECT c.*, co.nome as nome_corso
             FROM contratti c
@@ -266,13 +265,24 @@ def lista_contratti():
             ORDER BY c.data_upload DESC
         """)
         contratti = cursor.fetchall()
-    
+
+        # Mappa nome_corso → lista numeri fattura (query unica)
+        cursor.execute("SELECT id_corso, numero_fattura FROM fatture")
+        fatture_per_corso = {}
+        for f in cursor.fetchall():
+            nome = f['id_corso']
+            if nome:
+                if nome not in fatture_per_corso:
+                    fatture_per_corso[nome] = []
+                fatture_per_corso[nome].append(f['numero_fattura'])
+
     # Estrai lista clienti univoci (escludi None/vuoto)
     clienti = sorted(set(
         c['cliente'] for c in contratti if c['cliente']
     ))
-    
-    return render_template("contratti.html", contratti=contratti, clienti=clienti, current_tab='altro')
+
+    return render_template("contratti.html", contratti=contratti, clienti=clienti,
+                           fatture_per_corso=fatture_per_corso, current_tab='altro')
 
 
 @contratti_bp.route("/contratti/nuovo")

@@ -96,6 +96,14 @@
                     </div>
                     <div class="ios-list-meta">
                         📅 {{ contratto.data_upload[:10] }}
+                        {% if contratto.nome_corso %}
+                            {% set fat = fatture_per_corso.get(contratto.nome_corso, []) %}
+                            {% if fat %}
+                                · <span style="color:#34c759; font-weight:600;">✅ {{ fat|join(', n. ') if fat|length > 1 else 'Fattura n. ' + fat[0] }}</span>
+                            {% else %}
+                                · <span style="color:#ff9500;">⚠️ Non fatturato</span>
+                            {% endif %}
+                        {% endif %}
                     </div>
                 </div>
                 <span class="ios-list-chevron"></span>
