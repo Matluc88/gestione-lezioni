@@ -1,0 +1,423 @@
+{% extends "base_ios.html" %}
+
+{% block title %}Verifica Fattura{% endblock %}
+
+{% block navbar %}
+    {% set title = "Verifica Conformità" %}
+    {% include 'components/ios_navbar.html' %}
+{% endblock %}
+
+{% block content %}
+<div class="ios-page">
+
+    <!-- ── Header fattura ── -->
+    <div class="ios-card">
+        <div class="ios-card-body">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <div style="font-size:18px; font-weight:700; color:var(--ios-text-primary);">
+                    N° {{ fattura['numero_fattura'] }}
+                </div>
+                <div style="font-size:20px; font-weight:700; color:var(--ios-blue);">
+                    € {{ "%.2f"|format(fattura['importo']|float) }}
+                </div>
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:6px; font-size:13px; color:var(--ios-text-secondary);">
+                {% if fattura['id_corso'] %}
+                <span class="meta-pill">📚 {{ fattura['id_corso'] }}</span>
+                {% endif %}
+                {% if fattura.get('nome_corso') %}
+                <span class="meta-pill">🎓 {{ fattura['nome_corso'] }}</span>
+                {% endif %}
+                <span class="meta-pill">📅 {{ fattura['data_fattura'] }}</span>
+                <span class="meta-pill">⏱️ {{ ore_db }}h nel DB</span>
+                {% if importo_atteso %}
+                <span class="meta-pill">💰 Atteso: €{{ "%.2f"|format(importo_atteso) }}</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Riepilogo DB ── -->
+    {% if lezioni_db %}
+    <div class="ios-section-header">📊 Dati nel Database</div>
+    <div class="ios-card">
+        <div class="ios-card-body">
+            <div class="db-summary-grid">
+                <div class="db-summary-item">
+                    <div class="db-summary-value">{{ ore_db }}h</div>
+                    <div class="db-summary-label">Ore questa fattura</div>
+                </div>
+                {% if ore_totali_corso_fatturate > 0 %}
+                <div class="db-summary-item">
+                    <div class="db-summary-value">{{ ore_totali_corso_fatturate }}h</div>
+                    <div class="db-summary-label">Totale ore corso fatturate</div>
+                </div>
+                {% endif %}
+                {% if monte_ore_contratto %}
+                <div class="db-summary-item">
+                    <div class="db-summary-value">{{ monte_ore_contratto }}h</div>
+                    <div class="db-summary-label">Monte ore contratto</div>
+                </div>
+                <div class="db-summary-item">
+                    {% set residuo = monte_ore_contratto - ore_totali_corso_fatturate %}
+                    <div class="db-summary-value {% if residuo < 0 %}val-red{% elif residuo == 0 %}val-orange{% else %}val-green{% endif %}">
+                        {{ residuo|round(1) }}h
+                    </div>
+                    <div class="db-summary-label">Ore residue contratto</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ── Risultato verifica AI ── -->
+    {% if risultato %}
+    <div class="ios-section-header">🤖 Risultato Analisi AI</div>
+
+    <!-- Dati estratti dalla fattura PDF -->
+    {% set d = risultato.dati_ai %}
+    <div class="ios-card">
+        <div class="ios-card-body">
+            <div style="font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;
+                        color:var(--ios-text-secondary); margin-bottom:10px;">Dati letti dal PDF</div>
+            <div class="dati-ai-grid">
+                {% if d.get('numero_fattura') %}
+                <div class="dai-row"><span class="dai-key">Numero</span><span class="dai-val">{{ d.numero_fattura }}</span></div>
+                {% endif %}
+                {% if d.get('data_fattura') %}
+                <div class="dai-row"><span class="dai-key">Data</span><span class="dai-val">{{ d.data_fattura }}</span></div>
+                {% endif %}
+                {% if d.get('monte_ore') is not none %}
+                <div class="dai-row"><span class="dai-key">Monte ore</span><span class="dai-val">{{ d.monte_ore }}h</span></div>
+                {% endif %}
+                {% if d.get('importo_totale') is not none %}
+                <div class="dai-row"><span class="dai-key">Importo</span><span class="dai-val">€{{ "%.2f"|format(d.importo_totale|float) }}</span></div>
+                {% endif %}
+                {% if d.get('compenso_orario') %}
+                <div class="dai-row"><span class="dai-key">€/ora</span><span class="dai-val">€{{ d.compenso_orario }}</span></div>
+                {% endif %}
+                {% if d.get('codice_corso') %}
+                <div class="dai-row"><span class="dai-key">Codice corso</span><span class="dai-val">{{ d.codice_corso }}</span></div>
+                {% endif %}
+                {% if d.get('nome_corso') %}
+                <div class="dai-row"><span class="dai-key">Nome corso</span><span class="dai-val">{{ d.nome_corso }}</span></div>
+                {% endif %}
+                {% if d.get('cliente') %}
+                <div class="dai-row"><span class="dai-key">Cliente</span><span class="dai-val">{{ d.cliente }}</span></div>
+                {% endif %}
+                {% if d.get('periodo') %}
+                <div class="dai-row"><span class="dai-key">Periodo</span><span class="dai-val">{{ d.periodo }}</span></div>
+                {% endif %}
+            </div>
+            {% if d.get('note_ai') %}
+            <div style="margin-top:10px; padding:8px 10px; background:var(--ios-gray6,#F2F2F7);
+                        border-radius:8px; font-size:12px; color:var(--ios-text-secondary); font-style:italic;">
+                💬 {{ d.note_ai }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Checks conformità -->
+    <div class="ios-section-header">✅ Controlli di Conformità</div>
+    <div class="checks-list">
+        {% for check in risultato.checks %}
+        <div class="check-card check-{{ check.stato }}">
+            <div class="check-icon">
+                {% if check.stato == 'ok' %}✅
+                {% elif check.stato == 'warn' %}⚠️
+                {% elif check.stato == 'err' %}❌
+                {% else %}ℹ️{% endif %}
+            </div>
+            <div class="check-body">
+                <div class="check-label">{{ check.label }}</div>
+                <div class="check-msg">{{ check.messaggio }}</div>
+                {% if check.ai and check.db and check.stato != 'ok' %}
+                <div class="check-detail">
+                    <span class="badge-pdf">PDF: {{ check.ai }}</span>
+                    <span class="badge-db">DB: {{ check.db }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pulsante rianalizza -->
+    <div style="padding: 16px;">
+        <form method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label style="display:block; font-size:13px; font-weight:600; color:var(--ios-text-secondary);
+                          text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;">
+                Rianalizza con un altro PDF (opzionale)
+            </label>
+            <input type="file" name="file_pdf" accept=".pdf" class="ios-file-input" id="file_pdf">
+            <button type="submit" class="ios-button ios-button-secondary" style="width:100%; margin-top:12px;">
+                🔄 Rianalizza con AI
+            </button>
+        </form>
+    </div>
+
+    {% else %}
+    <!-- ── Form iniziale: carica PDF ── -->
+    <div class="ios-section-header">📤 Carica PDF per analisi</div>
+    <div class="ios-card">
+        <div class="ios-card-body">
+            <form method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="upload-area" id="upload-area" onclick="document.getElementById('file_pdf').click()">
+                    <div class="upload-icon">📄</div>
+                    <div class="upload-title">Carica il PDF della fattura</div>
+                    <div class="upload-sub" id="upload-sub">Tocca per selezionare il file</div>
+                </div>
+                <input type="file" name="file_pdf" id="file_pdf" accept=".pdf"
+                       style="display:none;" onchange="mostraFileScelto(this)">
+
+                {% if fattura['file_pdf'] %}
+                <div class="file-salvato">
+                    📎 PDF salvato: <strong>{{ fattura['file_pdf'] }}</strong><br>
+                    <small style="color:var(--ios-text-secondary);">
+                        Se non carichi un nuovo PDF, verrà usato quello già salvato (se disponibile sul server).
+                    </small>
+                </div>
+                {% endif %}
+
+                <button type="submit" class="ios-button ios-button-primary" style="width:100%; margin-top:16px;"
+                        id="btn-analizza" {% if not fattura['file_pdf'] %}disabled{% endif %}>
+                    🤖 Analizza con AI
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Nota informativa -->
+    <div class="ios-card" style="margin-top:8px;">
+        <div class="ios-card-body" style="font-size:13px; color:var(--ios-text-secondary); line-height:1.6;">
+            <strong>Cosa verifica l'AI:</strong><br>
+            📋 <strong>Numero fattura</strong> — corrisponde al DB?<br>
+            📚 <strong>Corso</strong> — il codice/nome coincide?<br>
+            ⏱️ <strong>Monte ore</strong> — ore nel PDF vs ore nelle lezioni registrate<br>
+            💰 <strong>Importo</strong> — importo nel PDF vs DB (e vs ore×tariffa)<br>
+            📄 <strong>Contratto</strong> — ore fatturate nei limiti del monte ore contrattuale?
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Torna indietro -->
+    <div style="padding: 8px 16px 32px;">
+        <a href="{{ url_for('fatture.index') }}" class="ios-button ios-button-secondary" style="width:100%;">
+            ← Torna alle fatture
+        </a>
+    </div>
+
+</div>
+
+<style>
+/* ── Meta pill ── */
+.meta-pill {
+    display: inline-block;
+    font-size: 12px;
+    padding: 3px 8px;
+    background: var(--ios-gray6, #F2F2F7);
+    color: var(--ios-text-secondary);
+    border-radius: 10px;
+    font-weight: 500;
+}
+
+/* ── DB Summary grid ── */
+.db-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 12px;
+}
+
+.db-summary-item {
+    text-align: center;
+}
+
+.db-summary-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--ios-blue);
+}
+
+.db-summary-value.val-green { color: #34c759; }
+.db-summary-value.val-orange { color: #ff9500; }
+.db-summary-value.val-red { color: #ff3b30; }
+
+.db-summary-label {
+    font-size: 11px;
+    color: var(--ios-text-secondary);
+    margin-top: 2px;
+    line-height: 1.3;
+}
+
+/* ── Dati AI ── */
+.dati-ai-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.dai-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 14px;
+    padding: 4px 0;
+    border-bottom: 0.5px solid var(--ios-separator);
+}
+
+.dai-row:last-child { border-bottom: none; }
+
+.dai-key {
+    color: var(--ios-text-secondary);
+    font-size: 13px;
+    min-width: 100px;
+}
+
+.dai-val {
+    font-weight: 600;
+    color: var(--ios-text-primary);
+    text-align: right;
+}
+
+/* ── Checks ── */
+.checks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin: 0 16px;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.check-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--ios-card-background);
+    border-bottom: 0.5px solid var(--ios-separator);
+    border-left: 4px solid transparent;
+}
+
+.check-card:last-child { border-bottom: none; }
+
+.check-ok   { border-left-color: #34c759; }
+.check-warn { border-left-color: #ff9500; background: rgba(255,149,0,0.04); }
+.check-err  { border-left-color: #ff3b30; background: rgba(255,59,48,0.04); }
+.check-info { border-left-color: #007AFF; }
+
+.check-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+
+.check-body { flex: 1; min-width: 0; }
+
+.check-label {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--ios-text-secondary);
+    margin-bottom: 3px;
+}
+
+.check-msg {
+    font-size: 14px;
+    color: var(--ios-text-primary);
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.check-detail {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+}
+
+.badge-pdf, .badge-db {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.badge-pdf { background: rgba(88,86,214,0.12); color: #5856D6; }
+.badge-db  { background: rgba(52,199,89,0.12); color: #34c759; }
+
+/* ── Upload area ── */
+.upload-area {
+    border: 2px dashed var(--ios-separator);
+    border-radius: var(--radius-lg);
+    padding: 32px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.upload-area:active { background: var(--ios-gray6, #F2F2F7); }
+
+.upload-icon { font-size: 48px; margin-bottom: 10px; opacity: 0.5; }
+
+.upload-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ios-text-primary);
+    margin-bottom: 4px;
+}
+
+.upload-sub {
+    font-size: 13px;
+    color: var(--ios-text-secondary);
+}
+
+/* ── File salvato ── */
+.file-salvato {
+    margin-top: 12px;
+    padding: 10px 12px;
+    background: rgba(52,199,89,0.08);
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    color: var(--ios-text-secondary);
+    line-height: 1.5;
+}
+
+/* ── File input ── */
+.ios-file-input {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+    border: 1px solid var(--ios-separator);
+    border-radius: var(--radius-md);
+    background: var(--ios-card-background);
+    color: var(--ios-text-primary);
+    margin-top: 8px;
+}
+
+/* ── Section header ── */
+.ios-section-header {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--ios-text-secondary);
+    padding: 16px 16px 6px;
+}
+</style>
+
+<script>
+function mostraFileScelto(input) {
+    const sub = document.getElementById('upload-sub');
+    const btn = document.getElementById('btn-analizza');
+    if (input.files && input.files[0]) {
+        sub.textContent = '📄 ' + input.files[0].name;
+        sub.style.color = 'var(--ios-blue)';
+        if (btn) btn.disabled = false;
+    }
+}
+</script>
+{% endblock %}

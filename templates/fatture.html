@@ -75,6 +75,8 @@
 
             <!-- Azioni -->
             <div class="fattura-azioni">
+                <a href="{{ url_for('fatture.verifica_fattura_ai', id_fattura=fattura['id_fattura']) }}"
+                   class="ios-button ios-button-secondary ios-button-sm">🔍 Verifica</a>
                 {% if fattura['file_pdf'] %}
                 <a href="{{ url_for('fatture.download_file', filename=fattura['file_pdf']) }}"
                    class="ios-button ios-button-secondary ios-button-sm">📎 PDF</a>
