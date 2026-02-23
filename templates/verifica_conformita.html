@@ -29,6 +29,31 @@
         </div>
     </div>
 
+    <!-- Banner Fatturazione -->
+    <div class="ios-card" style="border-left: 4px solid {% if fatture_collegate %}#34c759{% else %}#ff9500{% endif %};">
+        <div class="ios-card-body" style="padding: 14px 16px;">
+            {% if fatture_collegate %}
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                    {% for f in fatture_collegate %}
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span style="font-size:18px;">✅</span>
+                        <span style="font-size:14px; color:var(--ios-text-primary);">
+                            Fatturato — <strong>n. {{ f['numero_fattura'] }}</strong>
+                            · {{ f['data_fattura'] }} · €{{ "%.2f"|format(f['importo']) }}
+                            · <span style="text-transform:capitalize; color:var(--ios-text-secondary);">{{ f['tipo_fatturazione'] }}</span>
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:18px;">⚠️</span>
+                    <span style="font-size:14px; color:var(--ios-text-secondary);">Non ancora fatturato</span>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
     <!-- Riepilogo (solo se c'è un calendario) -->
     {% if risultato.totale_contratto > 0 %}
     <div class="summary-grid">

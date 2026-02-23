@@ -405,11 +405,23 @@ def dettaglio_contratto(contratto_id):
         # Ottieni tutti i corsi per collegamento
         cursor.execute("SELECT * FROM corsi ORDER BY nome")
         corsi = cursor.fetchall()
-    
-    return render_template("dettaglio_contratto.html", 
-                          contratto=contratto, 
+
+        # Trova le fatture collegate tramite il nome del corso
+        fatture_collegate = []
+        if contratto['nome_corso']:
+            cursor.execute(f"""
+                SELECT numero_fattura, importo, data_fattura, tipo_fatturazione
+                FROM fatture
+                WHERE id_corso = {placeholder}
+                ORDER BY data_fattura
+            """, (contratto['nome_corso'],))
+            fatture_collegate = cursor.fetchall()
+
+    return render_template("dettaglio_contratto.html",
+                          contratto=contratto,
                           analysis=analysis,
                           corsi=corsi,
+                          fatture_collegate=fatture_collegate,
                           current_tab='altro')
 
 
@@ -654,11 +666,23 @@ def verifica_conformita(contratto_id):
                 row = cursor.fetchone()
                 ore_db_totali = round(float(row[0]), 2) if row and row[0] is not None else 0.0
 
+            # Fatture collegate (via nome corso)
+            fatture_collegate = []
+            if contratto['nome_corso']:
+                cursor.execute(f"""
+                    SELECT numero_fattura, importo, data_fattura, tipo_fatturazione
+                    FROM fatture
+                    WHERE id_corso = {placeholder}
+                    ORDER BY data_fattura
+                """, (contratto['nome_corso'],))
+                fatture_collegate = cursor.fetchall()
+
         return render_template("verifica_conformita.html",
                              contratto=contratto,
                              risultato=risultato,
                              ore_contratto_estratte=ore_contratto_estratte,
                              ore_db_totali=ore_db_totali,
+                             fatture_collegate=fatture_collegate,
                              current_tab='altro')
     
     except Exception as e:

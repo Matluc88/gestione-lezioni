@@ -63,6 +63,42 @@
         </div>
     </div>
 
+    <!-- Fatturazione -->
+    <div class="ios-card">
+        <div class="ios-card-header">
+            <h3 class="ios-card-title">💰 Fatturazione</h3>
+        </div>
+        <div class="ios-card-body">
+            {% if fatture_collegate %}
+                {% for f in fatture_collegate %}
+                <div style="display:flex; align-items:flex-start; gap:12px; padding:12px 0; border-bottom:1px solid var(--ios-separator);">
+                    <span style="font-size:22px; flex-shrink:0;">✅</span>
+                    <div>
+                        <div style="font-weight:600; font-size:15px; color:var(--ios-text-primary);">
+                            Fattura n. {{ f['numero_fattura'] }}
+                        </div>
+                        <div style="font-size:13px; color:var(--ios-text-secondary); margin-top:2px;">
+                            {{ f['data_fattura'] }} · €{{ "%.2f"|format(f['importo']) }} ·
+                            <span style="text-transform:capitalize;">{{ f['tipo_fatturazione'] }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="display:flex; align-items:center; gap:12px; padding:10px 0;">
+                    <span style="font-size:22px;">⚠️</span>
+                    <span style="font-size:15px; color:var(--ios-text-secondary);">
+                        {% if contratto.nome_corso %}
+                            Nessuna fattura emessa per il corso "{{ contratto.nome_corso }}"
+                        {% else %}
+                            Collega un corso per vedere le fatture associate
+                        {% endif %}
+                    </span>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
     <!-- Analisi AI -->
     <div class="ios-card analysis-card">
         <div class="ios-card-header" style="display:flex; justify-content:space-between; align-items:center;">
