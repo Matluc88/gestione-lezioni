@@ -38,16 +38,16 @@ def extract_text_from_pdf(file_path):
         print(f"Errore nell'estrazione del testo PDF: {e}")
         return ""
 
-def pdf_to_base64_images(file_path, max_pages=15):
-    """Converte PDF in immagini base64 per Claude Vision"""
+def pdf_to_base64_images(file_path, max_pages=20):
+    """Converte PDF in immagini base64 per Claude Vision (300 DPI per OCR ottimale)"""
     try:
-        # Converti PDF in immagini (max 15 pagine: info + calendario completo)
-        images = convert_from_path(file_path, first_page=1, last_page=max_pages)
+        # 300 DPI: indispensabile per leggere tabelle e numeri piccoli
+        images = convert_from_path(file_path, first_page=1, last_page=max_pages, dpi=300)
         
         base64_images = []
         for img in images:
-            # Ridimensiona se troppo grande
-            max_size = 1568
+            # Ridimensiona se troppo grande (max 2000px lato lungo)
+            max_size = 2000
             if img.width > max_size or img.height > max_size:
                 ratio = min(max_size / img.width, max_size / img.height)
                 new_size = (int(img.width * ratio), int(img.height * ratio))
@@ -64,32 +64,8 @@ def pdf_to_base64_images(file_path, max_pages=15):
         print(f"Errore nella conversione PDF in immagini: {e}")
         return None
 
-def analyze_contract_with_claude(text, pdf_path=None):
-    """Analizza il contratto con Claude AI (testo o immagini)
-    
-    Returns:
-        tuple: (analysis, extracted_text, error)
-    """
-    try:
-        api_key = os.environ.get('ANTHROPIC_API_KEY')
-        if not api_key:
-            return None, None, "Chiave API Anthropic non configurata"
-        
-        client = Anthropic(api_key=api_key)
-        
-        # Se il testo è vuoto o quasi, usa la visione di Claude
-        if (not text or len(text) < 50) and pdf_path:
-            print("📸 PDF scansionato rilevato, uso visione Claude...")
-            images = pdf_to_base64_images(pdf_path)
-            
-            if not images:
-                return None, None, "Impossibile convertire il PDF in immagini"
-            
-            # Unica chiamata ottimizzata
-            print("🤖 Analisi e estrazione con Claude...")
-            content = [{
-                "type": "text",
-                "text": """Sei un assistente esperto nell'estrazione di dati da contratti di formazione.
+# ----- Prompt unificato per l'analisi dei contratti -----
+_PROMPT_ANALISI_CONTRATTO = """Sei un assistente esperto nell'estrazione di dati da contratti di formazione italiani.
 
 ANALIZZA QUESTO CONTRATTO ED ESTRAI:
 
@@ -97,85 +73,127 @@ ANALIZZA QUESTO CONTRATTO ED ESTRAI:
 - Numero contratto / Codice corso
 - Cliente/studente
 - Periodo: data inizio e data fine
-- Ore totali previste
+- Ore totali previste (monte ore)
 - Compenso (orario o totale)
 - Materia/argomento del corso
 - Luogo di svolgimento
 
-## 2. CALENDARIO COMPLETO DELLE LEZIONI (FONDAMENTALE!)
+## 2. CALENDARIO COMPLETO DELLE LEZIONI (PRIORITÀ MASSIMA!)
 
-CERCA ATTENTAMENTE il "CALENDARIO" o "ALLEGATO A" nel documento.
-Per OGNI lezione del calendario, estrai:
-- Data della lezione (giorno/mese/anno)
-- Ora inizio e ora fine
-- Durata in ore
-- Eventuali note
+CERCA IN TUTTO IL DOCUMENTO sezioni chiamate "CALENDARIO", "ALLEGATO A", "PROGRAMMA", "PIANO DIDATTICO" o simili.
 
-Trascrivi il calendario in formato tabella chiaro come:
+Per OGNI lezione/giornata trovata, trascrivila in questo formato ESATTO:
 ```
 DATA | INIZIO | FINE | ORE | NOTE
-13/02/2026 | 09:00 | 13:00 | 4 | 
-...
+13/02/2026 | 09:00 | 13:00 | 4 |
+14/02/2026 | 14:00 | 18:00 | 4 |
 ```
 
-## 3. ALTRE INFORMAZIONI
+REGOLE IMPORTANTI:
+- Usa SEMPRE il formato DD/MM/YYYY per le date
+- Usa SEMPRE il formato HH:MM per gli orari (es. 09:00, non 9:00)
+- NON saltare nessuna riga del calendario
+- Se il calendario è su più pagine, trascrivi TUTTE le pagine
+- Se una data ha sessioni mattino + pomeriggio, trascrivile come righe separate
+
+## 3. RIEPILOGO
+- Totale lezioni nel calendario: N
+- Totale ore dal calendario: N
+
+## 4. ALTRE INFORMAZIONI
 - Clausole importanti
 - Modalità di pagamento
 - Referenti/contatti
 
-**IMPORTANTE**: Non saltare nessuna pagina del calendario anche se è lungo.
-Trascrivi TUTTE le date presenti.
-
 Rispondi in italiano in modo strutturato e completo."""
+
+
+def _testo_contiene_date(text):
+    """Verifica se il testo PyPDF2 contiene almeno 2 date italiane ben formate.
+    Se sì, il PDF è testuale e leggibile. Se no, serve Vision.
+    """
+    import re
+    if not text or len(text) < 100:
+        return False
+    pattern = r'\d{1,2}[/\-]\d{1,2}[/\-]\d{4}'
+    matches = re.findall(pattern, text)
+    return len(matches) >= 2
+
+
+def analyze_contract_with_claude(text, pdf_path=None, force_vision=False):
+    """Analizza il contratto con Claude AI.
+
+    Strategia:
+    - Se pdf_path disponibile E (force_vision OPPURE testo non contiene date):
+        → usa Vision (immagini PDF a 300 DPI) + eventuale testo come contesto
+    - Altrimenti:
+        → usa solo testo con prompt unificato e max_tokens=4096
+
+    Returns:
+        tuple: (analysis, extracted_text, error)
+    """
+    try:
+        api_key = os.environ.get('ANTHROPIC_API_KEY')
+        if not api_key:
+            return None, None, "Chiave API Anthropic non configurata"
+
+        client = Anthropic(api_key=api_key)
+
+        # Decide se usare Vision
+        usar_vision = pdf_path and (force_vision or not _testo_contiene_date(text))
+
+        if usar_vision:
+            print("📸 Uso Vision Claude (300 DPI) per OCR potenziato...")
+            images = pdf_to_base64_images(pdf_path)
+
+            if not images:
+                print("⚠️ Conversione PDF→immagini fallita, fallback al testo")
+                usar_vision = False
+            else:
+                prompt_text = _PROMPT_ANALISI_CONTRATTO
+
+                # Aggiungi il testo PyPDF2 come contesto se disponibile ma incompleto
+                if text and 50 < len(text) < 5000:
+                    prompt_text += (
+                        f"\n\nNOTA SISTEMA: Il layer testuale del PDF contiene il seguente testo "
+                        f"(potrebbe essere parziale o corrotto — usa le immagini per verificare):\n"
+                        f"---\n{text[:3000]}\n---"
+                    )
+
+                content = [{"type": "text", "text": prompt_text}]
+                for img_base64 in images:
+                    content.append({
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": "image/png",
+                            "data": img_base64
+                        }
+                    })
+
+                message = client.messages.create(
+                    model="claude-sonnet-4-5-20250929",
+                    max_tokens=6000,
+                    messages=[{"role": "user", "content": content}]
+                )
+                response = message.content[0].text
+                return response, response, None
+
+        # Percorso testuale (PDF nativo con testo leggibile)
+        if not text:
+            return None, None, "Nessun testo disponibile e nessun PDF fornito"
+
+        print("📝 Analisi testuale con Claude...")
+        message = client.messages.create(
+            model="claude-sonnet-4-5-20250929",
+            max_tokens=4096,
+            messages=[{
+                "role": "user",
+                "content": f"{_PROMPT_ANALISI_CONTRATTO}\n\nTESTO DEL CONTRATTO:\n\n{text}"
             }]
-            
-            for img_base64 in images:
-                content.append({
-                    "type": "image",
-                    "source": {
-                        "type": "base64",
-                        "media_type": "image/png",
-                        "data": img_base64
-                    }
-                })
-            
-            message = client.messages.create(
-                model="claude-sonnet-4-5-20250929",
-                max_tokens=6000,
-                messages=[{
-                    "role": "user",
-                    "content": content
-                }]
-            )
-            
-            response = message.content[0].text
-            
-            return response, response, None
-        else:
-            # Usa il testo estratto
-            message = client.messages.create(
-                model="claude-sonnet-4-5-20250929",
-                max_tokens=1024,
-                messages=[{
-                    "role": "user",
-                    "content": f"""Analizza questo contratto e estrai le seguenti informazioni chiave in formato strutturato:
-- Numero contratto (se presente)
-- Nome cliente/studente
-- Date (inizio, fine, durata)
-- Compenso (orario o totale)
-- Materie/argomenti
-- Numero ore previste
-- Altre informazioni rilevanti
+        )
+        return message.content[0].text, text, None
 
-Ecco il testo del contratto:
-
-{text}
-
-Rispondi in italiano in modo chiaro e strutturato."""
-                }]
-            )
-            
-            return message.content[0].text, text, None
     except Exception as e:
         return None, None, f"Errore nell'analisi con Claude: {str(e)}"
 
@@ -612,6 +630,48 @@ def verifica_conformita(contratto_id):
         return redirect(url_for('contratti.dettaglio_contratto', contratto_id=contratto_id))
 
 
+@contratti_bp.route("/contratti/<int:contratto_id>/rianalizza", methods=["POST"])
+@login_required
+def rianalizza_ocr(contratto_id):
+    """Forza ri-analisi OCR potenziata con Vision Claude a 300 DPI.
+    Aggiorna contenuto_estratto nel DB e restituisce il nuovo testo come JSON.
+    """
+    try:
+        with db_connection() as conn:
+            cursor = conn.cursor()
+            placeholder = get_placeholder()
+
+            cursor.execute(f"SELECT file_path FROM contratti WHERE id = {placeholder}", (contratto_id,))
+            contratto = cursor.fetchone()
+
+            if not contratto:
+                return jsonify({"success": False, "error": "Contratto non trovato"}), 404
+
+            if not contratto['file_path'] or not os.path.exists(contratto['file_path']):
+                return jsonify({"success": False, "error": "File PDF non trovato sul disco"}), 404
+
+            # Forza sempre Vision a 300 DPI
+            analysis, extracted_text, error = analyze_contract_with_claude(
+                "", pdf_path=contratto['file_path'], force_vision=True
+            )
+
+            if error:
+                return jsonify({"success": False, "error": error}), 500
+
+            # Aggiorna il DB con il nuovo testo estratto
+            cursor.execute(f"""
+                UPDATE contratti
+                SET contenuto_estratto = {placeholder}
+                WHERE id = {placeholder}
+            """, (extracted_text, contratto_id))
+            conn.commit()
+
+        return jsonify({"success": True, "analysis": analysis})
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 def estrai_ore_da_contratto(testo):
     """Cerca nel testo estratto il monte ore totale previsto dal contratto.
     
@@ -657,77 +717,110 @@ def estrai_ore_da_contratto(testo):
     return None
 
 
-def parse_calendario_da_contratto(contenuto_estratto):
-    """Estrae le lezioni dal calendario nel contenuto estratto"""
+# Mappa mesi italiani → numero
+_MESI_IT = {
+    'gennaio': '01', 'febbraio': '02', 'marzo': '03', 'aprile': '04',
+    'maggio': '05', 'giugno': '06', 'luglio': '07', 'agosto': '08',
+    'settembre': '09', 'ottobre': '10', 'novembre': '11', 'dicembre': '12',
+    'gen': '01', 'feb': '02', 'mar': '03', 'apr': '04',
+    'mag': '05', 'giu': '06', 'lug': '07', 'ago': '08',
+    'set': '09', 'ott': '10', 'nov': '11', 'dic': '12',
+}
+
+
+def _normalizza_data(data_str):
+    """Normalizza una stringa data in formato YYYY-MM-DD. Restituisce None se non riesce."""
     import re
-    from datetime import datetime as dt
-    
+    data_str = data_str.strip()
+
+    # DD/MM/YYYY o DD-MM-YYYY
+    m = re.match(r'^(\d{1,2})[/\-](\d{1,2})[/\-](\d{4})$', data_str)
+    if m:
+        g, me, a = m.group(1), m.group(2), m.group(3)
+        return f"{a}-{me.zfill(2)}-{g.zfill(2)}"
+
+    # "13 febbraio 2026" / "13 feb 2026"
+    m = re.match(r'^(\d{1,2})\s+([a-zà-ü]+)\s+(\d{4})$', data_str.lower())
+    if m:
+        g, nome_mese, a = m.group(1), m.group(2), m.group(3)
+        mese_num = _MESI_IT.get(nome_mese)
+        if mese_num:
+            return f"{a}-{mese_num}-{g.zfill(2)}"
+
+    return None
+
+
+def _normalizza_ora(ora_str):
+    """Normalizza stringa ora in HH:MM. Gestisce '9:00', '09:00', '0900'."""
+    import re
+    ora_str = ora_str.strip()
+    # già HH:MM
+    m = re.match(r'^(\d{1,2}):(\d{2})$', ora_str)
+    if m:
+        return f"{m.group(1).zfill(2)}:{m.group(2)}"
+    # formato 0900 / 900
+    m = re.match(r'^(\d{2,4})$', ora_str)
+    if m:
+        s = m.group(1).zfill(4)
+        return f"{s[:2]}:{s[2:]}"
+    return ora_str
+
+
+def parse_calendario_da_contratto(contenuto_estratto):
+    """Estrae le lezioni dal calendario nel contenuto estratto.
+    Prova una serie di pattern in ordine di affidabilità.
+    """
+    import re
+
     lezioni = []
-    
+
     if not contenuto_estratto:
         return lezioni
-    
-    # Pattern per trovare date in vari formati
-    # Pattern 1: DATA | ORA_INIZIO - ORA_FINE (contratti tipo 8195)
-    pattern_trattino = r'(\d{1,2}[/\-]\d{1,2}[/\-]\d{4})\s*\|\s*(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})'
-    # Pattern 2: DATA | ORA_INIZIO | ORA_FINE (contratti tipo 2684)
-    pattern_pipe = r'(\d{1,2}[/\-]\d{1,2}[/\-]\d{4})\s*\|\s*(\d{1,2}:\d{2})\s*\|\s*(\d{1,2}:\d{2})'
-    
-    # Prova prima con pattern trattino
-    matches = re.findall(pattern_trattino, contenuto_estratto)
-    
-    # Se non trova nulla, prova con pattern pipe
-    if not matches:
-        matches = re.findall(pattern_pipe, contenuto_estratto)
-    
-    for match in matches:
-        data_str, ora_inizio, ora_fine = match
-        
-        # Normalizza data in formato YYYY-MM-DD
-        try:
-            if '/' in data_str:
-                parti = data_str.split('/')
-            else:
-                parti = data_str.split('-')
-            
-            if len(parti) == 3:
-                giorno, mese, anno = parti
-                data_norm = f"{anno}-{mese.zfill(2)}-{giorno.zfill(2)}"
-                
-                lezioni.append({
-                    'data': data_norm,
-                    'ora_inizio': ora_inizio,
-                    'ora_fine': ora_fine
-                })
-        except:
-            continue
-    
-    # Se non trova pattern tabella, cerca date e orari nel testo
-    if not lezioni:
-        # Pattern alternativo: cerca "13/02/2026 09:00-13:00" o simili
-        pattern_alt = r'(\d{1,2}[/\-]\d{1,2}[/\-]\d{4})\s+(\d{1,2}:\d{2})\s*[-–]\s*(\d{1,2}:\d{2})'
-        matches_alt = re.findall(pattern_alt, contenuto_estratto)
-        
-        for match in matches_alt:
-            data_str, ora_inizio, ora_fine = match
-            try:
-                if '/' in data_str:
-                    parti = data_str.split('/')
-                else:
-                    parti = data_str.split('-')
-                
-                if len(parti) == 3:
-                    giorno, mese, anno = parti
-                    data_norm = f"{anno}-{mese.zfill(2)}-{giorno.zfill(2)}"
-                    
+
+    # ---- Lista di pattern (data_group, ora_inizio_group, ora_fine_group) ----
+    # Sep = separatore flessibile: spazio, tab, pipe, virgola, punto e virgola
+    SEP = r'[\s\t]*[|,;\t][\s\t]*'
+
+    PATTERNS = [
+        # 1. DATA | HH:MM - HH:MM   (trattino o en-dash tra orari)
+        r'(\d{1,2}[/\-]\d{1,2}[/\-]\d{4})' + SEP + r'(\d{1,2}:\d{2})\s*[-–]\s*(\d{1,2}:\d{2})',
+        # 2. DATA | HH:MM | HH:MM
+        r'(\d{1,2}[/\-]\d{1,2}[/\-]\d{4})' + SEP + r'(\d{1,2}:\d{2})' + SEP + r'(\d{1,2}:\d{2})',
+        # 3. DATA  HH:MM-HH:MM  (senza separatore pipe — es. "13/02/2026 09:00-13:00")
+        r'(\d{1,2}[/\-]\d{1,2}[/\-]\d{4})\s+(\d{1,2}:\d{2})\s*[-–]\s*(\d{1,2}:\d{2})',
+        # 4. DATA  HH:MM  HH:MM  (solo spazi, comune in export PDF tabellari)
+        r'(\d{1,2}[/\-]\d{1,2}[/\-]\d{4})\s+(\d{1,2}:\d{2})\s+(\d{1,2}:\d{2})',
+        # 5. "13 febbraio 2026 | 09:00 - 13:00" (mesi in italiano)
+        r'(\d{1,2}\s+[a-zàèéìòù]+\s+\d{4})' + SEP + r'(\d{1,2}:\d{2})\s*[-–]\s*(\d{1,2}:\d{2})',
+        # 6. Formato senza ":": "13/02/2026 | 0900 - 1300"
+        r'(\d{1,2}[/\-]\d{1,2}[/\-]\d{4})' + SEP + r'(\d{3,4})\s*[-–]\s*(\d{3,4})',
+    ]
+
+    seen = set()  # evita duplicati
+
+    for pattern in PATTERNS:
+        matches = re.findall(pattern, contenuto_estratto, re.IGNORECASE)
+        if matches:
+            for match in matches:
+                data_str, ora_i_raw, ora_f_raw = match
+                data_norm = _normalizza_data(data_str)
+                if not data_norm:
+                    continue
+                ora_i = _normalizza_ora(ora_i_raw)
+                ora_f = _normalizza_ora(ora_f_raw)
+
+                key = (data_norm, ora_i, ora_f)
+                if key not in seen:
+                    seen.add(key)
                     lezioni.append({
                         'data': data_norm,
-                        'ora_inizio': ora_inizio,
-                        'ora_fine': ora_fine
+                        'ora_inizio': ora_i,
+                        'ora_fine': ora_f
                     })
-            except:
-                continue
-    
+            # Se abbiamo trovato lezioni con questo pattern, usciamo
+            if lezioni:
+                break
+
     return lezioni
 
 

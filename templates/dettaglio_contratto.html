@@ -65,11 +65,20 @@
 
     <!-- Analisi AI -->
     <div class="ios-card analysis-card">
-        <div class="ios-card-header">
+        <div class="ios-card-header" style="display:flex; justify-content:space-between; align-items:center;">
             <h3 class="ios-card-title">🤖 Analisi AI</h3>
+            <button id="btnRianalizza" onclick="rianalizzaOCR()"
+                    style="background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.5);
+                           color:white; border-radius:20px; padding:6px 14px; font-size:13px;
+                           cursor:pointer; transition:all 0.2s;">
+                🔄 Ri-analizza
+            </button>
         </div>
         <div class="ios-card-body">
-            <div class="analysis-content">{{ analysis }}</div>
+            <div id="rianalizzaStatus" style="display:none; text-align:center; padding:10px 0; color:rgba(255,255,255,0.8); font-size:14px;">
+                ⏳ OCR in corso (300 DPI)… può richiedere 20-40 secondi
+            </div>
+            <div class="analysis-content" id="analysisContent">{{ analysis }}</div>
         </div>
     </div>
 
@@ -490,6 +499,51 @@ function removeLoadingIndicator(id) {
     const loading = document.getElementById(id);
     if (loading) {
         loading.remove();
+    }
+}
+
+async function rianalizzaOCR() {
+    const btn = document.getElementById('btnRianalizza');
+    const status = document.getElementById('rianalizzaStatus');
+    const content = document.getElementById('analysisContent');
+
+    btn.disabled = true;
+    btn.textContent = '⏳ In corso…';
+    status.style.display = 'block';
+    content.style.opacity = '0.4';
+
+    try {
+        const response = await fetch(`/contratti/${contrattoId}/rianalizza`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            content.textContent = data.analysis;
+            btn.textContent = '✅ Completato';
+            setTimeout(() => {
+                btn.textContent = '🔄 Ri-analizza';
+                btn.disabled = false;
+            }, 3000);
+        } else {
+            btn.textContent = '❌ Errore';
+            alert('Errore: ' + data.error);
+            btn.disabled = false;
+            btn.textContent = '🔄 Ri-analizza';
+        }
+    } catch (err) {
+        btn.textContent = '❌ Errore';
+        alert('Errore di connessione: ' + err.message);
+        btn.disabled = false;
+        btn.textContent = '🔄 Ri-analizza';
+    } finally {
+        status.style.display = 'none';
+        content.style.opacity = '1';
     }
 }
 </script>
