@@ -47,8 +47,21 @@
     <!-- ── Lista fatture ── -->
     {% if fatture %}
     <div class="ios-section-header">Fatture emesse ({{ fatture|length }})</div>
-    <div class="ios-list-group fatture-list">
-        {% for fattura in fatture %}
+
+    {% set current_year = namespace(value='') %}
+    {% set year_group = namespace(open=false) %}
+
+    {% for fattura in fatture %}
+        {% set anno = fattura['data_fattura'][:4] %}
+
+        {% if anno != current_year.value %}
+            {% if year_group.open %}</div>{% endif %}
+            {% set current_year.value = anno %}
+            {% set year_group.open = true %}
+            <div class="anno-header">{{ anno }}</div>
+            <div class="ios-list-group fatture-list">
+        {% endif %}
+
         <div class="fattura-item">
 
             <!-- Riga principale -->
@@ -94,7 +107,7 @@
 
         </div>
         {% endfor %}
-    </div>
+    {% if year_group.open %}</div>{% endif %}
 
     {% else %}
     <!-- Stato vuoto -->
@@ -278,6 +291,24 @@
     letter-spacing: 0.5px;
     color: var(--ios-text-secondary);
     padding: 16px 16px 6px;
+}
+
+/* ── Anno header ── */
+.anno-header {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--ios-text-primary);
+    padding: 16px 16px 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.anno-header::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--ios-separator);
+    margin-left: 4px;
 }
 
 /* ── Calendario ── */
