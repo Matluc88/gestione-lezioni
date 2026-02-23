@@ -617,6 +617,29 @@ def verifica_conformita(contratto_id):
             # Confronta e categorizza
             risultato = confronta_lezioni(lezioni_contratto, lezioni_db)
 
+            # --- Carica lezioni rinunciate per questo contratto ---
+            _ensure_lezioni_rinunciate_table(cursor)
+            cursor.execute(f"""
+                SELECT data, ora_inizio, ora_fine FROM lezioni_rinunciate
+                WHERE id_contratto = {placeholder}
+            """, (contratto_id,))
+            rinunciate_set = {
+                (r['data'], r['ora_inizio'], r['ora_fine'])
+                for r in cursor.fetchall()
+            }
+
+            # Separa da_aggiungere in "da aggiungere" e "rinunciate"
+            da_aggiungere_effettive = []
+            lezioni_rinunciate_list = []
+            for lez in risultato['da_aggiungere']:
+                key = (lez['data'], lez['ora_inizio'], lez['ora_fine'])
+                if key in rinunciate_set:
+                    lezioni_rinunciate_list.append(lez)
+                else:
+                    da_aggiungere_effettive.append(lez)
+            risultato['da_aggiungere'] = da_aggiungere_effettive
+            risultato['rinunciate'] = lezioni_rinunciate_list
+
             # --- Fallback ore totali quando nessun calendario trovato ---
             ore_contratto_estratte = None
             ore_db_totali = None
@@ -641,6 +664,101 @@ def verifica_conformita(contratto_id):
     except Exception as e:
         flash(f"❌ Errore durante la verifica: {str(e)}", "danger")
         return redirect(url_for('contratti.dettaglio_contratto', contratto_id=contratto_id))
+
+
+def _ensure_lezioni_rinunciate_table(cursor):
+    """Crea la tabella lezioni_rinunciate se non esiste (compatibile SQLite e PostgreSQL)"""
+    if get_placeholder() == "%s":  # PostgreSQL
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS lezioni_rinunciate (
+                id SERIAL PRIMARY KEY,
+                id_contratto INTEGER NOT NULL,
+                data VARCHAR(10) NOT NULL,
+                ora_inizio VARCHAR(5) NOT NULL,
+                ora_fine VARCHAR(5) NOT NULL,
+                data_rinuncia TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(id_contratto, data, ora_inizio, ora_fine)
+            )
+        """)
+    else:  # SQLite
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS lezioni_rinunciate (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id_contratto INTEGER NOT NULL,
+                data VARCHAR(10) NOT NULL,
+                ora_inizio VARCHAR(5) NOT NULL,
+                ora_fine VARCHAR(5) NOT NULL,
+                data_rinuncia TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(id_contratto, data, ora_inizio, ora_fine)
+            )
+        """)
+
+
+@contratti_bp.route("/contratti/<int:contratto_id>/segna-rinunciata", methods=["POST"])
+@login_required
+def segna_rinunciata(contratto_id):
+    """Marca una lezione del contratto come rinunciata (foglio rinuncia)"""
+    try:
+        data = request.json
+        data_lez = data.get('data', '').strip()
+        ora_inizio = data.get('ora_inizio', '').strip()
+        ora_fine = data.get('ora_fine', '').strip()
+
+        if not data_lez or not ora_inizio or not ora_fine:
+            return jsonify({"success": False, "error": "Dati mancanti"}), 400
+
+        with db_connection() as conn:
+            cursor = conn.cursor()
+            placeholder = get_placeholder()
+            _ensure_lezioni_rinunciate_table(cursor)
+
+            try:
+                cursor.execute(f"""
+                    INSERT INTO lezioni_rinunciate (id_contratto, data, ora_inizio, ora_fine)
+                    VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder})
+                """, (contratto_id, data_lez, ora_inizio, ora_fine))
+            except Exception:
+                pass  # Già presente (UNIQUE constraint)
+
+            conn.commit()
+
+        return jsonify({"success": True})
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@contratti_bp.route("/contratti/<int:contratto_id>/rimuovi-rinuncia", methods=["POST"])
+@login_required
+def rimuovi_rinuncia(contratto_id):
+    """Rimuove la marcatura 'rinunciata' da una lezione del contratto"""
+    try:
+        data = request.json
+        data_lez = data.get('data', '').strip()
+        ora_inizio = data.get('ora_inizio', '').strip()
+        ora_fine = data.get('ora_fine', '').strip()
+
+        if not data_lez or not ora_inizio or not ora_fine:
+            return jsonify({"success": False, "error": "Dati mancanti"}), 400
+
+        with db_connection() as conn:
+            cursor = conn.cursor()
+            placeholder = get_placeholder()
+            _ensure_lezioni_rinunciate_table(cursor)
+
+            cursor.execute(f"""
+                DELETE FROM lezioni_rinunciate
+                WHERE id_contratto = {placeholder}
+                  AND data = {placeholder}
+                  AND ora_inizio = {placeholder}
+                  AND ora_fine = {placeholder}
+            """, (contratto_id, data_lez, ora_inizio, ora_fine))
+            conn.commit()
+
+        return jsonify({"success": True})
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @contratti_bp.route("/contratti/<int:contratto_id>/rianalizza", methods=["POST"])

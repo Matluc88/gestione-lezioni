@@ -37,23 +37,29 @@
             <div class="summary-number">{{ risultato.conformi|length }}</div>
             <div class="summary-label">Conformi</div>
         </div>
-        
+
         <div class="summary-card warning">
             <div class="summary-icon">⚠️</div>
-            <div class="summary-number">{{ risultato.da_aggiungere|length }}</div>
+            <div class="summary-number" id="count-da-aggiungere">{{ risultato.da_aggiungere|length }}</div>
             <div class="summary-label">Da Aggiungere</div>
         </div>
-        
+
         <div class="summary-card info">
             <div class="summary-icon">ℹ️</div>
             <div class="summary-number">{{ risultato.extra_db|length }}</div>
             <div class="summary-label">Extra in DB</div>
         </div>
-        
+
         <div class="summary-card danger">
             <div class="summary-icon">🔄</div>
             <div class="summary-number">{{ risultato.differenze_orari|length }}</div>
             <div class="summary-label">Differenze Orari</div>
+        </div>
+
+        <div class="summary-card rinuncia">
+            <div class="summary-icon">🔕</div>
+            <div class="summary-number" id="count-rinunciate">{{ risultato.rinunciate|length }}</div>
+            <div class="summary-label">Rinunciate</div>
         </div>
     </div>
 
@@ -92,24 +98,61 @@
 
     <!-- Lezioni Da Aggiungere -->
     {% if risultato.da_aggiungere %}
-    <div class="ios-card">
+    <div class="ios-card" id="card-da-aggiungere">
         <div class="ios-card-header" style="background-color: #ff9500; color: white;">
-            <h3 class="ios-card-title">⚠️ Da Aggiungere al Database ({{ risultato.da_aggiungere|length }})</h3>
+            <h3 class="ios-card-title">⚠️ Da Aggiungere al Database (<span id="hdr-count-da-aggiungere">{{ risultato.da_aggiungere|length }}</span>)</h3>
         </div>
         <div class="ios-card-body">
-            <p class="info-text">Queste lezioni sono presenti nel contratto ma non nel database:</p>
-            <div class="lezioni-list">
+            <p class="info-text">Queste lezioni sono presenti nel contratto ma non nel database. Se coperte da foglio rinuncia, premi 🔕.</p>
+            <div class="lezioni-list" id="list-da-aggiungere">
                 {% for lez in risultato.da_aggiungere %}
-                <div class="lezione-item warning">
-                    <div class="lezione-date">{{ lez.data }}</div>
-                    <div class="lezione-orario">{{ lez.ora_inizio }} - {{ lez.ora_fine }}</div>
-                    <div class="lezione-status">→ Mancante</div>
+                <div class="lezione-item warning" id="lez-{{ lez.data }}-{{ lez.ora_inizio|replace(':', '') }}-{{ lez.ora_fine|replace(':', '') }}">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+                        <div>
+                            <div class="lezione-date">{{ lez.data }}</div>
+                            <div class="lezione-orario">{{ lez.ora_inizio }} - {{ lez.ora_fine }}</div>
+                            <div class="lezione-status">→ Mancante</div>
+                        </div>
+                        <button class="btn-rinuncia"
+                                onclick="segnaRinunciata('{{ lez.data }}', '{{ lez.ora_inizio }}', '{{ lez.ora_fine }}')"
+                                title="Segna come rinunciata">
+                            🔕
+                        </button>
+                    </div>
                 </div>
                 {% endfor %}
             </div>
         </div>
     </div>
     {% endif %}
+
+    <!-- Lezioni Rinunciate -->
+    <div class="ios-card" id="card-rinunciate" {% if not risultato.rinunciate %}style="display:none;"{% endif %}>
+        <div class="ios-card-header" style="background-color: #8e8e93; color: white;">
+            <h3 class="ios-card-title">🔕 Ore Rinunciate (<span id="hdr-count-rinunciate">{{ risultato.rinunciate|length }}</span>)</h3>
+        </div>
+        <div class="ios-card-body">
+            <p class="info-text">Queste lezioni sono state marcate come rinunciate (foglio rinuncia). Premi ↩️ per riportarle tra le mancanti.</p>
+            <div class="lezioni-list" id="list-rinunciate">
+                {% for lez in risultato.rinunciate %}
+                <div class="lezione-item rinunciata" id="rin-{{ lez.data }}-{{ lez.ora_inizio|replace(':', '') }}-{{ lez.ora_fine|replace(':', '') }}">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+                        <div>
+                            <div class="lezione-date" style="text-decoration:line-through; color: var(--ios-text-secondary);">{{ lez.data }}</div>
+                            <div class="lezione-orario">{{ lez.ora_inizio }} - {{ lez.ora_fine }}</div>
+                            <div class="lezione-status" style="color:#8e8e93;">🔕 Rinunciata</div>
+                        </div>
+                        <button class="btn-riattiva"
+                                onclick="rimuoviRinuncia('{{ lez.data }}', '{{ lez.ora_inizio }}', '{{ lez.ora_fine }}')"
+                                title="Riporta tra le mancanti">
+                            ↩️
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
 
     <!-- Lezioni Extra nel Database -->
     {% if risultato.extra_db %}
@@ -171,7 +214,6 @@
     {% if ore_contratto_estratte is not none %}
         {% set scarto = ((ore_db_totali - ore_contratto_estratte) | abs) %}
         {% if scarto <= 1.0 %}
-        <!-- CONFORME -->
         <div class="ios-card ore-card ore-card--ok">
             <div class="ios-card-header ore-card-header ore-card-header--ok">
                 <h3 class="ios-card-title">✅ Calendario non presente — Monte ore conforme</h3>
@@ -195,7 +237,6 @@
             </div>
         </div>
         {% else %}
-        <!-- NON CONFORME -->
         <div class="ios-card ore-card ore-card--warn">
             <div class="ios-card-header ore-card-header ore-card-header--warn">
                 <h3 class="ios-card-title">⚠️ Calendario non presente — Monte ore NON conforme</h3>
@@ -204,7 +245,6 @@
                 <p class="info-text">
                     Il contratto non contiene un calendario dettagliato, e il
                     <strong>monte ore risulta diverso</strong> rispetto a quello registrato nel database.
-                    Controlla se mancano lezioni o se il contratto è stato aggiornato.
                 </p>
                 <div class="ore-compare-grid">
                     <div class="ore-compare-item">
@@ -217,21 +257,18 @@
                         <div class="ore-compare-value">{{ ore_db_totali }} h</div>
                     </div>
                 </div>
-                <div class="ore-scarto">
-                    Scarto: <strong>{{ scarto | round(1) }} h</strong>
-                </div>
+                <div class="ore-scarto">Scarto: <strong>{{ scarto | round(1) }} h</strong></div>
             </div>
         </div>
         {% endif %}
     {% else %}
-    <!-- Nessuna info trovata -->
     <div class="ios-card">
         <div class="ios-card-body" style="text-align: center; padding: 40px 20px;">
             <div style="font-size: 48px; margin-bottom: 15px;">📭</div>
             <h3>Calendario e monte ore non trovati</h3>
             <p style="color: var(--ios-text-secondary); margin-top: 10px;">
-                Il sistema non è riuscito a trovare né un calendario né le ore totali nel testo estratto
-                dal contratto. Verifica che il PDF sia stato analizzato correttamente.
+                Il sistema non è riuscito a trovare né un calendario né le ore totali.
+                Verifica che il PDF sia stato analizzato correttamente.
             </p>
         </div>
     </div>
@@ -241,12 +278,12 @@
     <!-- Azioni -->
     <div class="ios-card">
         <div class="ios-card-body">
-            <a href="{{ url_for('contratti.dettaglio_contratto', contratto_id=contratto.id) }}" 
+            <a href="{{ url_for('contratti.dettaglio_contratto', contratto_id=contratto.id) }}"
                class="ios-button ios-button-primary ios-button-block"
                style="margin-bottom: 12px;">
                 ← Torna al Contratto
             </a>
-            <a href="{{ url_for('contratti.nuovo_contratto') }}" 
+            <a href="{{ url_for('contratti.nuovo_contratto') }}"
                class="ios-button ios-button-secondary ios-button-block">
                 📤 Carica altro contratto
             </a>
@@ -255,33 +292,14 @@
 </div>
 
 <style>
-.info-grid {
-    display: grid;
-    gap: 12px;
-}
-
+.info-grid { display: grid; gap: 12px; }
 .info-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--ios-separator);
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0; border-bottom: 1px solid var(--ios-separator);
 }
-
-.info-item:last-child {
-    border-bottom: none;
-}
-
-.info-label {
-    font-size: 15px;
-    color: var(--ios-text-secondary);
-}
-
-.info-value {
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--ios-text-primary);
-}
+.info-item:last-child { border-bottom: none; }
+.info-label { font-size: 15px; color: var(--ios-text-secondary); }
+.info-value { font-size: 15px; font-weight: 600; color: var(--ios-text-primary); }
 
 .summary-grid {
     display: grid;
@@ -289,7 +307,6 @@
     gap: 15px;
     margin: 20px 0;
 }
-
 .summary-card {
     background: white;
     border-radius: var(--radius-lg);
@@ -297,261 +314,192 @@
     text-align: center;
     box-shadow: var(--shadow-sm);
 }
+.summary-card.success  { border-left: 4px solid #34c759; }
+.summary-card.warning  { border-left: 4px solid #ff9500; }
+.summary-card.info     { border-left: 4px solid #5ac8fa; }
+.summary-card.danger   { border-left: 4px solid #ff3b30; }
+.summary-card.rinuncia { border-left: 4px solid #8e8e93; }
 
-.summary-card.success {
-    border-left: 4px solid #34c759;
-}
-
-.summary-card.warning {
-    border-left: 4px solid #ff9500;
-}
-
-.summary-card.info {
-    border-left: 4px solid #5ac8fa;
-}
-
-.summary-card.danger {
-    border-left: 4px solid #ff3b30;
-}
-
-.summary-icon {
-    font-size: 32px;
-    margin-bottom: 8px;
-}
-
-.summary-number {
-    font-size: 28px;
-    font-weight: 700;
-    color: var(--ios-text-primary);
-    margin-bottom: 4px;
-}
-
-.summary-label {
-    font-size: 13px;
-    color: var(--ios-text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
+.summary-icon   { font-size: 32px; margin-bottom: 8px; }
+.summary-number { font-size: 28px; font-weight: 700; color: var(--ios-text-primary); margin-bottom: 4px; }
+.summary-label  { font-size: 13px; color: var(--ios-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
 
 .info-text {
-    font-size: 14px;
-    color: var(--ios-text-secondary);
-    margin-bottom: 15px;
-    padding: 10px;
-    background-color: var(--ios-background);
-    border-radius: var(--radius-md);
+    font-size: 14px; color: var(--ios-text-secondary);
+    margin-bottom: 15px; padding: 10px;
+    background-color: var(--ios-background); border-radius: var(--radius-md);
 }
-
-.lezioni-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
+.lezioni-list { display: flex; flex-direction: column; gap: 10px; }
 .lezione-item {
-    padding: 15px;
-    border-radius: var(--radius-md);
-    background-color: var(--ios-background);
-    border-left: 4px solid var(--ios-separator);
+    padding: 15px; border-radius: var(--radius-md);
+    background-color: var(--ios-background); border-left: 4px solid var(--ios-separator);
 }
+.lezione-item.conforme   { border-left-color: #34c759; background-color: #f0fdf4; }
+.lezione-item.warning    { border-left-color: #ff9500; background-color: #fff7ed; }
+.lezione-item.info       { border-left-color: #5ac8fa; background-color: #f0f9ff; }
+.lezione-item.danger     { border-left-color: #ff3b30; background-color: #fef2f2; }
+.lezione-item.rinunciata { border-left-color: #8e8e93; background-color: #f5f5f7; opacity: 0.8; }
 
-.lezione-item.conforme {
-    border-left-color: #34c759;
-    background-color: #f0fdf4;
-}
-
-.lezione-item.warning {
-    border-left-color: #ff9500;
-    background-color: #fff7ed;
-}
-
-.lezione-item.info {
-    border-left-color: #5ac8fa;
-    background-color: #f0f9ff;
-}
-
-.lezione-item.danger {
-    border-left-color: #ff3b30;
-    background-color: #fef2f2;
-}
-
-.lezione-date {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--ios-text-primary);
-    margin-bottom: 5px;
-}
-
-.lezione-orario {
-    font-size: 14px;
-    color: var(--ios-text-secondary);
-}
-
-.lezione-status-container {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 5px;
-    flex-wrap: wrap;
-}
-
-.lezione-status {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--ios-blue);
-}
+.lezione-date   { font-size: 16px; font-weight: 600; color: var(--ios-text-primary); margin-bottom: 5px; }
+.lezione-orario { font-size: 14px; color: var(--ios-text-secondary); }
+.lezione-status-container { display: flex; align-items: center; gap: 8px; margin-top: 5px; flex-wrap: wrap; }
+.lezione-status { font-size: 13px; font-weight: 600; color: var(--ios-blue); }
 
 .badge-suddiviso {
-    display: inline-block;
-    padding: 3px 8px;
-    background-color: #fff3cd;
-    color: #856404;
-    border: 1px solid #ffeaa7;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 600;
-    cursor: help;
+    display: inline-block; padding: 3px 8px;
+    background-color: #fff3cd; color: #856404;
+    border: 1px solid #ffeaa7; border-radius: 12px;
+    font-size: 11px; font-weight: 600; cursor: help;
 }
-
 .lezione-suddivisione {
-    margin-top: 10px;
-    padding: 10px;
-    background-color: rgba(255, 255, 255, 0.5);
-    border-radius: var(--radius-sm);
-    border-left: 2px solid #ffd60a;
+    margin-top: 10px; padding: 10px;
+    background-color: rgba(255,255,255,0.5);
+    border-radius: var(--radius-sm); border-left: 2px solid #ffd60a;
 }
+.lezione-suddivisione small { display: block; font-size: 12px; color: var(--ios-text-secondary); margin-bottom: 5px; font-weight: 600; }
+.sub-lezione { font-size: 13px; color: var(--ios-text-primary); padding: 3px 0; margin-left: 5px; }
 
-.lezione-suddivisione small {
-    display: block;
-    font-size: 12px;
-    color: var(--ios-text-secondary);
-    margin-bottom: 5px;
-    font-weight: 600;
+.lezione-header { font-size: 16px; margin-bottom: 10px; }
+.lezione-compare { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.compare-side { flex: 1; }
+.compare-label { font-size: 12px; color: var(--ios-text-secondary); margin-bottom: 4px; }
+.compare-value { font-size: 14px; font-weight: 600; color: var(--ios-text-primary); }
+.compare-separator { font-size: 20px; font-weight: bold; color: #ff3b30; }
+
+/* Pulsanti rinuncia */
+.btn-rinuncia, .btn-riattiva {
+    background: none; border: 1px solid var(--ios-separator);
+    border-radius: 8px; padding: 6px 10px;
+    font-size: 20px; cursor: pointer;
+    transition: all 0.2s; flex-shrink: 0;
 }
+.btn-rinuncia:hover { background-color: #f0fdf4; border-color: #8e8e93; }
+.btn-riattiva:hover { background-color: #fff7ed; border-color: #ff9500; }
 
-.sub-lezione {
-    font-size: 13px;
-    color: var(--ios-text-primary);
-    padding: 3px 0;
-    margin-left: 5px;
-}
-
-.lezione-header {
-    font-size: 16px;
-    margin-bottom: 10px;
-}
-
-.lezione-compare {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-}
-
-.compare-side {
-    flex: 1;
-}
-
-.compare-label {
-    font-size: 12px;
-    color: var(--ios-text-secondary);
-    margin-bottom: 4px;
-}
-
-.compare-value {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--ios-text-primary);
-}
-
-.compare-separator {
-    font-size: 20px;
-    font-weight: bold;
-    color: #ff3b30;
-}
-
-/* ── Blocco confronto monte ore (quando calendario assente) ── */
-.ore-card-header--ok {
-    background-color: #34c759 !important;
-    color: white;
-}
-
-.ore-card-header--warn {
-    background-color: #ff9500 !important;
-    color: white;
-}
-
+/* ── Monte ore ── */
+.ore-card-header--ok   { background-color: #34c759 !important; color: white; }
+.ore-card-header--warn { background-color: #ff9500 !important; color: white; }
 .ore-compare-grid {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
-    padding: 20px 10px;
+    display: flex; align-items: center; justify-content: center;
+    gap: 20px; padding: 20px 10px;
 }
-
-.ore-compare-item {
-    text-align: center;
-    flex: 1;
-}
-
-.ore-compare-label {
-    font-size: 13px;
-    color: var(--ios-text-secondary);
-    margin-bottom: 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.ore-compare-value {
-    font-size: 36px;
-    font-weight: 700;
-    color: var(--ios-text-primary);
-}
-
-.ore-compare-sep {
-    font-size: 28px;
-    font-weight: 700;
-    color: #34c759;
-    flex: 0;
-    padding: 0 5px;
-}
-
-.ore-compare-sep--diff {
-    color: #ff3b30;
-}
-
-.ore-scarto {
-    margin-top: 12px;
-    padding: 10px 14px;
-    background-color: #fff3cd;
-    border-radius: var(--radius-md);
-    font-size: 14px;
-    color: #856404;
-    text-align: center;
-}
+.ore-compare-item { text-align: center; flex: 1; }
+.ore-compare-label { font-size: 13px; color: var(--ios-text-secondary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+.ore-compare-value { font-size: 36px; font-weight: 700; color: var(--ios-text-primary); }
+.ore-compare-sep { font-size: 28px; font-weight: 700; color: #34c759; flex: 0; padding: 0 5px; }
+.ore-compare-sep--diff { color: #ff3b30; }
+.ore-scarto { margin-top: 12px; padding: 10px 14px; background-color: #fff3cd; border-radius: var(--radius-md); font-size: 14px; color: #856404; text-align: center; }
 
 @media (max-width: 768px) {
-    .summary-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .lezione-compare {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .compare-separator {
-        text-align: center;
-        margin: 10px 0;
-    }
-
-    .ore-compare-grid {
-        gap: 12px;
-    }
-
-    .ore-compare-value {
-        font-size: 28px;
-    }
+    .summary-grid { grid-template-columns: 1fr; }
+    .lezione-compare { flex-direction: column; align-items: stretch; }
+    .compare-separator { text-align: center; margin: 10px 0; }
+    .ore-compare-grid { gap: 12px; }
+    .ore-compare-value { font-size: 28px; }
 }
 </style>
+
+<script>
+const CONTRATTO_ID = {{ contratto.id }};
+const CSRF = '{{ csrf_token() }}';
+
+function _lezId(data, oi, of) {
+    return `lez-${data}-${oi.replace(':','')}-${of.replace(':','')}`;
+}
+function _rinId(data, oi, of) {
+    return `rin-${data}-${oi.replace(':','')}-${of.replace(':','')}`;
+}
+
+async function segnaRinunciata(data, ora_inizio, ora_fine) {
+    const res = await fetch(`/contratti/${CONTRATTO_ID}/segna-rinunciata`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+        body: JSON.stringify({ data, ora_inizio, ora_fine })
+    });
+    const json = await res.json();
+    if (!json.success) { alert('Errore: ' + json.error); return; }
+
+    // Rimuovi dalla lista "Da Aggiungere"
+    const itemDa = document.getElementById(_lezId(data, ora_inizio, ora_fine));
+    if (itemDa) itemDa.remove();
+
+    // Aggiorna contatori
+    _cambiaContatore('count-da-aggiungere', -1);
+    _cambiaContatore('hdr-count-da-aggiungere', -1);
+    _cambiaContatore('count-rinunciate', +1);
+    _cambiaContatore('hdr-count-rinunciate', +1);
+
+    // Aggiungi alla lista "Rinunciate"
+    const listRin = document.getElementById('list-rinunciate');
+    const cardRin = document.getElementById('card-rinunciate');
+    if (listRin) {
+        const div = document.createElement('div');
+        div.className = 'lezione-item rinunciata';
+        div.id = _rinId(data, ora_inizio, ora_fine);
+        div.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+                <div>
+                    <div class="lezione-date" style="text-decoration:line-through; color: var(--ios-text-secondary);">${data}</div>
+                    <div class="lezione-orario">${ora_inizio} - ${ora_fine}</div>
+                    <div class="lezione-status" style="color:#8e8e93;">🔕 Rinunciata</div>
+                </div>
+                <button class="btn-riattiva" onclick="rimuoviRinuncia('${data}','${ora_inizio}','${ora_fine}')" title="Riporta tra le mancanti">↩️</button>
+            </div>`;
+        listRin.appendChild(div);
+        if (cardRin) cardRin.style.display = '';
+    }
+}
+
+async function rimuoviRinuncia(data, ora_inizio, ora_fine) {
+    const res = await fetch(`/contratti/${CONTRATTO_ID}/rimuovi-rinuncia`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+        body: JSON.stringify({ data, ora_inizio, ora_fine })
+    });
+    const json = await res.json();
+    if (!json.success) { alert('Errore: ' + json.error); return; }
+
+    // Rimuovi dalla lista "Rinunciate"
+    const itemRin = document.getElementById(_rinId(data, ora_inizio, ora_fine));
+    if (itemRin) itemRin.remove();
+
+    // Aggiorna contatori
+    _cambiaContatore('count-rinunciate', -1);
+    _cambiaContatore('hdr-count-rinunciate', -1);
+    _cambiaContatore('count-da-aggiungere', +1);
+    _cambiaContatore('hdr-count-da-aggiungere', +1);
+
+    // Nascondi card rinunciate se vuota
+    const listRin = document.getElementById('list-rinunciate');
+    const cardRin = document.getElementById('card-rinunciate');
+    if (listRin && cardRin && listRin.children.length === 0) {
+        cardRin.style.display = 'none';
+    }
+
+    // Aggiungi di nuovo a "Da Aggiungere"
+    const listDa = document.getElementById('list-da-aggiungere');
+    const cardDa = document.getElementById('card-da-aggiungere');
+    if (listDa) {
+        const div = document.createElement('div');
+        div.className = 'lezione-item warning';
+        div.id = _lezId(data, ora_inizio, ora_fine);
+        div.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+                <div>
+                    <div class="lezione-date">${data}</div>
+                    <div class="lezione-orario">${ora_inizio} - ${ora_fine}</div>
+                    <div class="lezione-status">→ Mancante</div>
+                </div>
+                <button class="btn-rinuncia" onclick="segnaRinunciata('${data}','${ora_inizio}','${ora_fine}')" title="Segna come rinunciata">🔕</button>
+            </div>`;
+        listDa.appendChild(div);
+        if (cardDa) cardDa.style.display = '';
+    }
+}
+
+function _cambiaContatore(id, delta) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = Math.max(0, parseInt(el.textContent || '0') + delta);
+}
+</script>
 {% endblock %}
