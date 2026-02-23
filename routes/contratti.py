@@ -39,29 +39,42 @@ def extract_text_from_pdf(file_path):
         return ""
 
 def pdf_to_base64_images(file_path, max_pages=20):
-    """Converte PDF in immagini base64 per Claude Vision (300 DPI per OCR ottimale)"""
+    """Converte PDF in immagini base64 per Claude Vision.
+    Usa 300 DPI per OCR preciso e JPEG (qualità 92) per ridurre RAM e payload.
+    """
+    import gc
     try:
-        # 300 DPI: indispensabile per leggere tabelle e numeri piccoli
         images = convert_from_path(file_path, first_page=1, last_page=max_pages, dpi=300)
-        
+
         base64_images = []
         for img in images:
-            # Ridimensiona se troppo grande (max 2000px lato lungo)
-            max_size = 2000
+            # Ridimensiona se troppo grande (1568px è il limite consigliato da Anthropic)
+            max_size = 1568
             if img.width > max_size or img.height > max_size:
                 ratio = min(max_size / img.width, max_size / img.height)
                 new_size = (int(img.width * ratio), int(img.height * ratio))
                 img = img.resize(new_size, Image.Resampling.LANCZOS)
-            
-            # Converti in base64
+
+            # Converti in JPEG (60-70% meno RAM rispetto a PNG, qualità ottima per OCR)
+            if img.mode in ('RGBA', 'P'):
+                img = img.convert('RGB')
             buffered = BytesIO()
-            img.save(buffered, format="PNG")
+            img.save(buffered, format="JPEG", quality=92, optimize=True)
             img_str = base64.b64encode(buffered.getvalue()).decode()
             base64_images.append(img_str)
-        
+
+            # Libera subito la memoria dell'immagine
+            img.close()
+            buffered.close()
+
+        # Pulizia esplicita della lista immagini originali
+        del images
+        gc.collect()
+
         return base64_images
     except Exception as e:
         print(f"Errore nella conversione PDF in immagini: {e}")
+        gc.collect()
         return None
 
 # ----- Prompt unificato per l'analisi dei contratti -----
@@ -166,7 +179,7 @@ def analyze_contract_with_claude(text, pdf_path=None, force_vision=False):
                         "type": "image",
                         "source": {
                             "type": "base64",
-                            "media_type": "image/png",
+                            "media_type": "image/jpeg",
                             "data": img_base64
                         }
                     })
