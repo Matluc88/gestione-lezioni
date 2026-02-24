@@ -149,9 +149,11 @@
                     <tbody>
                         {% for c in d.corsi %}
                         <tr>
-                            <td style="padding:5px 6px; color:var(--ios-blue); font-weight:600; border-bottom:0.5px solid var(--ios-separator);">{{ c.get('codice', '—') }}</td>
-                            <td style="padding:5px 6px; color:var(--ios-text-primary); border-bottom:0.5px solid var(--ios-separator);">{{ c.get('nome', '—') }}</td>
-                            <td style="padding:5px 6px; text-align:right; font-weight:600; color:var(--ios-text-primary); border-bottom:0.5px solid var(--ios-separator);">{{ c.get('ore', '—') }}h</td>
+                            <td style="padding:5px 6px; color:var(--ios-blue); font-weight:600; border-bottom:0.5px solid var(--ios-separator);">{{ c.get('codice') or '—' }}</td>
+                            <td style="padding:5px 6px; color:var(--ios-text-primary); border-bottom:0.5px solid var(--ios-separator);">{{ c.get('nome') or '—' }}</td>
+                            <td style="padding:5px 6px; text-align:right; font-weight:600; color:var(--ios-text-primary); border-bottom:0.5px solid var(--ios-separator);">
+                                {% if c.get('ore') is not none and c.get('ore') != '' %}{{ c.get('ore') }}h{% else %}—{% endif %}
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>

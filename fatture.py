@@ -906,10 +906,17 @@ def verifica_fattura_ai(id_fattura):
 
         if corsi_ai and isinstance(corsi_ai, list) and len(corsi_ai) > 1:
             # Fattura multi-corso: mostra riepilogo info
+            ore_totale_corsi = sum(float(c.get('ore') or 0) for c in corsi_ai)
+            # Riepilogo: mostra le ore solo se disponibili nel PDF
             riepilogo_corsi = ' · '.join(
-                f"{c.get('codice','?')} ({c.get('ore','?')}h)" for c in corsi_ai
+                f"{c.get('codice','?')} ({c.get('ore')}h)" if c.get('ore') else f"{c.get('codice','?')}"
+                for c in corsi_ai
             )
-            ore_totale_corsi = sum(float(c.get('ore', 0) or 0) for c in corsi_ai)
+            # Ore totali nel messaggio: solo se disponibili
+            if ore_totale_corsi > 0:
+                ore_info = f', {ore_totale_corsi:.0f}h totali'
+            else:
+                ore_info = ' (ore non specificate nel PDF)'
             # Mostra tutti i corsi del DB, non solo id_corso principale
             db_corsi_str = ' · '.join(corsi_in_fattura) if corsi_in_fattura else id_corso_db
             checks.append({
@@ -917,7 +924,7 @@ def verifica_fattura_ai(id_fattura):
                 'stato': 'info',
                 'ai': f"{len(corsi_ai)} corsi",
                 'db': db_corsi_str,
-                'messaggio': f'Fattura multi-corso ({len(corsi_ai)} corsi, {ore_totale_corsi:.0f}h totali): {riepilogo_corsi}'
+                'messaggio': f'Fattura multi-corso ({len(corsi_ai)} corsi{ore_info}): {riepilogo_corsi}'
             })
         elif codice_ai:
             ca = codice_ai.lower()
