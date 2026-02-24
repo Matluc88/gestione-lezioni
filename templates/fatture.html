@@ -62,7 +62,7 @@
             <div class="ios-list-group fatture-list">
         {% endif %}
 
-        {% set is_annullata = fattura['note'] and fattura['note']|upper|truncate(9, true, '') == 'ANNULLATA' %}
+        {% set is_annullata = fattura['note'] and fattura['note'][:9]|upper == 'ANNULLATA' %}
         <div class="fattura-item{% if is_annullata %} fattura-annullata{% endif %}">
 
             <!-- Riga principale -->

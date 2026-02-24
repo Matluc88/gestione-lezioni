@@ -111,7 +111,7 @@ def get_fatture():
 
     cursor.execute(f'''
         SELECT f.id_fattura, f.numero_fattura, f.id_corso, f.data_fattura, f.importo, f.tipo_fatturazione,
-               f.file_pdf, {group_concat_func}(l.data, ', ') AS lezioni_fatturate
+               f.file_pdf, f.note, {group_concat_func}(l.data, ', ') AS lezioni_fatturate
         FROM fatture f
         LEFT JOIN fatture_lezioni fl ON f.id_fattura = fl.id_fattura
         LEFT JOIN lezioni l ON fl.id_lezione = l.id
