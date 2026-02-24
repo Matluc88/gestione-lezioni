@@ -750,9 +750,19 @@ def verifica_fattura_ai(id_fattura):
         ore_db = round(ore_db, 2)
         importo_atteso = round(ore_db * compenso_orario_db, 2) if compenso_orario_db and ore_db > 0 else None
 
-        # Totale ore fatturate su questo corso (storico)
+        # Verifica se la fattura è multi-corso
+        cursor.execute(f"""
+            SELECT DISTINCT l.id_corso
+            FROM fatture_lezioni fl
+            JOIN lezioni l ON fl.id_lezione = l.id
+            WHERE fl.id_fattura = {placeholder}
+        """, (id_fattura,))
+        corsi_in_fattura = [r['id_corso'] for r in cursor.fetchall()]
+        is_multi_corso = len(corsi_in_fattura) > 1
+
+        # Totale ore fatturate su questo corso (storico) — solo per mono-corso
         ore_totali_corso_fatturate = 0.0
-        if fattura['id_corso']:
+        if fattura['id_corso'] and not is_multi_corso:
             cursor.execute(f"""
                 SELECT l2.ora_inizio, l2.ora_fine
                 FROM fatture f2
@@ -775,9 +785,9 @@ def verifica_fattura_ai(id_fattura):
                     pass
             ore_totali_corso_fatturate = round(ore_totali_corso_fatturate, 2)
 
-        # Monte ore contratto
+        # Monte ore contratto — solo per mono-corso
         monte_ore_contratto = None
-        if fattura['id_corso']:
+        if fattura['id_corso'] and not is_multi_corso:
             cursor.execute(f"""
                 SELECT contenuto_estratto FROM contratti
                 WHERE id_corso = {placeholder}
