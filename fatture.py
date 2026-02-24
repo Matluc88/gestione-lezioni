@@ -809,6 +809,8 @@ def verifica_fattura_ai(id_fattura):
                                ore_totali_corso_fatturate=ore_totali_corso_fatturate,
                                monte_ore_contratto=monte_ore_contratto,
                                lezioni_db=lezioni_db,
+                               corsi_in_fattura=corsi_in_fattura,
+                               is_multi_corso=is_multi_corso,
                                risultato=None,
                                current_tab='altro')
 
@@ -1035,6 +1037,8 @@ def verifica_fattura_ai(id_fattura):
                                ore_totali_corso_fatturate=ore_totali_corso_fatturate,
                                monte_ore_contratto=monte_ore_contratto,
                                lezioni_db=lezioni_db,
+                               corsi_in_fattura=corsi_in_fattura,
+                               is_multi_corso=is_multi_corso,
                                risultato=risultato,
                                current_tab='altro')
 

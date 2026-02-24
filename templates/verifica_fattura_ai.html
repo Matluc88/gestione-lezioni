@@ -22,15 +22,19 @@
                 </div>
             </div>
             <div style="display:flex; flex-wrap:wrap; gap:6px; font-size:13px; color:var(--ios-text-secondary);">
-                {% if fattura['id_corso'] %}
+                {% if is_multi_corso and corsi_in_fattura %}
+                    {% for cif in corsi_in_fattura %}
+                    <span class="meta-pill">📚 {{ cif }}</span>
+                    {% endfor %}
+                {% elif fattura['id_corso'] %}
                 <span class="meta-pill">📚 {{ fattura['id_corso'] }}</span>
-                {% endif %}
-                {% if fattura.get('nome_corso') %}
+                {% if fattura.get('nome_corso') and fattura['nome_corso'] != fattura['id_corso'] %}
                 <span class="meta-pill">🎓 {{ fattura['nome_corso'] }}</span>
+                {% endif %}
                 {% endif %}
                 <span class="meta-pill">📅 {{ fattura['data_fattura'] }}</span>
                 <span class="meta-pill">⏱️ {{ ore_db }}h nel DB</span>
-                {% if importo_atteso %}
+                {% if importo_atteso and not is_multi_corso %}
                 <span class="meta-pill">💰 Atteso: €{{ "%.2f"|format(importo_atteso) }}</span>
                 {% endif %}
             </div>
