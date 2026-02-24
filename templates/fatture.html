@@ -62,12 +62,13 @@
             <div class="ios-list-group fatture-list">
         {% endif %}
 
-        <div class="fattura-item">
+        {% set is_annullata = fattura['note'] and fattura['note']|upper|truncate(9, true, '') == 'ANNULLATA' %}
+        <div class="fattura-item{% if is_annullata %} fattura-annullata{% endif %}">
 
             <!-- Riga principale -->
             <div class="fattura-top">
                 <div class="fattura-num">N° {{ fattura['numero_fattura'] }}</div>
-                <div class="fattura-importo">€ {{ "%.2f"|format(fattura['importo']|float) }}</div>
+                <div class="fattura-importo {% if is_annullata %}importo-annullata{% endif %}">€ {{ "%.2f"|format(fattura['importo']|float) }}</div>
             </div>
 
             <!-- Info secondarie -->
@@ -77,7 +78,17 @@
                 <span class="meta-pill tipo-pill {% if fattura['tipo_fatturazione'] == 'totale' %}tipo-totale{% else %}tipo-parziale{% endif %}">
                     {{ fattura['tipo_fatturazione'] | capitalize }}
                 </span>
+                {% if is_annullata %}
+                <span class="meta-pill pill-annullata">🚫 ANNULLATA</span>
+                {% endif %}
             </div>
+
+            <!-- Nota annullamento -->
+            {% if is_annullata %}
+            <div class="fattura-nota-annullata">
+                {{ fattura['note'] }}
+            </div>
+            {% endif %}
 
             <!-- Lezioni associate -->
             {% if fattura['lezioni_fatturate'] %}
@@ -314,6 +325,36 @@
 /* ── Calendario ── */
 #calendar {
     max-width: 100%;
+}
+
+/* ── Fattura annullata ── */
+.fattura-annullata {
+    background: rgba(255, 59, 48, 0.04);
+    border-left: 3px solid #ff3b30;
+    opacity: 0.85;
+}
+
+.importo-annullata {
+    color: var(--ios-text-secondary) !important;
+    text-decoration: line-through;
+}
+
+.pill-annullata {
+    background: rgba(255, 59, 48, 0.12) !important;
+    color: #ff3b30 !important;
+    font-weight: 700 !important;
+}
+
+.fattura-nota-annullata {
+    font-size: 12px;
+    color: #ff3b30;
+    background: rgba(255, 59, 48, 0.07);
+    border: 1px solid rgba(255, 59, 48, 0.18);
+    border-radius: var(--radius-sm);
+    padding: 6px 10px;
+    margin-bottom: 8px;
+    line-height: 1.5;
+    word-break: break-word;
 }
 
 /* ── Responsive ── */
