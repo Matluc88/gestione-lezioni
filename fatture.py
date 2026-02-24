@@ -908,11 +908,13 @@ def verifica_fattura_ai(id_fattura):
                 f"{c.get('codice','?')} ({c.get('ore','?')}h)" for c in corsi_ai
             )
             ore_totale_corsi = sum(float(c.get('ore', 0) or 0) for c in corsi_ai)
+            # Mostra tutti i corsi del DB, non solo id_corso principale
+            db_corsi_str = ' · '.join(corsi_in_fattura) if corsi_in_fattura else id_corso_db
             checks.append({
                 'label': 'Corso',
                 'stato': 'info',
                 'ai': f"{len(corsi_ai)} corsi",
-                'db': id_corso_db,
+                'db': db_corsi_str,
                 'messaggio': f'Fattura multi-corso ({len(corsi_ai)} corsi, {ore_totale_corsi:.0f}h totali): {riepilogo_corsi}'
             })
         elif codice_ai:
