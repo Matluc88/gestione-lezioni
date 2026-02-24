@@ -51,27 +51,32 @@ Analizza questo documento e restituisci un JSON con i seguenti campi (usa null s
 {
   "numero_fattura": "...",
   "data_fattura": "YYYY-MM-DD",
-  "monte_ore": <numero float, es. 20.5>,
-  "importo_lordo": <compenso lordo prima delle trattenute, es. 500.00>,
-  "importo_netto": <totale da percepire dopo ritenuta d'acconto, es. 400.00>,
-  "ritenuta_acconto": <importo ritenuta d'acconto, es. 100.00, oppure null se non presente>,
+  "monte_ore": <numero float TOTALE di tutte le ore, es. 94.0>,
+  "importo_lordo": <compenso lordo prima delle trattenute, es. 2820.00>,
+  "importo_netto": <totale da percepire dopo ritenuta d'acconto, es. 2256.00>,
+  "ritenuta_acconto": <importo ritenuta d'acconto, es. 564.00, oppure null se non presente>,
   "compenso_orario": <numero float o null>,
   "codice_corso": "...",
   "nome_corso": "...",
+  "corsi": [
+    {"codice": "...", "nome": "...", "ore": <numero float>},
+    ...
+  ],
   "cliente": "...",
   "periodo": "...",
   "note_ai": "breve nota su cosa hai trovato"
 }
 
 ISTRUZIONI:
-- "monte_ore": cerca "ore", "h", "monte ore", "ore prestate", "ore di formazione" ecc.
-- "codice_corso": cerca codice alfanumerico tipo "IFTS-LE-05", "CIG:", "CUP:", codici progetto ecc.
-- "periodo": il periodo di riferimento della fattura (es. "Febbraio 2026", "01/01-31/01/2026")
+- "monte_ore": la SOMMA TOTALE di tutte le ore di docenza nella fattura (anche se su più corsi).
+- "corsi": SE la fattura riguarda PIÙ corsi, elenca ciascuno con codice, nome e ore. Se è un solo corso, puoi omettere o mettere un array con un elemento.
+- "codice_corso" e "nome_corso": se c'è un solo corso usali normalmente; se ci sono più corsi, metti il primo/principale (o lascia null).
 - "importo_lordo": il COMPENSO LORDO prima di qualsiasi trattenuta/ritenuta. Se non c'è ritenuta, coincide col totale.
 - "importo_netto": il TOTALE DA PERCEPIRE dopo la ritenuta d'acconto. Se non c'è ritenuta, coincide col lordo.
 - "ritenuta_acconto": l'importo numerico della ritenuta d'acconto (es. 100.00), NON la percentuale.
   Per ricevute di collaborazione occasionale la ritenuta è solitamente il 20% del lordo.
 - Se nel documento c'è solo un importo totale senza ritenuta, metti lo stesso valore sia in importo_lordo che importo_netto.
+- "periodo": il periodo di riferimento della fattura (es. "Febbraio 2026", "01/01-31/01/2026").
 - Rispondi SOLO con il JSON, senza testo aggiuntivo."""
 
 
@@ -881,11 +886,26 @@ def verifica_fattura_ai(id_fattura):
                 'messaggio': 'Numero fattura conforme' if uguali else f'PDF: "{num_ai}" · DB: "{num_db}"'
             })
 
-        # 2. Corso
+        # 2. Corso (gestisce sia mono-corso che multi-corso)
+        corsi_ai = dati_ai.get('corsi')  # array opzionale per fatture multi-corso
         codice_ai = dati_ai.get('codice_corso') or dati_ai.get('nome_corso') or ''
         id_corso_db = fattura['id_corso'] or ''
         nome_corso_db = fattura.get('nome_corso') or ''
-        if codice_ai:
+
+        if corsi_ai and isinstance(corsi_ai, list) and len(corsi_ai) > 1:
+            # Fattura multi-corso: mostra riepilogo info
+            riepilogo_corsi = ' · '.join(
+                f"{c.get('codice','?')} ({c.get('ore','?')}h)" for c in corsi_ai
+            )
+            ore_totale_corsi = sum(float(c.get('ore', 0) or 0) for c in corsi_ai)
+            checks.append({
+                'label': 'Corso',
+                'stato': 'info',
+                'ai': f"{len(corsi_ai)} corsi",
+                'db': id_corso_db,
+                'messaggio': f'Fattura multi-corso ({len(corsi_ai)} corsi, {ore_totale_corsi:.0f}h totali): {riepilogo_corsi}'
+            })
+        elif codice_ai:
             ca = codice_ai.lower()
             ic = id_corso_db.lower()
             nc = nome_corso_db.lower()

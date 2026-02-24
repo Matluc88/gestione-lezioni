@@ -130,6 +130,30 @@
                 <div class="dai-row"><span class="dai-key">Periodo</span><span class="dai-val">{{ d.periodo }}</span></div>
                 {% endif %}
             </div>
+            {% if d.get('corsi') and d.corsi|length > 1 %}
+            <div style="margin-top:12px;">
+                <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;
+                            color:var(--ios-text-secondary); margin-bottom:6px;">Corsi nella fattura</div>
+                <table style="width:100%; font-size:13px; border-collapse:collapse;">
+                    <thead>
+                        <tr style="color:var(--ios-text-secondary); font-size:11px; text-transform:uppercase;">
+                            <th style="text-align:left; padding:4px 6px; border-bottom:0.5px solid var(--ios-separator);">Codice</th>
+                            <th style="text-align:left; padding:4px 6px; border-bottom:0.5px solid var(--ios-separator);">Nome</th>
+                            <th style="text-align:right; padding:4px 6px; border-bottom:0.5px solid var(--ios-separator);">Ore</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in d.corsi %}
+                        <tr>
+                            <td style="padding:5px 6px; color:var(--ios-blue); font-weight:600; border-bottom:0.5px solid var(--ios-separator);">{{ c.get('codice', '—') }}</td>
+                            <td style="padding:5px 6px; color:var(--ios-text-primary); border-bottom:0.5px solid var(--ios-separator);">{{ c.get('nome', '—') }}</td>
+                            <td style="padding:5px 6px; text-align:right; font-weight:600; color:var(--ios-text-primary); border-bottom:0.5px solid var(--ios-separator);">{{ c.get('ore', '—') }}h</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
             {% if d.get('note_ai') %}
             <div style="margin-top:10px; padding:8px 10px; background:var(--ios-gray6,#F2F2F7);
                         border-radius:8px; font-size:12px; color:var(--ios-text-secondary); font-style:italic;">
