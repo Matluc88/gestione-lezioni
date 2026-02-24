@@ -121,10 +121,10 @@
                 {% if d.get('compenso_orario') %}
                 <div class="dai-row"><span class="dai-key">€/ora</span><span class="dai-val">€{{ d.compenso_orario }}</span></div>
                 {% endif %}
-                {% if d.get('codice_corso') %}
+                {% if d.get('codice_corso') and not (d.get('corsi') and d.corsi|length > 1) %}
                 <div class="dai-row"><span class="dai-key">Codice corso</span><span class="dai-val">{{ d.codice_corso }}</span></div>
                 {% endif %}
-                {% if d.get('nome_corso') %}
+                {% if d.get('nome_corso') and not (d.get('corsi') and d.corsi|length > 1) %}
                 <div class="dai-row"><span class="dai-key">Nome corso</span><span class="dai-val">{{ d.nome_corso }}</span></div>
                 {% endif %}
                 {% if d.get('cliente') %}
