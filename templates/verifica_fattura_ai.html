@@ -91,8 +91,28 @@
                 {% if d.get('monte_ore') is not none %}
                 <div class="dai-row"><span class="dai-key">Monte ore</span><span class="dai-val">{{ d.monte_ore }}h</span></div>
                 {% endif %}
-                {% if d.get('importo_totale') is not none %}
-                <div class="dai-row"><span class="dai-key">Importo</span><span class="dai-val">€{{ "%.2f"|format(d.importo_totale|float) }}</span></div>
+                {% if d.get('importo_lordo') is not none %}
+                <div class="dai-row">
+                    <span class="dai-key">{% if d.get('ritenuta_acconto') %}Importo lordo{% else %}Importo{% endif %}</span>
+                    <span class="dai-val">€{{ "%.2f"|format(d.importo_lordo|float) }}</span>
+                </div>
+                {% elif d.get('importo_totale') is not none %}
+                <div class="dai-row">
+                    <span class="dai-key">Importo</span>
+                    <span class="dai-val">€{{ "%.2f"|format(d.importo_totale|float) }}</span>
+                </div>
+                {% endif %}
+                {% if d.get('ritenuta_acconto') %}
+                <div class="dai-row">
+                    <span class="dai-key">Ritenuta d'acc.</span>
+                    <span class="dai-val" style="color:#ff9500;">− €{{ "%.2f"|format(d.ritenuta_acconto|float) }}</span>
+                </div>
+                {% endif %}
+                {% if d.get('importo_netto') is not none and d.get('ritenuta_acconto') %}
+                <div class="dai-row">
+                    <span class="dai-key">Netto da percepire</span>
+                    <span class="dai-val" style="color:#34c759;">€{{ "%.2f"|format(d.importo_netto|float) }}</span>
+                </div>
                 {% endif %}
                 {% if d.get('compenso_orario') %}
                 <div class="dai-row"><span class="dai-key">€/ora</span><span class="dai-val">€{{ d.compenso_orario }}</span></div>

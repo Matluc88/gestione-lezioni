@@ -52,7 +52,9 @@ Analizza questo documento e restituisci un JSON con i seguenti campi (usa null s
   "numero_fattura": "...",
   "data_fattura": "YYYY-MM-DD",
   "monte_ore": <numero float, es. 20.5>,
-  "importo_totale": <numero float, es. 500.00>,
+  "importo_lordo": <compenso lordo prima delle trattenute, es. 500.00>,
+  "importo_netto": <totale da percepire dopo ritenuta d'acconto, es. 400.00>,
+  "ritenuta_acconto": <importo ritenuta d'acconto, es. 100.00, oppure null se non presente>,
   "compenso_orario": <numero float o null>,
   "codice_corso": "...",
   "nome_corso": "...",
@@ -65,7 +67,11 @@ ISTRUZIONI:
 - "monte_ore": cerca "ore", "h", "monte ore", "ore prestate", "ore di formazione" ecc.
 - "codice_corso": cerca codice alfanumerico tipo "IFTS-LE-05", "CIG:", "CUP:", codici progetto ecc.
 - "periodo": il periodo di riferimento della fattura (es. "Febbraio 2026", "01/01-31/01/2026")
-- "importo_totale": il totale netto o lordo indicato nella fattura
+- "importo_lordo": il COMPENSO LORDO prima di qualsiasi trattenuta/ritenuta. Se non c'è ritenuta, coincide col totale.
+- "importo_netto": il TOTALE DA PERCEPIRE dopo la ritenuta d'acconto. Se non c'è ritenuta, coincide col lordo.
+- "ritenuta_acconto": l'importo numerico della ritenuta d'acconto (es. 100.00), NON la percentuale.
+  Per ricevute di collaborazione occasionale la ritenuta è solitamente il 20% del lordo.
+- Se nel documento c'è solo un importo totale senza ritenuta, metti lo stesso valore sia in importo_lordo che importo_netto.
 - Rispondi SOLO con il JSON, senza testo aggiuntivo."""
 
 
@@ -104,7 +110,6 @@ def get_fatture():
         FROM fatture f
         LEFT JOIN fatture_lezioni fl ON f.id_fattura = fl.id_fattura
         LEFT JOIN lezioni l ON fl.id_lezione = l.id
-        WHERE l.fatturato = 1 OR fl.id_fattura IS NOT NULL
         GROUP BY f.id_fattura
         ORDER BY f.data_fattura DESC
     ''')
@@ -914,24 +919,58 @@ def verifica_fattura_ai(id_fattura):
                            'ai': '(non trovato nel PDF)', 'db': f'{ore_db}h',
                            'messaggio': f'DB registra {ore_db}h per questa fattura'})
 
-        # 4. Importo
-        importo_ai = dati_ai.get('importo_totale')
+        # 4. Importo (gestisce lordo/netto con ritenuta d'acconto)
+        importo_lordo_ai = dati_ai.get('importo_lordo')
+        importo_netto_ai = dati_ai.get('importo_netto')
+        ritenuta_ai = dati_ai.get('ritenuta_acconto')
+        # Retrocompatibilità col vecchio campo importo_totale
+        if importo_lordo_ai is None:
+            importo_lordo_ai = dati_ai.get('importo_totale')
         importo_db_f = float(fattura['importo'])
-        if importo_ai is not None:
+
+        if importo_lordo_ai is not None:
             try:
-                imp_ai_f = float(importo_ai)
-                diff_imp = abs(imp_ai_f - importo_db_f)
-                if diff_imp < 1.0:
-                    msg_imp = f'Importo conforme: €{imp_ai_f:.2f}'
+                lordo_f = float(importo_lordo_ai)
+                diff_lordo = abs(lordo_f - importo_db_f)
+
+                # Controlla se c'è ritenuta d'acconto
+                ha_ritenuta = ritenuta_ai is not None and float(ritenuta_ai) > 0
+                netto_f = float(importo_netto_ai) if importo_netto_ai is not None else None
+
+                if diff_lordo < 1.0:
+                    # Il lordo nel PDF corrisponde al DB
+                    if ha_ritenuta:
+                        msg_imp = f'Compenso lordo conforme: €{lordo_f:.2f} · Ritenuta d\'acconto: €{float(ritenuta_ai):.2f} · Netto da percepire: €{netto_f:.2f}'
+                    else:
+                        msg_imp = f'Importo conforme: €{lordo_f:.2f}'
                     stato_imp = 'ok'
+                    label_ai = f'€{lordo_f:.2f} lordo'
+                    if ha_ritenuta and netto_f:
+                        label_ai += f' (netto €{netto_f:.2f})'
                 else:
-                    msg_imp = f'Divergenza: PDF €{imp_ai_f:.2f} · DB €{importo_db_f:.2f}'
-                    if importo_atteso:
-                        msg_imp += f' · Atteso da ore×tariffa: €{importo_atteso:.2f}'
-                    stato_imp = 'err'
+                    # Il lordo non corrisponde — controlla se il netto corrisponde (caso anomalo)
+                    if netto_f is not None and abs(netto_f - importo_db_f) < 1.0:
+                        msg_imp = f'⚠️ Il DB ha il netto (€{netto_f:.2f}) ma dovrebbe avere il lordo (€{lordo_f:.2f})'
+                        stato_imp = 'warn'
+                    else:
+                        msg_imp = f'Divergenza: PDF lordo €{lordo_f:.2f} · DB €{importo_db_f:.2f}'
+                        if importo_atteso:
+                            msg_imp += f' · Atteso da ore×tariffa: €{importo_atteso:.2f}'
+                        stato_imp = 'err'
+                    label_ai = f'€{lordo_f:.2f}'
+
                 checks.append({'label': 'Importo', 'stato': stato_imp,
-                               'ai': f'€{imp_ai_f:.2f}', 'db': f'€{importo_db_f:.2f}',
+                               'ai': label_ai, 'db': f'€{importo_db_f:.2f}',
                                'messaggio': msg_imp})
+
+                # Check aggiuntivo: mostra riepilogo ritenuta se presente
+                if ha_ritenuta and netto_f is not None:
+                    perc_rit = round((float(ritenuta_ai) / lordo_f) * 100) if lordo_f > 0 else 0
+                    checks.append({'label': 'Ritenuta d\'acconto',
+                                   'stato': 'info',
+                                   'ai': f'{perc_rit}% = €{float(ritenuta_ai):.2f}',
+                                   'db': f'Netto da percepire: €{netto_f:.2f}',
+                                   'messaggio': f'Ritenuta d\'acconto {perc_rit}%: lordo €{lordo_f:.2f} − €{float(ritenuta_ai):.2f} = netto €{netto_f:.2f}'})
             except Exception:
                 pass
 
