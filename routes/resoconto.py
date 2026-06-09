@@ -259,6 +259,52 @@ def resoconto_annuale():
                 'fatture_per_mese': round(fatture_per_mese, 1),
             }
 
+        # ========== RITMO DI FATTURAZIONE PER MESE (tutti gli anni) ==========
+        # Quanti mesi passano, tipicamente, tra un mese in cui fatturi e il successivo.
+        ritmo_mesi = None
+        fatture_per_mese_labels = []
+        fatture_per_mese_counts = []
+        if date_fatture:
+            mesi_nomi = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu',
+                         'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic']
+            # conteggio fatture per (anno, mese)
+            counts = {}
+            for d in date_fatture:
+                chiave = (d.year, d.month)
+                counts[chiave] = counts.get(chiave, 0) + 1
+
+            # timeline continua dal primo all'ultimo mese (inclusi i mesi a zero)
+            primo, ultimo = date_fatture[0], date_fatture[-1]
+            anno_cur, mese_cur = primo.year, primo.month
+            while (anno_cur, mese_cur) <= (ultimo.year, ultimo.month):
+                fatture_per_mese_labels.append(f"{mesi_nomi[mese_cur - 1]} {anno_cur}")
+                fatture_per_mese_counts.append(counts.get((anno_cur, mese_cur), 0))
+                mese_cur += 1
+                if mese_cur > 12:
+                    mese_cur = 1
+                    anno_cur += 1
+
+            # gap in mesi tra mesi "attivi" consecutivi (con almeno una fattura)
+            mesi_attivi = sorted(counts.keys())
+            gap_mesi = [(mesi_attivi[i][0] - mesi_attivi[i - 1][0]) * 12
+                        + (mesi_attivi[i][1] - mesi_attivi[i - 1][1])
+                        for i in range(1, len(mesi_attivi))]
+            if gap_mesi:
+                gs = sorted(gap_mesi)
+                k = len(gs)
+                gap_mediano = gs[k // 2] if k % 2 == 1 else (gs[k // 2 - 1] + gs[k // 2]) / 2
+                gap_medio = sum(gap_mesi) / len(gap_mesi)
+                max_gap = max(gap_mesi)
+            else:
+                gap_mediano = gap_medio = max_gap = 0
+            ritmo_mesi = {
+                'n_mesi_periodo': len(fatture_per_mese_labels),
+                'n_mesi_attivi': len(mesi_attivi),
+                'gap_medio_mesi': round(gap_medio, 1),
+                'gap_mediano_mesi': round(gap_mediano, 1),
+                'max_gap_mesi': max_gap,
+            }
+
         return render_template(
             'resoconto_annuale.html',
             anno=anno_selezionato,
@@ -298,5 +344,8 @@ def resoconto_annuale():
             totale_fatture_totali=totale_fatture_totali,
             totale_fatture_parziali=totale_fatture_parziali,
             dati_mensili_fatture_emesse=json.dumps(dati_mensili_fatture_emesse),
-            cadenza_fatturazione=cadenza_fatturazione
+            cadenza_fatturazione=cadenza_fatturazione,
+            ritmo_mesi=ritmo_mesi,
+            fatture_per_mese_labels=json.dumps(fatture_per_mese_labels),
+            fatture_per_mese_counts=json.dumps(fatture_per_mese_counts)
         )

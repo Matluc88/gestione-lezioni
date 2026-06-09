@@ -487,6 +487,61 @@
             </div>
         </div>
         {% endif %}
+
+        <!-- Ritmo di fatturazione: ogni quanti mesi emetti fattura -->
+        {% if ritmo_mesi %}
+        <div class="row">
+            <div class="col-md-12 mb-4">
+                <div class="card">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0">📆 Ogni quanti mesi emetti fattura</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center mb-3">
+                            <div class="col-md-3 mb-3">
+                                <div class="p-3 rounded" style="background:#f1f3f5;">
+                                    <div style="font-size:2rem;font-weight:bold;color:#343a40;">
+                                        ~{{ ritmo_mesi.gap_mediano_mesi }}
+                                    </div>
+                                    <div class="text-muted">Mesi tra una fattura e l'altra (tipico)</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="p-3 rounded" style="background:#f1f3f5;">
+                                    <div style="font-size:2rem;font-weight:bold;color:#343a40;">
+                                        ~{{ ritmo_mesi.gap_medio_mesi }}
+                                    </div>
+                                    <div class="text-muted">Mesi tra una fattura e l'altra (media)</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="p-3 rounded" style="background:#f1f3f5;">
+                                    <div style="font-size:2rem;font-weight:bold;color:#343a40;">
+                                        {{ ritmo_mesi.n_mesi_attivi }}/{{ ritmo_mesi.n_mesi_periodo }}
+                                    </div>
+                                    <div class="text-muted">Mesi in cui hai fatturato (sul totale)</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="p-3 rounded" style="background:#fff3cd;">
+                                    <div style="font-size:2rem;font-weight:bold;color:#856404;">
+                                        {{ ritmo_mesi.max_gap_mesi }}
+                                    </div>
+                                    <div class="text-muted">Pausa più lunga (mesi senza fatture)</div>
+                                </div>
+                            </div>
+                        </div>
+                        <canvas id="chartFatturePerMese"></canvas>
+                        <p class="text-muted text-center mb-0 mt-3">
+                            Ogni barra è un mese; l'altezza è il numero di fatture emesse in quel mese.
+                            I mesi a zero sono le pause. Il valore <em>tipico</em> (mediana) conta i mesi che passano
+                            tra un mese in cui fatturi e il successivo.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
     </div>
 
     <script>
@@ -1058,6 +1113,62 @@
                 }
             }
         });
+
+        // Grafico Fatture per Mese (ritmo di fatturazione su tutti gli anni)
+        {% if ritmo_mesi %}
+        const ctxFatturePerMese = document.getElementById('chartFatturePerMese').getContext('2d');
+        const chartFatturePerMese = new Chart(ctxFatturePerMese, {
+            type: 'bar',
+            data: {
+                labels: {{ fatture_per_mese_labels|safe }},
+                datasets: [{
+                    label: 'Fatture emesse',
+                    data: {{ fatture_per_mese_counts|safe }},
+                    backgroundColor: 'rgba(108, 117, 125, 0.8)',
+                    borderColor: 'rgba(108, 117, 125, 1)',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        ticks: { color: '#666', maxRotation: 90, minRotation: 45, autoSkip: false },
+                        grid: { display: false }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: '#666',
+                            precision: 0,
+                            stepSize: 1,
+                            callback: function(value) { return Number.isInteger(value) ? value : ''; }
+                        },
+                        grid: { color: 'rgba(0,0,0,0.1)' }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Numero di fatture emesse mese per mese',
+                        font: { size: 16, weight: 'bold' },
+                        color: '#333',
+                        padding: 15
+                    },
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const n = context.raw;
+                                return n === 0 ? 'Nessuna fattura' : n + (n === 1 ? ' fattura' : ' fatture');
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        {% endif %}
 
         // Grafico Confronto: Compensi da Lezioni vs Fatture Emesse
         {% if fatture_emesse|length > 0 %}
