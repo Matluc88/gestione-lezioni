@@ -36,7 +36,10 @@ CREATE TABLE fatture (
     importo REAL NOT NULL,
     tipo_fatturazione TEXT CHECK(tipo_fatturazione IN ('parziale', 'totale')) NOT NULL,
     file_pdf TEXT NOT NULL,
-    note TEXT
+    note TEXT,
+    cliente TEXT,
+    progetto TEXT,
+    tranche TEXT
 );
 CREATE TABLE fatture_lezioni (
     id_fattura INTEGER,

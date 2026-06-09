@@ -111,7 +111,8 @@ def get_fatture():
 
     cursor.execute(f'''
         SELECT f.id_fattura, f.numero_fattura, f.id_corso, f.data_fattura, f.importo, f.tipo_fatturazione,
-               f.file_pdf, f.note, {group_concat_func}(l.data, ', ') AS lezioni_fatturate
+               f.file_pdf, f.note, f.cliente, f.progetto, f.tranche,
+               {group_concat_func}(l.data, ', ') AS lezioni_fatturate
         FROM fatture f
         LEFT JOIN fatture_lezioni fl ON f.id_fattura = fl.id_fattura
         LEFT JOIN lezioni l ON fl.id_lezione = l.id
@@ -460,6 +461,105 @@ def aggiungi_fattura():
 
     return render_template("aggiungi_fattura.html", corsi=corsi, lezioni=lezioni_non_fatturate,
                            clienti=clienti, now=get_local_now(), corso_preselezionato=corso_preselezionato)
+
+
+# ─── Route: Aggiungi fattura di progetto/consulenza (senza lezioni) ─────────────
+
+@fatture_bp.route("/aggiungi_fattura_progetto", methods=["GET", "POST"])
+@login_required
+def aggiungi_fattura_progetto():
+    """Aggiunge una fattura NON legata alle lezioni: consulenza singola o progetto a trance."""
+    # Clienti esistenti (per il datalist) + progetti già usati
+    clienti = []
+    progetti = []
+    try:
+        conn_read = get_db_connection()
+        cursor_read = conn_read.cursor()
+        cursor_read.execute("""
+            SELECT DISTINCT cliente FROM corsi WHERE cliente IS NOT NULL AND cliente != ''
+            UNION
+            SELECT DISTINCT cliente FROM fatture WHERE cliente IS NOT NULL AND cliente != ''
+            ORDER BY cliente
+        """)
+        clienti = [row[0] for row in cursor_read.fetchall()]
+        cursor_read.execute("""
+            SELECT DISTINCT progetto FROM fatture
+            WHERE progetto IS NOT NULL AND progetto != ''
+            ORDER BY progetto
+        """)
+        progetti = [row[0] for row in cursor_read.fetchall()]
+        conn_read.close()
+    except Exception as e:
+        flash(f"❌ Errore durante il caricamento dei dati: {str(e)}", "danger")
+
+    if request.method == "POST":
+        conn_write = None
+        try:
+            conn_write = get_db_connection()
+            cursor_write = conn_write.cursor()
+            placeholder = get_placeholder()
+
+            numero_fattura = sanitize_input(request.form.get("numero_fattura"))
+            data_fattura = request.form.get("data_fattura")
+            importo = float(request.form.get("importo"))
+            cliente = sanitize_input(request.form.get("cliente", ""))
+            progetto = sanitize_input(request.form.get("progetto", ""))
+            tranche = sanitize_input(request.form.get("tranche", ""))
+            tipo_fatturazione = sanitize_input(request.form.get("tipo_fatturazione", "totale"))
+            if tipo_fatturazione not in ['parziale', 'totale']:
+                tipo_fatturazione = 'totale'
+            note = sanitize_input(request.form.get("note", ""))
+
+            if not numero_fattura or not data_fattura or not cliente:
+                flash("❌ Numero fattura, data e cliente sono obbligatori.", "danger")
+                return render_template("aggiungi_fattura_progetto.html",
+                                       clienti=clienti, progetti=progetti, now=get_local_now())
+
+            # Controllo duplicato numero per anno (la numerazione si azzera ogni anno)
+            anno_fattura = datetime.strptime(data_fattura, "%Y-%m-%d").year
+            cursor_write.execute(
+                f"SELECT data_fattura FROM fatture WHERE numero_fattura = {placeholder}",
+                (numero_fattura,))
+            for fattura_esistente in cursor_write.fetchall():
+                anno_esistente = datetime.strptime(fattura_esistente['data_fattura'], "%Y-%m-%d").year
+                if anno_esistente == anno_fattura:
+                    flash(f"❌ Esiste già una fattura con il numero '{numero_fattura}' per l'anno {anno_fattura}.", "danger")
+                    return render_template("aggiungi_fattura_progetto.html",
+                                           clienti=clienti, progetti=progetti, now=get_local_now())
+
+            # File PDF opzionale
+            file_pdf = ""
+            if 'file_pdf' in request.files:
+                file = request.files['file_pdf']
+                if file and file.filename and allowed_file(file.filename):
+                    filename = secure_filename(file.filename)
+                    timestamp = format_datetime_for_db().replace('-', '').replace(' ', '').replace(':', '')
+                    filename = f"{timestamp}_{filename}"
+                    file.save(os.path.join(UPLOAD_FOLDER, filename))
+                    file_pdf = filename
+
+            cursor_write.execute(f"""
+                INSERT INTO fatture (numero_fattura, id_corso, data_fattura, importo, tipo_fatturazione,
+                                     note, file_pdf, cliente, progetto, tranche)
+                VALUES ({placeholder}, NULL, {placeholder}, {placeholder}, {placeholder},
+                        {placeholder}, {placeholder}, {placeholder}, {placeholder}, {placeholder})
+            """, (str(numero_fattura), data_fattura, importo, str(tipo_fatturazione),
+                  note, file_pdf, cliente, progetto or None, tranche or None))
+
+            conn_write.commit()
+            flash("✅ Fattura di progetto aggiunta con successo!", "success")
+            return redirect(url_for("fatture.index"))
+
+        except Exception as e:
+            if conn_write:
+                conn_write.rollback()
+            flash(f"❌ Errore durante l'aggiunta della fattura: {str(e)}", "danger")
+        finally:
+            if conn_write:
+                conn_write.close()
+
+    return render_template("aggiungi_fattura_progetto.html",
+                           clienti=clienti, progetti=progetti, now=get_local_now())
 
 
 # ─── Route: Modifica fattura ───────────────────────────────────────────────────

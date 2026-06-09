@@ -39,7 +39,10 @@ CREATE TABLE IF NOT EXISTS fatture (
     importo REAL NOT NULL,
     tipo_fatturazione TEXT NOT NULL CHECK(tipo_fatturazione IN ('parziale', 'totale')),
     file_pdf TEXT NOT NULL,
-    note TEXT
+    note TEXT,
+    cliente TEXT,
+    progetto TEXT,
+    tranche TEXT
 );
 
 CREATE TABLE IF NOT EXISTS fatture_lezioni (

@@ -30,6 +30,16 @@
         </div>
     </div>
 
+    <!-- ── Azione: fattura di progetto/consulenza (senza lezioni) ── -->
+    <div class="ios-card">
+        <div class="ios-card-body">
+            <a href="{{ url_for('fatture.aggiungi_fattura_progetto') }}" class="ios-button ios-button-secondary" style="width:100%;">
+                🗂️ Fattura di progetto / consulenza (senza lezioni)
+            </a>
+            <div class="ios-field-label" style="margin-top:8px;">Per consulenze (es. ONE-M) o progetti a trance (acconto + saldo)</div>
+        </div>
+    </div>
+
     <!-- ── Stato corso (solo se selezionato) ── -->
     {% if corso_scelto %}
     <div class="ios-card stato-card
@@ -73,7 +83,13 @@
 
             <!-- Info secondarie -->
             <div class="fattura-meta">
+                {% if fattura['id_corso'] %}
                 <span class="meta-pill">📚 {{ fattura['id_corso'] }}</span>
+                {% else %}
+                    {% if fattura['cliente'] %}<span class="meta-pill">👤 {{ fattura['cliente'] }}</span>{% endif %}
+                    {% if fattura['progetto'] %}<span class="meta-pill">🗂️ {{ fattura['progetto'] }}</span>{% endif %}
+                    {% if fattura['tranche'] %}<span class="meta-pill">🧩 {{ fattura['tranche'] }}</span>{% endif %}
+                {% endif %}
                 <span class="meta-pill">📅 {{ fattura['data_fattura'] }}</span>
                 <span class="meta-pill tipo-pill {% if fattura['tipo_fatturazione'] == 'totale' %}tipo-totale{% else %}tipo-parziale{% endif %}">
                     {{ fattura['tipo_fatturazione'] | capitalize }}

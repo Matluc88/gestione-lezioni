@@ -207,7 +207,18 @@ def ensure_database():
             hashed_password = generate_password_hash(password)
             cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, hashed_password))
             print(f"✅ Utente di test creato: {username} / {password}")
-    
+
+    # Colonne per le fatture senza lezioni (consulenza/progetto)
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='fatture'")
+    if cursor.fetchone():
+        cursor.execute("PRAGMA table_info(fatture)")
+        fatture_cols = [column[1] for column in cursor.fetchall()]
+        for colonna in ("cliente", "progetto", "tranche"):
+            if colonna not in fatture_cols:
+                print(f"La colonna '{colonna}' non esiste nella tabella 'fatture'. Aggiunta in corso...")
+                cursor.execute(f"ALTER TABLE fatture ADD COLUMN {colonna} TEXT DEFAULT NULL")
+                print(f"✅ Colonna '{colonna}' aggiunta con successo alla tabella 'fatture'")
+
     conn.commit()
     conn.close()
     print(f"✅ Database verificato e aggiornato con successo: {DB_PATH}")

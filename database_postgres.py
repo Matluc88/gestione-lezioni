@@ -161,7 +161,20 @@ def ensure_database():
                 )
             """)
             print("✅ Tabella 'contratti' creata con successo!")
-        
+
+        # Verifica e aggiunge le colonne per le fatture senza lezioni (consulenza/progetto)
+        for colonna in ("cliente", "progetto", "tranche"):
+            cursor.execute("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.columns
+                    WHERE table_schema = 'public' AND table_name = 'fatture' AND column_name = %s
+                )
+            """, (colonna,))
+            if not cursor.fetchone()[0]:
+                print(f"La colonna '{colonna}' non esiste nella tabella 'fatture'. Aggiunta in corso...")
+                cursor.execute(f"ALTER TABLE fatture ADD COLUMN {colonna} TEXT")
+                print(f"✅ Colonna '{colonna}' aggiunta con successo alla tabella 'fatture'")
+
         conn.commit()
     
     print("✅ Database verificato e aggiornato con successo!")

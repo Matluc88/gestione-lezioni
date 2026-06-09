@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aggiungi Fattura di Progetto - Gestione Lezioni</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(135deg, #d4c5b9 0%, #e8dfd6 100%);
+      padding-top: 76px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    }
+    .card { border-radius: 0; box-shadow: none; border: 1px solid #e0e0e0; }
+    .btn { border-radius: 0; }
+    .form-control, .form-select { border-radius: 0; }
+    .alert { border-radius: 0; }
+    .form-label { font-weight: 500; }
+    .btn-custom { background-color: #1a1a1a; color: white; border: none; border-radius: 0; }
+    .btn-custom:hover { background-color: #a67c52; color: white; }
+    @media (max-width: 768px) {
+      .btn { min-height: 44px; margin-bottom: 0.5rem; padding: 12px 16px; font-size: 0.9rem; }
+      .container { padding: 0 15px; }
+      h4, h5 { font-size: 1.3rem; margin-bottom: 1rem; }
+      .form-control, .form-select { min-height: 44px; font-size: 1rem; }
+    }
+    @media (max-width: 393px) {
+      .btn { min-height: 48px; font-size: 0.85rem; padding: 14px 16px; }
+      .container { padding: 0 8px; }
+      .form-control, .form-select { min-height: 48px; font-size: 16px; }
+    }
+  </style>
+</head>
+<body>
+  {% include 'components/navbar_unified.html' %}
+
+  <div class="container my-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4>Fattura di progetto / consulenza <small class="text-muted">(senza lezioni)</small></h4>
+          <a href="{{ url_for('fatture.index') }}" class="btn btn-secondary">↩ Torna alle Fatture</a>
+        </div>
+
+        <div class="alert alert-info" role="alert">
+          ℹ️ Usa questa sezione per fatture <strong>non legate alle lezioni</strong>: consulenze (es. ONE-M)
+          o progetti fatturati a <strong>trance</strong> (es. acconto + saldo dello stesso progetto).
+          Compila lo stesso <em>Progetto</em> per raggruppare più trance.
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, msg in messages %}
+              <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ msg }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form method="POST" enctype="multipart/form-data" class="row g-3">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <div class="col-md-6">
+            <label for="numero_fattura" class="form-label">Numero Fattura</label>
+            <input type="text" class="form-control" id="numero_fattura" name="numero_fattura" required>
+          </div>
+
+          <div class="col-md-6">
+            <label for="data_fattura" class="form-label">Data Fattura</label>
+            <input type="date" class="form-control" id="data_fattura" name="data_fattura" required value="{{ now.strftime('%Y-%m-%d') }}">
+          </div>
+
+          <div class="col-md-6">
+            <label for="cliente" class="form-label">Cliente</label>
+            <input type="text" class="form-control" id="cliente" name="cliente" list="lista-clienti" required>
+            <datalist id="lista-clienti">
+              {% for c in clienti %}<option value="{{ c }}">{% endfor %}
+            </datalist>
+          </div>
+
+          <div class="col-md-6">
+            <label for="importo" class="form-label">Importo (€)</label>
+            <input type="number" step="0.01" class="form-control" id="importo" name="importo" required>
+          </div>
+
+          <div class="col-md-6">
+            <label for="progetto" class="form-label">Progetto <small class="text-muted">(per raggruppare le trance)</small></label>
+            <input type="text" class="form-control" id="progetto" name="progetto" list="lista-progetti"
+                   placeholder="Es. Officine del Lavoro WP2">
+            <datalist id="lista-progetti">
+              {% for p in progetti %}<option value="{{ p }}">{% endfor %}
+            </datalist>
+          </div>
+
+          <div class="col-md-6">
+            <label for="tranche" class="form-label">Trance <small class="text-muted">(opzionale)</small></label>
+            <input type="text" class="form-control" id="tranche" name="tranche"
+                   placeholder="Es. acconto / saldo / unica">
+          </div>
+
+          <div class="col-md-6">
+            <label for="tipo_fatturazione" class="form-label">Tipo Fatturazione</label>
+            <select class="form-select" id="tipo_fatturazione" name="tipo_fatturazione" required>
+              <option value="totale">Prestazione Occasionale</option>
+              <option value="parziale">Partita IVA</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label for="file_pdf" class="form-label">File PDF Fattura</label>
+            <input type="file" class="form-control" id="file_pdf" name="file_pdf" accept=".pdf">
+            <div class="form-text">Opzionale: carica il PDF della fattura</div>
+          </div>
+
+          <div class="col-12">
+            <label for="note" class="form-label">Note</label>
+            <textarea class="form-control" id="note" name="note" rows="3"></textarea>
+          </div>
+
+          <div class="col-12 d-flex gap-2">
+            <button type="submit" class="btn btn-custom">💾 Salva fattura di progetto</button>
+            <a href="{{ url_for('fatture.index') }}" class="btn btn-secondary">Annulla</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
