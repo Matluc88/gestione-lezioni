@@ -156,33 +156,39 @@ def resoconto_annuale():
                     'da_fatturare': 0,
                     'pianificate': 0,
                     'cancellate': 0,
-                    'totale': 0
+                    'totale': 0,
+                    'n_completate': 0,
+                    'n_fatturate': 0
                 }
-            
+
             ore = calcola_ore(lezione['ora_inizio'], lezione['ora_fine'])
             if ore is None:
                 continue
-                
+
             compenso = ore * lezione['compenso_orario']
-            
+
             if lezione['stato'] == 'Completato':
+                totali_per_anno[anno]['n_completate'] += 1
                 if lezione['fatturato'] == 1:
                     totali_per_anno[anno]['fatturate'] += compenso
+                    totali_per_anno[anno]['n_fatturate'] += 1
                 else:
                     totali_per_anno[anno]['da_fatturare'] += compenso
             elif lezione['stato'] == 'Pianificato':
                 totali_per_anno[anno]['pianificate'] += compenso
             elif lezione['stato'] == 'Cancellato':
                 totali_per_anno[anno]['cancellate'] += compenso
-                
+
             totali_per_anno[anno]['totale'] += compenso
-        
+
         anni_grafico = sorted(totali_per_anno.keys())
         dati_fatturate_per_anno = [totali_per_anno[a]['fatturate'] for a in anni_grafico]
         dati_da_fatturare_per_anno = [totali_per_anno[a]['da_fatturare'] for a in anni_grafico]
         dati_pianificate_per_anno = [totali_per_anno[a]['pianificate'] for a in anni_grafico]
         dati_cancellate_per_anno = [totali_per_anno[a]['cancellate'] for a in anni_grafico]
         dati_totali_per_anno = [totali_per_anno[a]['totale'] for a in anni_grafico]
+        n_completate_per_anno = [totali_per_anno[a]['n_completate'] for a in anni_grafico]
+        n_fatturate_per_anno = [totali_per_anno[a]['n_fatturate'] for a in anni_grafico]
         
         # ========== NUOVA SEZIONE: FATTURE EMESSE NELL'ANNO ==========
         cursor.execute("""
@@ -244,6 +250,8 @@ def resoconto_annuale():
             dati_pianificate_per_anno=json.dumps(dati_pianificate_per_anno),
             dati_cancellate_per_anno=json.dumps(dati_cancellate_per_anno),
             dati_totali_per_anno=json.dumps(dati_totali_per_anno),
+            n_completate_per_anno=json.dumps(n_completate_per_anno),
+            n_fatturate_per_anno=json.dumps(n_fatturate_per_anno),
             # Nuovi dati per fatture emesse
             fatture_emesse=fatture_emesse,
             totale_fatture_emesse=totale_fatture_emesse,

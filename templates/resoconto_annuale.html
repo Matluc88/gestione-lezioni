@@ -425,6 +425,20 @@
                 </div>
             </div>
         </div>
+
+        <!-- Grafico Lezioni Completate vs Fatturate per Tutti gli Anni -->
+        <div class="row">
+            <div class="col-md-12 mb-4">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">📚 Lezioni Completate vs Fatturate per Tutti gli Anni</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="chartLezioniCompletateFatturate"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -882,6 +896,121 @@
             }
         });
         
+        // Grafico Lezioni Completate vs Fatturate per Tutti gli Anni (numero lezioni)
+        const ctxLezCompFat = document.getElementById('chartLezioniCompletateFatturate').getContext('2d');
+        const chartLezioniCompletateFatturate = new Chart(ctxLezCompFat, {
+            type: 'bar',
+            data: {
+                labels: {{ anni_grafico|safe }},
+                datasets: [
+                    {
+                        label: 'Lezioni Completate',
+                        data: {{ n_completate_per_anno|safe }},
+                        backgroundColor: 'rgba(23, 162, 184, 0.8)',
+                        borderColor: 'rgba(23, 162, 184, 1)',
+                        borderWidth: 2,
+                        borderRadius: 6,
+                        borderSkipped: false
+                    },
+                    {
+                        label: 'Lezioni Fatturate',
+                        data: {{ n_fatturate_per_anno|safe }},
+                        backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        borderWidth: 2,
+                        borderRadius: 6,
+                        borderSkipped: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                animation: {
+                    duration: 1500,
+                    easing: 'easeInOutQuart'
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            color: '#666',
+                            font: {
+                                family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+                                size: 12
+                            }
+                        },
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: '#666',
+                            precision: 0,
+                            font: {
+                                family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+                                size: 12
+                            },
+                            callback: function(value) {
+                                return Number.isInteger(value) ? value : '';
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(0,0,0,0.1)',
+                            drawBorder: false
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Numero di Lezioni Completate e Fatturate negli Anni',
+                        font: {
+                            size: 18,
+                            weight: 'bold',
+                            family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+                        },
+                        color: '#333',
+                        padding: 20
+                    },
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            font: {
+                                family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+                                size: 14
+                            },
+                            color: '#666',
+                            usePointStyle: true,
+                            padding: 15
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        borderColor: '#17a2b8',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += context.raw + ' lezioni';
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
         // Grafico Confronto: Compensi da Lezioni vs Fatture Emesse
         {% if fatture_emesse|length > 0 %}
         const ctxConfrontoFatture = document.getElementById('chartConfrontoFatture').getContext('2d');
