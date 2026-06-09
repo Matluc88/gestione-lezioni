@@ -439,6 +439,54 @@
                 </div>
             </div>
         </div>
+
+        <!-- Cadenza media di fatturazione -->
+        {% if cadenza_fatturazione %}
+        <div class="row">
+            <div class="col-md-12 mb-4">
+                <div class="card">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0">⏱️ Ogni quanto fatturi (media su tutte le fatture)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-4 mb-3">
+                                <div class="p-3 rounded" style="background:#f1f3f5;">
+                                    <div style="font-size:2rem;font-weight:bold;color:#343a40;">
+                                        1 ogni {{ cadenza_fatturazione.media_giorni }} gg
+                                    </div>
+                                    <div class="text-muted">Cadenza media</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="p-3 rounded" style="background:#f1f3f5;">
+                                    <div style="font-size:2rem;font-weight:bold;color:#343a40;">
+                                        1 ogni {{ cadenza_fatturazione.mediana_giorni }} gg
+                                    </div>
+                                    <div class="text-muted">Cadenza tipica (mediana)</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="p-3 rounded" style="background:#f1f3f5;">
+                                    <div style="font-size:2rem;font-weight:bold;color:#343a40;">
+                                        {{ cadenza_fatturazione.fatture_per_mese }}/mese
+                                    </div>
+                                    <div class="text-muted">Fatture al mese (media)</div>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-muted text-center mb-0">
+                            Calcolato su <strong>{{ cadenza_fatturazione.n_fatture }}</strong> fatture
+                            emesse dal <strong>{{ cadenza_fatturazione.prima_data }}</strong>
+                            al <strong>{{ cadenza_fatturazione.ultima_data }}</strong>.
+                            La <em>cadenza media</em> divide l'intero periodo per il numero di fatture;
+                            la <em>mediana</em> è l'intervallo più rappresentativo, meno influenzato da periodi anomali.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
     </div>
 
     <script>

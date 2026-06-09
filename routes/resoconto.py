@@ -220,7 +220,45 @@ def resoconto_annuale():
         for fattura in fatture_emesse:
             mese_fattura = int(fattura['data_fattura'].split('-')[1]) - 1
             dati_mensili_fatture_emesse[mese_fattura] += fattura['importo']
-        
+
+        # ========== CADENZA MEDIA DI FATTURAZIONE (tutte le fatture storiche) ==========
+        cursor.execute("""
+            SELECT data_fattura FROM fatture
+            WHERE data_fattura IS NOT NULL
+            ORDER BY data_fattura ASC
+        """)
+        date_fatture = []
+        for row in cursor.fetchall():
+            try:
+                date_fatture.append(datetime.strptime(row['data_fattura'][:10], '%Y-%m-%d'))
+            except (ValueError, TypeError):
+                continue
+
+        cadenza_fatturazione = None
+        if len(date_fatture) >= 2:
+            date_fatture.sort()
+            n_fatt = len(date_fatture)
+            span_giorni = (date_fatture[-1] - date_fatture[0]).days
+            gaps = [(date_fatture[i] - date_fatture[i - 1]).days
+                    for i in range(1, n_fatt)]
+            gaps_sorted = sorted(gaps)
+            m = len(gaps_sorted)
+            if m % 2 == 1:
+                mediana_giorni = gaps_sorted[m // 2]
+            else:
+                mediana_giorni = (gaps_sorted[m // 2 - 1] + gaps_sorted[m // 2]) / 2
+            media_giorni = span_giorni / (n_fatt - 1) if n_fatt > 1 else 0
+            mesi_totali = span_giorni / 30.44 if span_giorni > 0 else 0
+            fatture_per_mese = (n_fatt / mesi_totali) if mesi_totali > 0 else 0
+            cadenza_fatturazione = {
+                'n_fatture': n_fatt,
+                'prima_data': date_fatture[0].strftime('%d/%m/%Y'),
+                'ultima_data': date_fatture[-1].strftime('%d/%m/%Y'),
+                'media_giorni': round(media_giorni, 1),
+                'mediana_giorni': round(mediana_giorni, 1),
+                'fatture_per_mese': round(fatture_per_mese, 1),
+            }
+
         return render_template(
             'resoconto_annuale.html',
             anno=anno_selezionato,
@@ -259,5 +297,6 @@ def resoconto_annuale():
             fatture_parziali=fatture_parziali,
             totale_fatture_totali=totale_fatture_totali,
             totale_fatture_parziali=totale_fatture_parziali,
-            dati_mensili_fatture_emesse=json.dumps(dati_mensili_fatture_emesse)
+            dati_mensili_fatture_emesse=json.dumps(dati_mensili_fatture_emesse),
+            cadenza_fatturazione=cadenza_fatturazione
         )
