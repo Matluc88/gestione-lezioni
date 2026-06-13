@@ -429,6 +429,38 @@
             </div>
         </section>
 
+        {% if arretrati and arretrati|length > 0 %}
+        <div class="card mb-4 shadow-sm" style="margin:16px;">
+            <div class="card-header" style="background:#b00020;color:#fff;">
+                <h5 class="mb-0">🔴 Corsi conclusi da fatturare — {{ arretrati|length }} corsi · € {{ '%.2f'|format(totale_arretrati) }}</h5>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-sm table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Corso</th>
+                            <th class="text-end">Da incassare</th>
+                            <th>Concluso il</th>
+                            <th class="text-end">Giorni fa</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for a in arretrati %}
+                        <tr{% if a.giorni is not none and a.giorni > 60 %} class="table-danger"{% elif a.giorni is not none and a.giorni > 30 %} class="table-warning"{% endif %}>
+                            <td>{{ a.cliente }}</td>
+                            <td>{{ a.nome }}</td>
+                            <td class="text-end">€ {{ '%.2f'|format(a.da_incassare) }}</td>
+                            <td>{{ a.ultima_data }}</td>
+                            <td class="text-end">{{ a.giorni if a.giorni is not none else '—' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
         <div class="card mb-4 shadow-sm">
             <div class="card-header bg-primary text-white">
                 <h5 class="mb-0">📊 Distribuzione Lezioni per Mese</h5>

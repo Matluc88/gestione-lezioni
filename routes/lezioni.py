@@ -78,13 +78,70 @@ def dashboard():
         cursor.execute("SELECT * FROM corsi_archiviati ORDER BY data_archiviazione DESC")
         corsi_archiviati = cursor.fetchall()
 
-    return render_template("dashboard.html", 
-                          username=user['username'], 
-                          lezioni=lezioni, 
+        # Alert "corsi conclusi da fatturare": corsi 100% completati e interamente da fatturare
+        if placeholder == "%s":  # PostgreSQL
+            cursor.execute("""
+                SELECT COALESCE(c.cliente, 'Senza Cliente') AS cliente, l.id_corso,
+                       COALESCE(c.nome, l.id_corso) AS nome,
+                       COUNT(*) AS totale,
+                       SUM(CASE WHEN l.stato = 'Completato' THEN 1 ELSE 0 END) AS completate,
+                       SUM(CASE WHEN l.stato = 'Completato' AND l.fatturato = 0
+                           THEN calcola_ore(l.ora_inizio, l.ora_fine) * l.compenso_orario ELSE 0 END) AS da_incassare,
+                       MAX(l.data) AS ultima_data
+                FROM lezioni l
+                LEFT JOIN corsi c ON l.id_corso = c.id_corso
+                GROUP BY COALESCE(c.cliente, 'Senza Cliente'), l.id_corso, c.nome
+            """)
+        else:  # SQLite
+            cursor.execute("""
+                SELECT COALESCE(c.cliente, 'Senza Cliente') AS cliente, l.id_corso,
+                       COALESCE(c.nome, l.id_corso) AS nome,
+                       COUNT(*) AS totale,
+                       SUM(CASE WHEN l.stato = 'Completato' THEN 1 ELSE 0 END) AS completate,
+                       SUM(CASE WHEN l.stato = 'Completato' AND l.fatturato = 0
+                           THEN ((julianday(l.ora_fine) - julianday(l.ora_inizio)) * 24) * l.compenso_orario ELSE 0 END) AS da_incassare,
+                       MAX(l.data) AS ultima_data
+                FROM lezioni l
+                LEFT JOIN corsi c ON l.id_corso = c.id_corso
+                GROUP BY COALESCE(c.cliente, 'Senza Cliente'), l.id_corso, c.nome
+            """)
+        arretrati = []
+        totale_arretrati = 0.0
+        oggi = datetime.now().date()
+        for row in cursor.fetchall():
+            totale = row['totale'] or 0
+            completate = row['completate'] or 0
+            da_incassare = float(row['da_incassare'] or 0)
+            # corso concluso al 100% e interamente ancora da fatturare
+            if totale > 0 and completate == totale and da_incassare > 0:
+                ultima = row['ultima_data']
+                giorni = None
+                if ultima:
+                    try:
+                        giorni = (oggi - datetime.strptime(str(ultima)[:10], '%Y-%m-%d').date()).days
+                    except (ValueError, TypeError):
+                        giorni = None
+                arretrati.append({
+                    'cliente': row['cliente'],
+                    'id_corso': row['id_corso'],
+                    'nome': row['nome'],
+                    'da_incassare': da_incassare,
+                    'ultima_data': ultima,
+                    'giorni': giorni,
+                })
+                totale_arretrati += da_incassare
+        # i più vecchi prima (chi non ha data in fondo)
+        arretrati.sort(key=lambda x: (x['giorni'] is None, -(x['giorni'] or 0)))
+
+    return render_template("dashboard.html",
+                          username=user['username'],
+                          lezioni=lezioni,
                           corsi=corsi,
                           corsi_archiviati=corsi_archiviati,
                           mesi=mesi,
-                          conteggi=conteggi)
+                          conteggi=conteggi,
+                          arretrati=arretrati,
+                          totale_arretrati=totale_arretrati)
 
 
 @lezioni_bp.route("/aggiungi_lezione", methods=["GET", "POST"])
