@@ -1,0 +1,82 @@
+/* ============================================================
+   mobile-fixes.css
+   Correzioni di layout per smartphone, NON invasive.
+   Viene caricato per ultimo in ogni pagina: non riscrive lo
+   stile esistente, corregge solo i problemi su schermo stretto.
+   ============================================================ */
+
+/* 1. Evita lo scroll orizzontale accidentale dell'intera pagina
+      (quando un elemento sfora di pochi pixel la pagina "balla"). */
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+@media (max-width: 768px) {
+
+    /* 2. TABELLE LARGHE
+          Invece di sforare lo schermo, la tabella diventa un blocco
+          che scorre in orizzontale al suo interno. Le celle non vanno
+          a capo in modo disordinato. */
+    table {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    table thead th,
+    table tbody td {
+        white-space: nowrap;
+    }
+    /* ECCEZIONE: FullCalendar (Dashboard e Calendario) usa tabelle per
+       disegnare la griglia: non vanno trasformate in blocchi scrollabili. */
+    .fc table,
+    .fc thead,
+    .fc tbody,
+    .fc tr,
+    .fc th,
+    .fc td {
+        display: revert;
+        white-space: normal;
+        overflow: visible;
+    }
+
+    /* 3. INPUT a 16px
+          Impedisce a iOS di fare lo zoom automatico quando tocchi
+          un campo di testo. */
+    input,
+    select,
+    textarea,
+    .form-control,
+    .form-select {
+        font-size: 16px !important;
+    }
+
+    /* 4. AREE DI TOCCO
+          Pulsanti principali abbastanza alti da toccare comodamente. */
+    .btn:not(.btn-sm) {
+        min-height: 44px;
+    }
+
+    /* 5. CONTENITORI
+          Nessun contenitore o scheda supera la larghezza dello schermo. */
+    .container,
+    .container-fluid,
+    .card,
+    .row {
+        max-width: 100%;
+    }
+    .row {
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    /* 6. IMMAGINI responsive (i grafici Chart.js gestiscono la propria
+          dimensione e non vengono toccati). */
+    img,
+    svg {
+        max-width: 100%;
+        height: auto;
+    }
+}
