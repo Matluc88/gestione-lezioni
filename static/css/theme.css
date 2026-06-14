@@ -1,0 +1,72 @@
+/* ============================================================
+   theme.css — TEMA UNICO dell'app (palette coerente)
+   ------------------------------------------------------------
+   Obiettivo: dare a TUTTE le pagine "standalone" (Dashboard,
+   Calendario, Compenso, ecc.) gli stessi colori delle pagine
+   già in stile iOS (Fatture, Corsi...), usando la palette di
+   ios-core.css come unica fonte di verità.
+
+   Come: NON riscrive le pagine. Viene caricato PER ULTIMO e:
+     - definisce le variabili che oggi le pagine usano ma che
+       erano rimaste SENZA valore in modalità chiara
+       (--surface-color, --primary-color, --shadow-*, ...);
+     - neutralizza il vecchio gradiente beige con uno sfondo
+       neutro uguale a quello delle pagine iOS (#F2F2F7).
+
+   Reversibile al 100%: vedi RESTYLING_TEMA_2026-06-14.md
+   ============================================================ */
+
+:root {
+    /* Palette unica — stessi valori di ios-core.css */
+    --primary-color:   #007AFF;   /* blu iOS (prima: viola non def. in chiaro) */
+    --primary-dark:    #0062CC;
+    --secondary-color: #34C759;   /* verde iOS */
+    --on-primary:      #FFFFFF;
+
+    --surface-color:   #FFFFFF;   /* schede bianche */
+    --background-color:#F2F2F7;   /* sfondo neutro */
+    --on-surface:      #1C1C1E;   /* testo scuro leggibile */
+
+    --border-radius:   12px;
+    --radius:          12px;
+
+    --shadow-1: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --shadow-2: 0 4px 12px rgba(0, 0, 0, 0.10);
+    --shadow-3: 0 8px 24px rgba(0, 0, 0, 0.14);
+
+    --top-bar-height: 56px;
+}
+
+/* 1. Via il gradiente beige → sfondo neutro coerente con le pagine iOS.
+      (Niente !important: questo foglio è caricato dopo, quindi vince
+      naturalmente sullo stile inline delle pagine.) */
+body {
+    background: #F2F2F7;
+    color: #1C1C1E;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text',
+                 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+
+/* 2. Pulsanti primari Bootstrap allineati al blu iOS (così i bottoni
+      delle pagine standalone hanno lo stesso colore di quelle iOS). */
+.btn-primary {
+    --bs-btn-bg:                #007AFF;
+    --bs-btn-border-color:      #007AFF;
+    --bs-btn-hover-bg:          #0062CC;
+    --bs-btn-hover-border-color:#0062CC;
+    --bs-btn-active-bg:         #0062CC;
+    --bs-btn-active-border-color:#0062CC;
+    --bs-btn-disabled-bg:       #007AFF;
+    --bs-btn-disabled-border-color:#007AFF;
+}
+
+/* Link e accenti coerenti col primario */
+a:not(.btn) {
+    color: #007AFF;
+}
+
+/* 3. Schede: bordo morbido uniforme dove la pagina usa .card
+      (le pagine iOS hanno il proprio .card e non vengono toccate). */
+.card {
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
