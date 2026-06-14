@@ -72,7 +72,8 @@ def stato_crediti():
                     'fatturato': [],
                     'totale_completato': 0,
                     'totale_fatturato': 0,
-                    'totale_maturato': 0
+                    'totale_maturato': 0,
+                    'totale_futuro': 0
                 }
             
             totale_lezioni = row['totale_lezioni'] or 0
@@ -125,19 +126,25 @@ def stato_crediti():
             corsi_per_cliente[cliente]['totale_completato'] += credito_completato
             corsi_per_cliente[cliente]['totale_fatturato'] += credito_fatturato
             corsi_per_cliente[cliente]['totale_maturato'] += credito_maturato
-        
+            corsi_per_cliente[cliente]['totale_futuro'] += credito_futuro
+
         # Calcoli generali
         totale_generale_completato = sum(c['totale_completato'] for c in corsi_per_cliente.values())
         totale_generale_fatturato = sum(c['totale_fatturato'] for c in corsi_per_cliente.values())
         totale_generale_maturato = sum(c['totale_maturato'] for c in corsi_per_cliente.values())
-        
+        totale_generale_futuro = sum(c['totale_futuro'] for c in corsi_per_cliente.values())
+        # Totale "in ballo" = lavoro svolto da fatturare + lezioni future già pianificate
+        totale_in_ballo = totale_generale_maturato + totale_generale_futuro
+
         corsi_pronti = sum(len(cliente['da_fatturare']) for cliente in corsi_per_cliente.values())
-    
+
     return render_template(
         'stato_crediti.html',
         corsi_per_cliente=corsi_per_cliente,
         totale_generale_completato=totale_generale_completato,
         totale_generale_fatturato=totale_generale_fatturato,
         totale_generale_maturato=totale_generale_maturato,
+        totale_generale_futuro=totale_generale_futuro,
+        totale_in_ballo=totale_in_ballo,
         corsi_pronti=corsi_pronti
     )
