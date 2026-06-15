@@ -60,8 +60,10 @@ body {
     --bs-btn-disabled-border-color:#007AFF;
 }
 
-/* Link e accenti coerenti col primario */
-a:not(.btn) {
+/* Link e accenti coerenti col primario.
+   NB: esclusi gli eventi del calendario (sono <a>), altrimenti il nome
+   del corso diventerebbe blu su sfondo blu/verde = illeggibile. */
+a:not(.btn):not(.fc-event):not(.fc-daygrid-event):not(.fc-timegrid-event) {
     color: #007AFF;
 }
 
@@ -69,4 +71,31 @@ a:not(.btn) {
       (le pagine iOS hanno il proprio .card e non vengono toccate). */
 .card {
     border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* 4. CALENDARIO — leggibilità del nome del corso DENTRO l'evento.
+      Gli eventi colorati (blu/verde) devono avere testo BIANCO, in grassetto,
+      e il nome deve andare a capo invece di essere tagliato.
+      (La vista "lista/agenda" usa .fc-list-event su sfondo bianco e NON è
+      toccata da queste regole, così lì il testo resta scuro e leggibile.) */
+.fc-daygrid-event,
+.fc-daygrid-event *,
+.fc-timegrid-event,
+.fc-timegrid-event * {
+    color: #ffffff !important;
+}
+.fc-daygrid-event .fc-event-title,
+.fc-timegrid-event .fc-event-title {
+    font-weight: 600;
+    font-size: 0.82rem;
+    line-height: 1.25;
+    white-space: normal;     /* il nome va a capo, non viene troncato */
+    overflow: visible;
+}
+.fc-timegrid-event .fc-event-time {
+    font-weight: 600;
+    opacity: 0.95;
+}
+.fc-timegrid-event {
+    padding: 1px 3px;
 }

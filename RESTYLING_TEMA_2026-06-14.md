@@ -69,3 +69,22 @@ git push origin revert-tema:main
 Aprire e controllare che siano leggibili e coerenti (stesso azzurro, sfondo
 chiaro uniforme, niente beige): **Dashboard**, Calendario, Compenso,
 Stato Crediti, Resoconto, una pagina di inserimento (Aggiungi lezione/fattura).
+
+---
+
+## CHANGELOG
+
+### 2026-06-15 — Fix leggibilità calendario
+**Problema**: dentro gli eventi del calendario il **nome del corso non si
+leggeva**. Causa: il backend non imposta il colore del testo degli eventi e la
+regola `a:not(.btn){color:#007AFF}` del tema (gli eventi sono `<a>`) rendeva il
+nome **blu su sfondo blu/verde**.
+
+**Fix** (solo `static/css/theme.css`):
+- esclusi gli eventi dalla regola dei link;
+- testo eventi (vista griglia) **bianco, grassetto**, con **a-capo** invece del
+  troncamento; la vista lista/agenda resta scura su bianco.
+
+**Rollback solo di questo fix**: `git push origin fe7217b:main --force`
+(`fe7217b` = stato con tema ma senza questo fix). Per tornare a prima del tema,
+vedi sopra (`6374dc3`).
