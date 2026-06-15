@@ -88,3 +88,22 @@ nome **blu su sfondo blu/verde**.
 **Rollback solo di questo fix**: `git push origin fe7217b:main --force`
 (`fe7217b` = stato con tema ma senza questo fix). Per tornare a prima del tema,
 vedi sopra (`6374dc3`).
+
+### 2026-06-15 — Grafici ricolorati (palette unica)
+**Problema**: i grafici usavano la palette "arcobaleno" di default di Chart.js
+(blu/teal/rosa/giallo/indaco a caso) + beige/marrone → aspetto incoerente.
+
+**Fix** (templates `resoconto_annuale.html`, `compenso.html`): rimappati i
+colori dei dataset sulla palette iOS, mantenendo le trasparenze:
+- 54,162,235 → 0,122,255 (blu) · 75,192,192 → 90,200,250 (azzurro) ·
+  255,99,132 → 255,59,48 (rosso) · 255,206,86 → 255,149,0 (arancio) ·
+  102,126,234 → 88,86,214 (indaco) · 40,167,69 → 52,199,89 (verde) ·
+  #28a745 → #34C759.
+- 46 sostituzioni totali. Nessuna logica toccata, solo colori.
+
+**Da fare eventualmente** (non incluso): gli sfondi/bordi beige-marrone
+(`#a67c52`, `#d4c5b9`) rimasti nel CSS di queste due pagine (chrome, non
+grafici); e — su richiesta dell'utente "non li guardo quasi mai" — si possono
+nascondere/comprimere i grafici dando priorità ai numeri/totali.
+
+**Rollback solo di questo fix**: `git push origin f8e60ee:main --force`
