@@ -1,321 +1,100 @@
+{# ============================================================
+   navbar_unified.html — Navigazione unificata (barra iOS in basso)
+   Sostituisce il vecchio menu "hamburger". Componente AUTONOMO:
+   porta con sé tutto il CSS/JS, non dipende dai fogli iOS, così
+   funziona su ogni pagina standalone che lo include.
+   Stesse icone/etichette della barra delle pagine iOS (Fatture/Corsi),
+   per coerenza totale. Rollback: ripristina questo singolo file.
+   ============================================================ #}
 <style>
-    .navbar-zara {
-        background: #1a1a1a;
-        border-bottom: 1px solid #333333;
-        padding: 0;
-        min-height: 60px;
-        font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
-        position: fixed;
-        top: 0;
-        width: 100%;
+    /* --- Barra superiore minimale (solo marchio) --- */
+    .app-topbar {
+        position: fixed; top: 0; left: 0; right: 0; height: 56px;
+        background: #ffffff; border-bottom: 1px solid #E5E5EA;
+        display: flex; align-items: center; justify-content: center;
         z-index: 1000;
     }
-    
-    .navbar-zara .navbar-brand {
-        color: #ffffff;
-        font-weight: 300;
-        font-size: 16px;
-        letter-spacing: 3px;
-        text-transform: uppercase;
-        padding: 20px 24px;
-        transition: color 0.2s;
-    }
-    
-    .navbar-zara .navbar-brand:hover {
-        color: #a67c52;
-    }
-    
-    .navbar-zara .nav-link {
-        color: #ffffff;
-        text-transform: uppercase;
-        letter-spacing: 1.5px;
-        font-size: 11px;
-        font-weight: 400;
-        padding: 20px 20px 18px 20px;
-        border-bottom: 2px solid transparent;
-        transition: all 0.2s;
-        position: relative;
-    }
-    
-    .navbar-zara .nav-link:hover {
-        color: #ffffff;
-        border-bottom-color: #a67c52;
-    }
-    
-    .navbar-zara .nav-link.active {
-        border-bottom-color: #ffffff;
-        color: #ffffff;
-    }
-    
-    .navbar-zara .badge {
-        font-size: 9px;
-        padding: 3px 6px;
-        font-weight: 500;
-        letter-spacing: 0.5px;
-        margin-left: 6px;
-        border-radius: 2px;
-    }
-    
-    .navbar-zara .navbar-toggler {
-        border: none;
-        padding: 8px;
-        color: #ffffff;
-        display: block !important;
-    }
-    
-    .navbar-zara .navbar-toggler:focus {
-        box-shadow: none;
-    }
-    
-    .navbar-zara .navbar-toggler-icon {
-        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 1%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
-    }
-    
-    /* Forza hamburger sempre visibile su tutti gli schermi */
-    .hamburger-menu-btn {
-        display: block !important;
-    }
-    
-    /* Hamburger menu drawer style */
-    .hamburger-nav {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 1100;
-        visibility: hidden;
-        opacity: 0;
-        transition: all 0.3s ease;
+    .app-topbar .brand {
+        color: #1C1C1E; font-weight: 600; font-size: 17px;
+        text-decoration: none; letter-spacing: 0.2px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
 
-    .hamburger-nav.active {
-        visibility: visible;
-        opacity: 1;
+    /* --- Barra inferiore stile iOS --- */
+    .app-tabbar {
+        position: fixed; bottom: 0; left: 0; right: 0;
+        min-height: 54px;
+        background: rgba(255,255,255,0.97);
+        backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+        border-top: 0.5px solid #C6C6C8;
+        display: flex; z-index: 1000;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
     }
+    .app-tabbar a, .app-tabbar button {
+        flex: 1; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; gap: 2px;
+        color: #8E8E93; font-size: 10px; font-weight: 500;
+        text-decoration: none; background: none; border: none; cursor: pointer;
+        padding: 6px 2px; -webkit-tap-highlight-color: transparent;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    .app-tabbar .tab-ico { font-size: 22px; line-height: 1; }
+    .app-tabbar a.active { color: #007AFF; }
+    .app-tabbar a:active, .app-tabbar button:active { opacity: 0.6; }
 
-    .nav-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.6);
-    }
+    /* spazio in fondo per non coprire il contenuto con la barra */
+    body { padding-bottom: 62px; }
 
-    .nav-drawer {
-        position: absolute;
-        top: 0;
-        left: -300px;
-        width: 300px;
-        height: 100%;
-        background-color: #ffffff;
-        box-shadow: 2px 0 10px rgba(0,0,0,0.3);
-        transition: left 0.3s ease;
-        overflow-y: auto;
+    /* --- Foglio "Altro" --- */
+    .more-sheet { position: fixed; inset: 0; z-index: 2000; display: none; }
+    .more-sheet.open { display: block; }
+    .more-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.4); }
+    .more-panel {
+        position: absolute; left: 0; right: 0; bottom: 0;
+        background: #fff; border-radius: 16px 16px 0 0;
+        max-height: 78vh; overflow-y: auto;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        animation: moreUp .25s ease;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
-
-    .hamburger-nav.active .nav-drawer {
-        left: 0;
+    @keyframes moreUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .more-panel h3 {
+        margin: 0; padding: 16px; font-size: 15px; text-align: center;
+        border-bottom: 1px solid #E5E5EA; color: #1C1C1E; font-weight: 600;
     }
-
-    .nav-drawer-header {
-        padding: 20px;
-        background-color: #1a1a1a;
-        color: #ffffff;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        min-height: 60px;
+    .more-panel a {
+        display: flex; align-items: center; gap: 12px; padding: 15px 18px;
+        color: #1C1C1E; text-decoration: none; border-bottom: 1px solid #F2F2F7;
+        font-size: 15px;
     }
-
-    .nav-drawer-header h3 {
-        margin: 0;
-        font-size: 14px;
-        font-weight: 300;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-    }
-
-    .nav-close {
-        background: none;
-        border: none;
-        color: #ffffff;
-        font-size: 24px;
-        padding: 0;
-        cursor: pointer;
-        width: 30px;
-        height: 30px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: color 0.2s;
-    }
-
-    .nav-close:hover {
-        color: #a67c52;
-    }
-
-    .nav-menu {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-
-    .nav-menu-item {
-        display: block;
-        padding: 16px 24px;
-        color: #1a1a1a;
-        text-decoration: none;
-        border-bottom: 1px solid #e0e0e0;
-        transition: all 0.2s;
-        font-size: 13px;
-        letter-spacing: 0.5px;
-    }
-
-    .nav-menu-item:hover {
-        background-color: #f8f8f8;
-        color: #a67c52;
-        text-decoration: none;
-        padding-left: 30px;
-    }
-    
-    @media (min-width: 992px) {
-        .navbar-zara .navbar-collapse {
-            display: flex !important;
-        }
-    }
-    
-    @media (max-width: 991px) {
-        .navbar-zara .navbar-nav {
-            display: none !important;
-        }
-        
-        .navbar-zara .navbar-collapse {
-            background: #1a1a1a;
-            padding: 15px 0;
-            margin-top: 1px;
-            border-top: 1px solid #333333;
-        }
-        
-        .navbar-zara .nav-link {
-            border-bottom: none;
-            border-left: 2px solid transparent;
-            padding: 12px 24px;
-        }
-        
-        .navbar-zara .nav-link:hover,
-        .navbar-zara .nav-link.active {
-            border-left-color: #a67c52;
-            border-bottom-color: transparent;
-            background: rgba(166, 124, 82, 0.1);
-        }
-    }
+    .more-panel a:active { background: #F2F2F7; }
+    .more-ico { font-size: 20px; width: 26px; text-align: center; }
 </style>
 
-<nav class="navbar navbar-zara navbar-expand-lg navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="{{ url_for('lezioni.dashboard') }}">📚 Gestione Lezioni</a>
-        
-        <!-- Hamburger button for all screens -->
-        <button class="navbar-toggler hamburger-menu-btn" type="button" id="hamburgerMenuBtn">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        
-        <!-- Desktop menu (visible only on large screens) -->
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item">
-                    <a class="nav-link {% if request.endpoint == 'lezioni.dashboard' %}active{% endif %}" href="{{ url_for('lezioni.dashboard') }}">
-                        🏠 Dashboard
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {% if request.endpoint and 'corsi' in request.endpoint %}active{% endif %}" href="{{ url_for('corsi.lista_corsi') }}">
-                        📚 Corsi
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {% if request.endpoint and 'fatture' in request.endpoint %}active{% endif %}" href="{{ url_for('fatture.index') }}">
-                        💰 Fatture
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {% if request.endpoint == 'stato_crediti.stato_crediti' %}active{% endif %}" href="{{ url_for('stato_crediti.stato_crediti') }}">
-                        📊 Stato Crediti
-                        {% if corsi_pronti is defined and corsi_pronti > 0 %}
-                        <span class="badge bg-danger">{{ corsi_pronti }}</span>
-                        {% endif %}
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('auth.logout') }}">
-                        Logout
-                    </a>
-                </li>
-            </ul>
-        </div>
-    </div>
+<header class="app-topbar">
+    <a class="brand" href="{{ url_for('lezioni.dashboard') }}">📚 Gestione Lezioni</a>
+</header>
+
+<nav class="app-tabbar">
+    <a href="{{ url_for('lezioni.dashboard') }}" class="{% if request.endpoint == 'lezioni.dashboard' %}active{% endif %}"><span class="tab-ico">🏠</span>Home</a>
+    <a href="{{ url_for('calendario.calendario') }}" class="{% if request.endpoint and 'calendario' in request.endpoint %}active{% endif %}"><span class="tab-ico">📅</span>Calendario</a>
+    <a href="{{ url_for('corsi.lista_corsi') }}" class="{% if request.endpoint and 'corsi' in request.endpoint %}active{% endif %}"><span class="tab-ico">📚</span>Corsi</a>
+    <a href="{{ url_for('fatture.index') }}" class="{% if request.endpoint and 'fatture' in request.endpoint %}active{% endif %}"><span class="tab-ico">💰</span>Fatture</a>
+    <button type="button" onclick="document.getElementById('moreSheet').classList.add('open'); document.body.style.overflow='hidden';"><span class="tab-ico">⋯</span>Altro</button>
 </nav>
 
-<!-- Drawer menu (always present, activated by hamburger) -->
-<nav class="hamburger-nav" id="hamburgerNav">
-    <div class="nav-overlay" id="navOverlay"></div>
-    <div class="nav-drawer">
-        <div class="nav-drawer-header">
-            <h3>Menu</h3>
-            <button class="nav-close" id="navClose">✕</button>
-        </div>
-        <ul class="nav-menu">
-            <li><a href="{{ url_for('lezioni.dashboard') }}" class="nav-menu-item">🏠 Dashboard</a></li>
-            <li><a href="{{ url_for('calendario.calendario') }}" class="nav-menu-item">📅 Calendario</a></li>
-            <li><a href="{{ url_for('corsi.lista_corsi') }}" class="nav-menu-item">📚 Corsi</a></li>
-            <li><a href="{{ url_for('lezioni.aggiungi_lezione') }}" class="nav-menu-item">➕ Aggiungi Lezione</a></li>
-            <li><a href="{{ url_for('export.importa_csv') }}" class="nav-menu-item">📂 Importa CSV</a></li>
-            <li><a href="{{ url_for('export.esporta_csv') }}" class="nav-menu-item">📥 Esporta CSV</a></li>
-            <li><a href="{{ url_for('archivio.lezioni_archiviate') }}" class="nav-menu-item">📁 Archiviate</a></li>
-            <li><a href="{{ url_for('fatture.index') }}" class="nav-menu-item">💰 Fatture</a></li>
-            <li><a href="{{ url_for('stato_crediti.stato_crediti') }}" class="nav-menu-item">📊 Stato Crediti</a></li>
-            <li><a href="{{ url_for('lezioni.compenso') }}" class="nav-menu-item">💵 Compenso</a></li>
-            <li><a href="{{ url_for('resoconto.resoconto_annuale') }}" class="nav-menu-item">📈 Resoconto</a></li>
-            <li><a href="{{ url_for('contratti.lista_contratti') }}" class="nav-menu-item">📄 Contratti</a></li>
-            <li><a href="{{ url_for('google_calendar.sincronizza') }}" class="nav-menu-item">🔄 Sincronizza Google</a></li>
-            <li><a href="{{ url_for('auth.logout') }}" class="nav-menu-item">🚪 Logout</a></li>
-        </ul>
+<div class="more-sheet" id="moreSheet">
+    <div class="more-overlay" onclick="document.getElementById('moreSheet').classList.remove('open'); document.body.style.overflow='';"></div>
+    <div class="more-panel">
+        <h3>Menu</h3>
+        <a href="{{ url_for('lezioni.aggiungi_lezione') }}"><span class="more-ico">➕</span>Aggiungi Lezione</a>
+        <a href="{{ url_for('lezioni.compenso') }}"><span class="more-ico">💵</span>Compenso</a>
+        <a href="{{ url_for('stato_crediti.stato_crediti') }}"><span class="more-ico">📊</span>Stato Crediti</a>
+        <a href="{{ url_for('resoconto.resoconto_annuale') }}"><span class="more-ico">📈</span>Resoconto Annuale</a>
+        <a href="{{ url_for('archivio.lezioni_archiviate') }}"><span class="more-ico">📁</span>Lezioni Archiviate</a>
+        <a href="{{ url_for('export.importa_csv') }}"><span class="more-ico">📂</span>Importa CSV</a>
+        <a href="{{ url_for('export.esporta_csv') }}"><span class="more-ico">📥</span>Esporta CSV</a>
+        <a href="{{ url_for('google_calendar.sincronizza') }}"><span class="more-ico">🔄</span>Sincronizza Google</a>
+        <a href="{{ url_for('auth.logout') }}"><span class="more-ico">🚪</span>Logout</a>
     </div>
-</nav>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const hamburgerBtn = document.getElementById('hamburgerMenuBtn');
-    const hamburgerNav = document.getElementById('hamburgerNav');
-    const navOverlay = document.getElementById('navOverlay');
-    const navClose = document.getElementById('navClose');
-
-    function openNav() {
-        hamburgerNav.classList.add('active');
-        document.body.style.overflow = 'hidden';
-    }
-
-    function closeNav() {
-        hamburgerNav.classList.remove('active');
-        document.body.style.overflow = '';
-    }
-
-    if (hamburgerBtn) {
-        hamburgerBtn.addEventListener('click', openNav);
-    }
-    if (navClose) {
-        navClose.addEventListener('click', closeNav);
-    }
-    if (navOverlay) {
-        navOverlay.addEventListener('click', closeNav);
-    }
-
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            closeNav();
-        }
-    });
-});
-</script>
+</div>

@@ -126,3 +126,22 @@ body+grafici).
 - Emoji come icone nei titoli.
 
 **Rollback solo di questo fix**: `git push origin e157c1f:main --force`
+
+### 2026-06-15 — Navigazione unificata (barra iOS in basso)
+**Scelta utente**: unificare sulla barra iOS in basso (come Fatture/Corsi).
+
+**Come**: le ~13 pagine standalone includevano TUTTE lo stesso componente
+`templates/components/navbar_unified.html` (il vecchio menu "hamburger" nero).
+Riscritto QUEL SOLO FILE come barra iOS in basso autonoma (CSS/JS propri, niente
+dipendenze dai fogli iOS): top-bar minimale col marchio + tab-bar in basso
+Home/Calendario/Corsi/Fatture/Altro (stesse icone/etichette delle pagine iOS) +
+foglio "Altro" con le voci secondarie. Route invariate (sottoinsieme delle
+vecchie → nessun BuildError).
+- Sistemati i pulsanti flottanti che coprivano la barra: dashboard `.fab`
+  (20→74px) e `#floating-fattura-btn` di stato_crediti (30→84px).
+- Bonus: spariscono anche gli ultimi 5 `#a67c52` che erano nel vecchio menu.
+- Restano senza barra alcune sotto-pagine-form che non includono il componente
+  (aggiungi_corso, importa_csv, modifica_corso/lezione, inserisci_multiple,
+  fattura_corso) — già così prima, si torna indietro col browser.
+
+**Rollback solo di questo step**: `git push origin 737c2df:main --force`
