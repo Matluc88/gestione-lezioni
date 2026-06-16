@@ -107,3 +107,22 @@ grafici); e — su richiesta dell'utente "non li guardo quasi mai" — si posson
 nascondere/comprimere i grafici dando priorità ai numeri/totali.
 
 **Rollback solo di questo fix**: `git push origin f8e60ee:main --force`
+
+### 2026-06-15 — Pulizia resti tema beige/marrone
+**Analisi (da pagine live, login admin)**: dopo il tema unico restavano resti
+del vecchio tema in 8+ pagine: bottoni/intestazioni/bordi **marrone `#a67c52`**
+e **beige `#d4c5b9`/`#e8dfd6`** (chrome non toccato dal tema, che agiva solo su
+body+grafici).
+
+**Fix**: sostituzione globale nei template:
+- `#a67c52` → `#007AFF` (blu iOS) · `#d4c5b9`/`#e8dfd6` → `#F2F2F7` (grigio chiaro).
+- 67 sostituzioni su 14 file, 0 residui. Verificato sicuro: il marrone era
+  quasi solo sfondo/bordo (1 sola occorrenza come testo), il beige solo sfondo.
+
+**Restano (decisioni a parte)**:
+- **Navigazione doppia**: Fatture/Corsi usano la barra iOS in basso, le altre il
+  menu hamburger → unificare è un lavoro più grosso.
+- **Angoli squadrati** (`border-radius:0`) su varie pagine vs arrotondati iOS.
+- Emoji come icone nei titoli.
+
+**Rollback solo di questo fix**: `git push origin e157c1f:main --force`
