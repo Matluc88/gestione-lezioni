@@ -121,7 +121,15 @@ def get_fatture():
     ''')
     fatture = cursor.fetchall()
     conn.close()
-    return fatture
+
+    # Ordina per anno e numero fattura decrescenti (piu' recente in cima),
+    # robusto rispetto al formato del numero (es. '16', 'NC.01', 'Ricevuta 03')
+    import re as _re
+    def _ordina(f):
+        anno = (f['data_fattura'] or '')[:4]
+        cifre = _re.sub(r'\D', '', f['numero_fattura'] or '')
+        return (anno, int(cifre) if cifre else 0)
+    return sorted(fatture, key=_ordina, reverse=True)
 
 
 # ─── Route: Lista fatture ──────────────────────────────────────────────────────
